@@ -1,0 +1,36 @@
+com.sistemariegoagoteo
+├── SistemaRiegoAGoteoApplication.java  // Clase principal de la aplicación
+├── config              // Configuraciones generales y de seguridad
+│   └── SecurityConfig.java // Configuración de Spring Security
+├── controller          // Endpoints de la API REST
+│   └── auth            // Controladores para autenticación y registro
+│       └── AuthController.java
+│   └── admin           // Controladores para funcionalidades de administrador (futuro)
+│   └── analista        // Controladores para funcionalidades de analista (futuro)
+│   └── operario        // Controladores para funcionalidades de operario (futuro)
+├── model               // Entidades JPA que mapean la base de datos
+│   ├── user            // Entidades relacionadas con usuarios, roles y permisos
+│   │   ├── User.java
+│   │   ├── Role.java
+│   │   └── Permission.java // Si utilizas permisos más granulares (opcional)
+│   └── riego           // Entidades relacionadas con el sistema de riego (futuro)
+│   └── ...             // Otras entidades del dominio
+├── repository          // Repositorios de Spring Data JPA para acceso a datos
+│   └── user            // Repositorios para User, Role, etc.
+│       ├── UserRepository.java
+│       └── RoleRepository.java
+│   └── riego           // Repositorios para el dominio de riego (futuro)
+│   └── ...
+├── service             // Lógica de negocio y servicios
+│   └── auth            // Servicios para autenticación, registro y gestión básica de usuarios (por admin)
+│       └── AuthService.java
+│       └── UserService.java // Servicio para gestionar usuarios por el admin
+│   └── riego           // Servicios para la lógica de riego (futuro)
+│   └── ...             // Otros servicios
+└── dto                 // Objetos de Transferencia de Datos para comunicación externa
+    └── auth            // DTOs para solicitudes y respuestas de autenticación/registro
+        ├── RegisterRequest.java
+        ├── AuthRequest.java
+        └── AuthResponse.java
+    └── user            // DTOs para la gestión de usuarios (por admin)
+    └── ...             // Otros DTOs
