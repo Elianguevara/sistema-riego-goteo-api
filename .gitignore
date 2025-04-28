@@ -1,33 +1,62 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Directorios de compilación y salida
+/target/        # Directorio de salida de Maven
+/build/         # Directorio de salida de Gradle
+/bin/           # Posible directorio de salida de Eclipse/otros
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Archivos de clases y empaquetados
+*.class
+*.jar
+*.war
+*.ear
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# Archivos de configuración de IDEs
+
+# VS Code
+.vscode/        # Configuración específica de VS Code para el workspace
+
+# IntelliJ IDEA (si alguna vez usas o usaste IntelliJ)
+.idea/
 *.iml
+*.iws
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# Eclipse (si el proyecto fue creado o usado en Eclipse)
+.project
+.classpath
+.settings/
 
-### VS Code ###
-.vscode/
+# Archivos de log
+*.log
+log/
+logs/
+
+# Archivos de configuración local sensibles (ej: overrides locales de propiedades)
+# Descomenta y ajusta según tu necesidad
+# src/main/resources/application-local.properties
+# src/main/resources/application-dev.properties
+# src/main/resources/application-prod.properties # Cuidado con credenciales aquí
+
+# Dependencias (si no usas Maven/Gradle correctamente y tienes libs sueltas)
+# /lib/
+
+# Archivos del sistema operativo
+.DS_Store       # macOS
+Thumbs.db       # Windows
+
+# Archivos temporales o de backup del editor
+*~
+*.swp
+
+# Archivos generados por Wrapper de Maven/Gradle (si los tienes y no quieres versionarlos - a menudo SÍ se versionan)
+# !mvnw
+# !mvnw.cmd
+# /.mvn/wrapper/
+
+# Archivos generados por Wrapper de Gradle
+# !gradlew
+# !gradlew.bat
+# /.gradle/wrapper/
+
+# Directorios de caché de Maven/Gradle (suelen estar fuera del proyecto, pero por si acaso)
+# ~/.m2/repository/
+# ~/.gradle/caches/
