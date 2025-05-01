@@ -67,7 +67,11 @@ public class DataInitializer implements CommandLineRunner {
         
         if (!userRepository.existsByUsername("admin")) {
              Role adminRole = roleRepository.findByNombreRol("ADMIN").orElseThrow();
-             User defaultAdmin = new User("Elian Guevara", "administrador", passwordEncoder.encode("admin123"), "elian.guevara689@gmail.com", adminRole);
+             User defaultAdmin = new User("Elian Guevara",
+             "admin", 
+             passwordEncoder.encode("admin123"), 
+             "elian.guevara689@gmail.com", 
+             adminRole);
              userRepository.save(defaultAdmin);
              log.info("Usuario administrador por defecto 'admin' creado.");
         }
