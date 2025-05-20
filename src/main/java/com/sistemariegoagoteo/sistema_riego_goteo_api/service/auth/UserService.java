@@ -38,7 +38,7 @@ public class UserService {
         if (!"ANALISTA".equals(requestedRoleName) && !"OPERARIO".equals(requestedRoleName)) {
             throw new IllegalArgumentException("Solo se pueden registrar usuarios con los roles ANALISTA u OPERARIO a través de esta función.");
         }
-        Role targetRole = roleRepository.findByNombreRol(requestedRoleName)
+        Role targetRole = roleRepository.findByRoleName(requestedRoleName)
                 .orElseThrow(() -> new ResourceNotFoundException("Role", "nombreRol", requestedRoleName));
 
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
@@ -51,14 +51,14 @@ public class UserService {
         }
 
         User newUser = new User();
-        newUser.setNombre(registerRequest.getNombre());
+        newUser.setName(registerRequest.getName());
         newUser.setUsername(registerRequest.getUsername());
         newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         newUser.setEmail(registerRequest.getEmail());
         newUser.setRol(targetRole);
-        newUser.setActivo(true);
-        newUser.setIntentosFallidos(0);
-        newUser.setFechaUltimoLogin(null);
+        newUser.setActive(true);
+        newUser.setFailedAttempts(0);
+        newUser.setLastLogin(null);
 
         User savedUser = userRepository.save(newUser);
         log.info("Usuario {} registrado exitosamente por admin con ID: {}", requestedRoleName, savedUser.getId());
@@ -84,7 +84,7 @@ public class UserService {
     @PreAuthorize("hasRole('ADMIN')")
     public List<User> findUsersByRole(String roleName) {
         log.debug("Admin buscando usuarios con rol: {}", roleName);
-        Role role = roleRepository.findByNombreRol(roleName.toUpperCase())
+        Role role = roleRepository.findByRoleName(roleName.toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Role", "nombreRol", roleName));
         return userRepository.findByRol(role);
     }
@@ -101,7 +101,7 @@ public class UserService {
             throw new RuntimeException("El email '" + updateRequest.getEmail() + "' ya está en uso por otro usuario.");
         }
 
-        user.setNombre(updateRequest.getNombre());
+        user.setName(updateRequest.getName());
         user.setEmail(updateRequest.getEmail());
 
         User updatedUser = userRepository.save(user);
@@ -114,7 +114,7 @@ public class UserService {
     public User updateUserStatus(Long id, boolean status) {
         log.info("Admin intentando cambiar estado activo a {} para usuario con ID: {}", status, id);
         User user = findUserById(id);
-        user.setActivo(status);
+        user.setActive(status);
         User updatedUser = userRepository.save(user);
         log.info("Estado activo del usuario con ID: {} cambiado a {} exitosamente por admin.", id, status);
         return updatedUser;
@@ -139,7 +139,7 @@ public class UserService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
         user.setPassword(passwordEncoder.encode(rawPassword));
-        user.setIntentosFallidos(0);
+        user.setFailedAttempts(0);
         userRepository.save(user);
         log.info("Contraseña del usuario con ID: {} actualizada exitosamente por admin.", userId);
     }

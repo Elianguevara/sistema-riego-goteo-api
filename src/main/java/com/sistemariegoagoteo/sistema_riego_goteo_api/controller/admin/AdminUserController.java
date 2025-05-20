@@ -87,7 +87,7 @@ public class AdminUserController {
                                               @Valid @RequestBody UserStatusUpdateRequest statusRequest) {
         log.debug("PUT /api/admin/users/{}/status", id);
         try {
-            User updated = userService.updateUserStatus(id, statusRequest.getActivo());
+            User updated = userService.updateUserStatus(id, statusRequest.getActive());
             return ResponseEntity.ok(new UserResponse(updated));
         } catch (ResourceNotFoundException e) {
             log.warn("Usuario no encontrado para actualizar estado con ID: {}", id);

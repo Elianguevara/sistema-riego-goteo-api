@@ -13,21 +13,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserResponse {
     private Long id;
-    private String nombre;
+    private String name;
     private String username;
     private String email;
-    private String nombreRol; // Nombre del rol
-    private boolean activo;
-    private java.util.Date fechaUltimoLogin; // Puede ser null
+    private String roleName; // Nombre del rol
+    private boolean active;
+    private java.util.Date lastLogin; // Puede ser null
 
     // Constructor para facilitar la conversión desde la entidad User
     public UserResponse(User user) {
         this.id = user.getId();
-        this.nombre = user.getNombre();
+        this.name = user.getName();
         this.username = user.getUsername();
         this.email = user.getEmail();
-        this.nombreRol = user.getRol() != null ? user.getRol().getNombreRol() : null; // Manejo de rol nulo
-        this.activo = user.isActivo();
-        this.fechaUltimoLogin = user.getFechaUltimoLogin();
+        this.roleName = user.getRol() != null ? user.getRol().getRoleName() : null; // Manejo de rol nulo
+        this.active = user.isActive();
+        this.lastLogin = user.getLastLogin();
     }
 }

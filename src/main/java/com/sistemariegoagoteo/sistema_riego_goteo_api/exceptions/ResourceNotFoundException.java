@@ -15,7 +15,7 @@ public class ResourceNotFoundException extends RuntimeException {
 
     /**
      * Constructor que genera un mensaje estándar "Recurso no encontrado con campo : 'valor'".
-     * @param resourceName Nombre del recurso (ej. "User", "Role", "Finca").
+     * @param resourceName Nombre del recurso (ej. "User", "Role", "Farm").
      * @param fieldName Nombre del campo por el que se buscó (ej. "id", "username").
      * @param fieldValue Valor del campo que se buscó.
      */

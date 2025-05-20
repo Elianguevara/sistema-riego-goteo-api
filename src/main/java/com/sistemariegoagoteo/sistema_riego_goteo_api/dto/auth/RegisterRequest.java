@@ -20,7 +20,7 @@ public class RegisterRequest {
 
     @NotBlank(message = "El nombre completo no puede estar vacío")
     @Size(min = 3, max = 100, message = "El nombre debe tener entre 3 y 100 caracteres")
-    private String nombre;
+    private String name;
 
     @NotBlank(message = "El nombre de usuario no puede estar vacío")
     @Size(min = 4, max = 50, message = "El nombre de usuario debe tener entre 4 y 50 caracteres")

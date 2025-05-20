@@ -19,8 +19,8 @@ public interface RoleRepository extends JpaRepository<Role, Integer> { // <Entid
      * Busca un rol por su nombre único.
      * Spring Data JPA genera la implementación automáticamente basado en el nombre del método.
      *
-     * @param nombreRol El nombre del rol a buscar (ej. "ADMIN").
+     * @param rolName El nombre del rol a buscar (ej. "ADMIN").
      * @return Un Optional que contiene el Role si se encuentra, o vacío si no.
      */
-    Optional<Role> findByNombreRol(String nombreRol);
+    Optional<Role> findByRoleName(String rolName);
 }

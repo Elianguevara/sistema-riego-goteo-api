@@ -65,14 +65,14 @@ public class AuthService {
             User user = (User) userDetails; // Hacemos cast a nuestra entidad User
 
             // Validar si el usuario está activo (aunque UserDetails lo hace, doble check no está mal)
-            if (!user.isActivo()) {
+            if (!user.isActive()) {
                  log.warn("Intento de login de usuario inactivo: {}", authRequest.getUsername());
                  throw new RuntimeException("La cuenta del usuario está inactiva.");
             }
 
             // Actualizar fecha de último login (opcional pero útil)
-            user.setFechaUltimoLogin(new Date(System.currentTimeMillis())); // Actualiza la fecha de último login
-            user.setIntentosFallidos(0); // Reiniciar intentos fallidos al loguearse correctamente
+            user.setLastLogin(new Date(System.currentTimeMillis())); // Actualiza la fecha de último login
+            user.setFailedAttempts(0); // Reiniciar intentos fallidos al loguearse correctamente
             userRepository.save(user); // Guardar los cambios
 
             // Generar el token JWT
@@ -113,7 +113,7 @@ public class AuthService {
         }
 
         // 2. Buscar el rol ADMIN en la base de datos
-        Role adminRole = roleRepository.findByNombreRol("ADMIN")
+        Role adminRole = roleRepository.findByRoleName("ADMIN")
                 .orElseThrow(() -> {
                     log.error("El rol ADMIN no existe en la base de datos. Debe ser creado primero.");
                     return new RuntimeException("El rol ADMIN no existe en la base de datos.");
@@ -133,15 +133,15 @@ public class AuthService {
 
         // 5. Crear la nueva entidad User
         User newUser = new User();
-        newUser.setNombre(registerRequest.getNombre());
+        newUser.setName(registerRequest.getName());
         newUser.setUsername(registerRequest.getUsername());
         // ¡Importante! Encriptar la contraseña antes de guardarla
         newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         newUser.setEmail(registerRequest.getEmail());
         newUser.setRol(adminRole); // Asignar el rol ADMIN encontrado
-        newUser.setActivo(true); // Por defecto, el admin se crea activo
-        newUser.setIntentosFallidos(0);
-        newUser.setFechaUltimoLogin(null); // Aún no ha iniciado sesión
+        newUser.setActive(true); // Por defecto, el admin se crea activo
+        newUser.setFailedAttempts(0);
+        newUser.setLastLogin(null); // Aún no ha iniciado sesión
 
         // 6. Guardar el nuevo usuario en la base de datos
         User savedUser = userRepository.save(newUser);

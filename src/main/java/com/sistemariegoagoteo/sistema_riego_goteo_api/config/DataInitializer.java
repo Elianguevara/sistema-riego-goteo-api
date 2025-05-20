@@ -46,16 +46,16 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("Iniciando verificación e inicialización de roles esenciales...");
 
-        for (String nombreRol : ROLES_ESENCIALES) {
+        for (String roleName : ROLES_ESENCIALES) {
             // Verifica si el rol ya existe en la base de datos
-            if (!roleRepository.findByNombreRol(nombreRol).isPresent()) {
+            if (!roleRepository.findByRoleName(roleName).isPresent()) {
                 // Si no existe, crea una nueva instancia de Role
-                Role nuevoRol = new Role(nombreRol);
+                Role newRol = new Role(roleName);
                 // Guarda el nuevo rol en la base de datos
-                roleRepository.save(nuevoRol);
-                log.info("Rol '{}' creado exitosamente.", nombreRol);
+                roleRepository.save(newRol);
+                log.info("Rol '{}' creado exitosamente.", roleName);
             } else {
-                log.debug("El rol '{}' ya existe en la base de datos.", nombreRol); // Log a nivel debug si ya existe
+                log.debug("El rol '{}' ya existe en la base de datos.", roleName); // Log a nivel debug si ya existe
             }
         }
 
@@ -66,12 +66,13 @@ public class DataInitializer implements CommandLineRunner {
         // ¡Cuidado con las contraseñas hardcodeadas en producción!
         
         if (!userRepository.existsByUsername("admin")) {
-             Role adminRole = roleRepository.findByNombreRol("ADMIN").orElseThrow();
-             User defaultAdmin = new User("Elian Guevara",
-             "admin", 
-             passwordEncoder.encode("admin123"), 
-             "elian.guevara689@gmail.com", 
-             adminRole);
+             Role adminRole = roleRepository.findByRoleName("ADMIN").orElseThrow();
+             User defaultAdmin = new User(
+                "Elian Guevara",
+                "admin", 
+                passwordEncoder.encode("hg"), 
+                "elian.guevara689@gmail.com", 
+                adminRole);
              userRepository.save(defaultAdmin);
              log.info("Usuario administrador por defecto 'admin' creado.");
         }

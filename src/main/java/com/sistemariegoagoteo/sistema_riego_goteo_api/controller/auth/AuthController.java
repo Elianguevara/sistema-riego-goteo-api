@@ -91,7 +91,7 @@ public class AuthController {
         try {
             // La validación del rol (ANALISTA/OPERARIO) se hace en UserService
             User newUser = userService.registerUserByAdmin(registerRequest);
-            String successMessage = "Usuario '" + newUser.getUsername() + "' registrado exitosamente con rol: " + newUser.getRol().getNombreRol();
+            String successMessage = "Usuario '" + newUser.getUsername() + "' registrado exitosamente con rol: " + newUser.getRol().getRoleName();
             log.info(successMessage);
             return ResponseEntity.status(HttpStatus.CREATED).body(successMessage); // 201 Created
         } catch (RuntimeException e) {

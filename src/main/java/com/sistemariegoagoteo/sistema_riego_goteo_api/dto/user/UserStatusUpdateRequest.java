@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class UserStatusUpdateRequest {
 
     @NotNull(message = "El estado 'activo' no puede ser nulo")
-    private Boolean activo; // Usamos Boolean para permitir null check por @NotNull
+    private Boolean active; // Usamos Boolean para permitir null check por @NotNull
 }
