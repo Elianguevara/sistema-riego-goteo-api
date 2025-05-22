@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para la entidad HumiditySensor.
@@ -13,5 +14,6 @@ import java.util.List;
 @Repository
 public interface HumiditySensorRepository extends JpaRepository<HumiditySensor, Integer> {
     List<HumiditySensor> findBySector(Sector sector);
-    List<HumiditySensor> findBySensorTypeAndSector(String sensorType, Sector sector);
+    List<HumiditySensor> findBySectorOrderBySensorTypeAsc(Sector sector);
+    Optional<HumiditySensor> findBySensorTypeAndSector(String sensorType, Sector sector); // Para validación de unicidad por tipo/sector
 }
