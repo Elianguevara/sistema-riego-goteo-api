@@ -16,4 +16,7 @@ public interface HumidityAlertRepository extends JpaRepository<HumidityAlert, In
     List<HumidityAlert> findByHumiditySensor(HumiditySensor humiditySensor);
     List<HumidityAlert> findByAlertDatetimeBetween(Date startDate, Date endDate);
     List<HumidityAlert> findByHumiditySensorAndAlertDatetimeBetween(HumiditySensor humiditySensor, Date startDate, Date endDate);
+    List<HumidityAlert> findByHumiditySensorOrderByAlertDatetimeDesc(HumiditySensor humiditySensor);
+    // Podrías añadir para buscar alertas por sensor en un rango de fechas
+    // List<HumidityAlert> findByHumiditySensorAndAlertDatetimeBetweenOrderByAlertDatetimeDesc(HumiditySensor humiditySensor, Date startDate, Date endDate);
 }
