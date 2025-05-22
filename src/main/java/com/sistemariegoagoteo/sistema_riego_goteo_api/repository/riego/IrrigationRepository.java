@@ -18,4 +18,8 @@ public interface IrrigationRepository extends JpaRepository<Irrigation, Integer>
     List<Irrigation> findByEquipment(IrrigationEquipment equipment);
     List<Irrigation> findByStartDatetimeBetween(Date startDate, Date endDate);
     List<Irrigation> findBySectorAndStartDatetimeBetween(Sector sector, Date startDate, Date endDate);
+    List<Irrigation> findBySectorOrderByStartDatetimeDesc(Sector sector);
+    // Si quieres buscar también por equipo:
+    // List<Irrigation> findByEquipmentOrderByStartDatetimeDesc(IrrigationEquipment equipment);
+    // List<Irrigation> findBySectorAndStartDatetimeBetweenOrderByStartDatetimeDesc(Sector sector, Date startDate, Date endDate);
 }
