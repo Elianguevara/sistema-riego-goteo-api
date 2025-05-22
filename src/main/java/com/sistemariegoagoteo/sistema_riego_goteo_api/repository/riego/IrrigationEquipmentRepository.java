@@ -1,5 +1,19 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego;
 
-public class IrrigationEquipmentRepository {
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEquipment;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Repositorio para la entidad IrrigationEquipment.
+ */
+@Repository
+public interface IrrigationEquipmentRepository extends JpaRepository<IrrigationEquipment, Integer> {
+    Optional<IrrigationEquipment> findByNameAndFarm(String name, Farm farm);
+    List<IrrigationEquipment> findByFarm(Farm farm);
+    List<IrrigationEquipment> findByEquipmentTypeAndFarm(String equipmentType, Farm farm);
 }

@@ -1,8 +1,16 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego;
 
-public class FarmRepository {
-    // This class is currently empty, but it can be used to define methods for interacting with the database
-    // related to the Farm entity. For example, you might want to add methods for saving, updating, deleting,
-    // or querying Farm records.
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
+/**
+ * Repositorio para la entidad Farm.
+ */
+@Repository
+public interface FarmRepository extends JpaRepository<Farm, Integer> {
+    // Ejemplo de método personalizado (puedes añadir más según necesidades)
+    Optional<Farm> findByName(String name);
 }

@@ -70,7 +70,7 @@ public class DataInitializer implements CommandLineRunner {
              User defaultAdmin = new User(
                 "Elian Guevara",
                 "admin", 
-                passwordEncoder.encode("hg"), 
+                passwordEncoder.encode("admin123"), 
                 "elian.guevara689@gmail.com", 
                 adminRole);
              userRepository.save(defaultAdmin);
