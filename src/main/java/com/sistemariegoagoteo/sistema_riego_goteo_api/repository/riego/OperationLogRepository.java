@@ -15,4 +15,6 @@ import java.util.List;
 public interface OperationLogRepository extends JpaRepository<OperationLog, Integer> {
     List<OperationLog> findByFarm(Farm farm);
     List<OperationLog> findByFarmAndStartDatetimeBetween(Farm farm, Date startDate, Date endDate);
+    List<OperationLog> findByFarmOrderByStartDatetimeDesc(Farm farm);
+    List<OperationLog> findByFarmAndStartDatetimeBetweenOrderByStartDatetimeDesc(Farm farm, Date startDate, Date endDate);
 }
