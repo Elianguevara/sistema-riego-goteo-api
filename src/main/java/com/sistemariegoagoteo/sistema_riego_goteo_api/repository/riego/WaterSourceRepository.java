@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para la entidad WaterSource.
@@ -13,5 +14,6 @@ import java.util.List;
 @Repository
 public interface WaterSourceRepository extends JpaRepository<WaterSource, Integer> {
     List<WaterSource> findByFarm(Farm farm);
-    List<WaterSource> findByTypeAndFarm(String type, Farm farm);
+    List<WaterSource> findByFarmOrderByTypeAsc(Farm farm);
+    Optional<WaterSource> findByTypeAndFarm(String type, Farm farm);
 }
