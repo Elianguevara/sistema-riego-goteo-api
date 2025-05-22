@@ -1,12 +1,14 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit;
 
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.audit.SynchronizationStatusUpdateRequest; // Asegúrate de que este DTO exista
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.ChangeHistory;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.Synchronization; // Añadir import
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.audit.ChangeHistoryRepository;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository; // Para buscar usuario por ID
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.audit.SynchronizationRepository; // Añadir import
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 
-// Imports para JpaSpecificationExecutor
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 
@@ -28,9 +30,10 @@ import java.util.Optional;
 public class AuditService {
 
     private final ChangeHistoryRepository changeHistoryRepository;
-    private final UserRepository userRepository; // Para buscar usuario por ID
+    private final SynchronizationRepository synchronizationRepository; // Inyectar nuevo repo
+    private final UserRepository userRepository;
 
-    // Método interno para registrar cambios (no expuesto directamente vía API para creación)
+    // --- Métodos de ChangeHistory (existentes) ---
     @Transactional
     public void logChange(User user, String affectedTable, String changedField, String oldValue, String newValue) {
         ChangeHistory logEntry = new ChangeHistory();
@@ -48,10 +51,9 @@ public class AuditService {
     public Page<ChangeHistory> getChangeHistory(
             Long userId, String affectedTable, String searchTerm,
             Date startDate, Date endDate, Pageable pageable) {
-
+        // ... (implementación existente)
         Specification<ChangeHistory> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
             if (userId != null) {
                 User user = userRepository.findById(userId)
                         .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
@@ -72,19 +74,86 @@ public class AuditService {
             if (endDate != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("changeDatetime"), endDate));
             }
-            // Ordenar por fecha descendente por defecto si no se especifica en Pageable
             if (pageable.getSort().isUnsorted()) {
                  query.orderBy(criteriaBuilder.desc(root.get("changeDatetime")));
             }
-
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
-
         return changeHistoryRepository.findAll(spec, pageable);
     }
 
     @Transactional(readOnly = true)
     public Optional<ChangeHistory> getChangeHistoryDetail(Integer logId) {
         return changeHistoryRepository.findById(logId);
+    }
+
+
+    // --- Nuevos Métodos para Synchronization ---
+
+    /**
+     * Registra o actualiza una entrada de sincronización cuando una entidad es modificada.
+     * Este método sería llamado internamente por otros servicios o listeners.
+     */
+    @Transactional
+    public void recordModificationForSync(String tableName, Integer recordId) {
+        Synchronization syncRecord = synchronizationRepository
+                .findByModifiedTableAndModifiedRecordId(tableName, recordId)
+                .orElse(new Synchronization()); // Crea uno nuevo si no existe
+
+        syncRecord.setModifiedTable(tableName);
+        syncRecord.setModifiedRecordId(recordId);
+        syncRecord.setModificationDatetime(new Date());
+        syncRecord.setIsSynchronized(false); // Marcar como no sincronizado
+
+        synchronizationRepository.save(syncRecord);
+        log.info("Recorded modification for sync: Table '{}', Record ID '{}'", tableName, recordId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Synchronization> getPendingSynchronizations(String tableName, Pageable pageable) {
+        if (tableName != null && !tableName.isEmpty()) {
+            return synchronizationRepository.findByModifiedTableAndIsSynchronized(tableName, false, pageable);
+        } else {
+            return synchronizationRepository.findByIsSynchronized(false, pageable);
+        }
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<Synchronization> getAllSynchronizationRecords(String tableName, Boolean isSynchronized, Pageable pageable) {
+        Specification<Synchronization> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (tableName != null && !tableName.isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("modifiedTable"), tableName));
+            }
+            if (isSynchronized != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isSynchronized"), isSynchronized));
+            }
+            if (pageable.getSort().isUnsorted()) {
+                 query.orderBy(criteriaBuilder.desc(root.get("modificationDatetime")));
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        return synchronizationRepository.findAll(spec, pageable);
+    }
+
+
+    @Transactional
+    public Synchronization updateSynchronizationStatus(Integer syncId, boolean synchronizedStatus) {
+        Synchronization syncRecord = synchronizationRepository.findById(syncId)
+                .orElseThrow(() -> new ResourceNotFoundException("Synchronization", "id", syncId));
+
+        syncRecord.setIsSynchronized(synchronizedStatus);
+        syncRecord.setModificationDatetime(new Date()); // Actualizar la fecha de la última acción sobre este registro de sync
+        log.info("Updating synchronization status for sync ID {}: {}", syncId, synchronizedStatus);
+        return synchronizationRepository.save(syncRecord);
+    }
+
+    @Transactional
+    public int batchUpdateSynchronizationStatus(List<Integer> syncIds, boolean synchronizedStatus) {
+        if (syncIds == null || syncIds.isEmpty()) {
+            return 0;
+        }
+        log.info("Batch updating synchronization status for {} IDs to: {}", syncIds.size(), synchronizedStatus);
+        return synchronizationRepository.updateSynchronizationStatusForIds(syncIds, synchronizedStatus, new Date());
     }
 }
