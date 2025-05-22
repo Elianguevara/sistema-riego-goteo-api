@@ -2,11 +2,11 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.IrrigationRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
+//import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Irrigation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEquipment;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
+//import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
@@ -29,7 +29,7 @@ public class IrrigationService {
     private final IrrigationRepository irrigationRepository;
     private final SectorRepository sectorRepository;
     private final IrrigationEquipmentRepository equipmentRepository;
-    private final FarmRepository farmRepository; // Para validar la finca
+    //private final FarmRepository farmRepository; // Para validar la finca
 
     @Transactional
     public Irrigation logIrrigation(Integer farmId, Integer sectorId, IrrigationRequest request) {

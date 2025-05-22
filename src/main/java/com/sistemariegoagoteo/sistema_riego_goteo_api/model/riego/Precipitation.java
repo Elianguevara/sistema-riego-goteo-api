@@ -27,6 +27,9 @@ public class Precipitation {
     @Column(name = "precipitation_date") 
     private Date precipitationDate;
 
-    @Column(name = "mm_rain", precision = 6, scale = 2)
+    @Column(name = "mm_rain", precision = 6, scale = 2) // Lluvia total
     private BigDecimal mmRain;
+
+    @Column(name = "mm_effective_rain", precision = 6, scale = 2) // Lluvia efectiva calculada
+    private BigDecimal mmEffectiveRain;
 }
