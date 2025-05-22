@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para la entidad EnergyConsumption.
@@ -16,4 +17,7 @@ public interface EnergyConsumptionRepository extends JpaRepository<EnergyConsump
     List<EnergyConsumption> findByFarm(Farm farm);
     List<EnergyConsumption> findByConsumptionDate(Date date);
     List<EnergyConsumption> findByFarmAndConsumptionDateBetween(Farm farm, Date startDate, Date endDate);
+    List<EnergyConsumption> findByFarmOrderByConsumptionDateDesc(Farm farm);
+    Optional<EnergyConsumption> findByFarmAndConsumptionDateAndEnergyType(Farm farm, Date consumptionDate, String energyType);
+    List<EnergyConsumption> findByFarmAndConsumptionDateBetweenOrderByConsumptionDateDesc(Farm farm, Date startDate, Date endDate);
 }
