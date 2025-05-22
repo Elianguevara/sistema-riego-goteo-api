@@ -17,4 +17,5 @@ public interface SectorRepository extends JpaRepository<Sector, Integer> {
     List<Sector> findByFarm(Farm farm); // Usará el objeto Farm
     List<Sector> findByFarm_Id(Integer farmId); // Alternativa, buscar por el ID de la finca
     Optional<Sector> findByIdAndFarm_Id(Integer sectorId, Integer farmId);
+    boolean existsByEquipment_Id(Integer equipmentId); //  Para la validación
 }

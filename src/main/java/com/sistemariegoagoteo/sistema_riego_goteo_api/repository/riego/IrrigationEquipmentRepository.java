@@ -14,6 +14,8 @@ import java.util.Optional;
 @Repository
 public interface IrrigationEquipmentRepository extends JpaRepository<IrrigationEquipment, Integer> {
     Optional<IrrigationEquipment> findByNameAndFarm(String name, Farm farm);
-    List<IrrigationEquipment> findByFarm(Farm farm);
-    List<IrrigationEquipment> findByEquipmentTypeAndFarm(String equipmentType, Farm farm);
+    // List<IrrigationEquipment> findByFarm(Farm farm); // Ya la tenías
+    List<IrrigationEquipment> findByFarm_Id(Integer farmId); // Alternativa por ID
+    Optional<IrrigationEquipment> findByIdAndFarm_Id(Integer equipmentId, Integer farmId);
+    List<IrrigationEquipment> findByEquipmentTypeAndFarm(String equipmentType, Farm farm); // Ya la tenías
 }
