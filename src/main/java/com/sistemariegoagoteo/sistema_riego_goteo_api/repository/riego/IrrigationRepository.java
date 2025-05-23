@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para la entidad Irrigation.
@@ -22,4 +23,5 @@ public interface IrrigationRepository extends JpaRepository<Irrigation, Integer>
     // Si quieres buscar también por equipo:
     // List<Irrigation> findByEquipmentOrderByStartDatetimeDesc(IrrigationEquipment equipment);
     // List<Irrigation> findBySectorAndStartDatetimeBetweenOrderByStartDatetimeDesc(Sector sector, Date startDate, Date endDate);
+    Optional<Irrigation> findByLocalMobileId(String localMobileId); // Nuevo método
 }

@@ -4,6 +4,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.FarmRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,16 +18,23 @@ import java.util.List;
 public class FarmService {
 
     private final FarmRepository farmRepository;
-
+    private final AuditService auditService;
+    
     @Transactional
     public Farm createFarm(FarmRequest farmRequest) {
-        // Podrías añadir validaciones aquí, como verificar si ya existe una finca con el mismo nombre
         Farm farm = new Farm();
         farm.setName(farmRequest.getName());
         farm.setLocation(farmRequest.getLocation());
         farm.setReservoirCapacity(farmRequest.getReservoirCapacity());
         farm.setFarmSize(farmRequest.getFarmSize());
-        return farmRepository.save(farm);
+        
+        Farm savedFarm = farmRepository.save(farm);
+
+        // Registrar modificación para sincronización
+        // Usamos el nombre simple de la clase como nombre de la tabla (puedes ajustarlo si tienes un mapeo diferente)
+        auditService.recordModificationForSync(Farm.class.getSimpleName(), savedFarm.getId());
+        
+        return savedFarm;
     }
 
     @Transactional(readOnly = true)
@@ -46,7 +55,13 @@ public class FarmService {
         farm.setLocation(farmRequest.getLocation());
         farm.setReservoirCapacity(farmRequest.getReservoirCapacity());
         farm.setFarmSize(farmRequest.getFarmSize());
-        return farmRepository.save(farm);
+        
+        Farm updatedFarm = farmRepository.save(farm);
+
+        // Registrar modificación para sincronización
+        auditService.recordModificationForSync(Farm.class.getSimpleName(), updatedFarm.getId());
+        
+        return updatedFarm;
     }
 
     @Transactional

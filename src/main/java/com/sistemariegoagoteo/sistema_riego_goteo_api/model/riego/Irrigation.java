@@ -6,18 +6,26 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.UUID; // Importar UUID
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "irrigation")
+@Table(name = "irrigation",
+       uniqueConstraints = { // Asegurar unicidad del localMobileId si es global
+           @UniqueConstraint(columnNames = {"local_mobile_id"})
+       }
+)
 public class Irrigation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "irrigation_id")
-    private Integer id;
+    private Integer id; // ID del servidor
+
+    @Column(name = "local_mobile_id", nullable = false, unique = true, length = 36) // Nuevo campo
+    private String localMobileId; // Ej. un UUID generado por el móvil
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sector_id", nullable = false)
@@ -25,7 +33,7 @@ public class Irrigation {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "equipment_id", nullable = false)
-    private IrrigationEquipment equipment; // Referencia actualizada
+    private IrrigationEquipment equipment;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "start_datetime")
@@ -40,4 +48,12 @@ public class Irrigation {
 
     @Column(name = "irrigation_hours", precision = 5, scale = 2)
     private BigDecimal irrigationHours;
+
+    // Método para generar un localMobileId si no se proporciona (aunque el móvil debería enviarlo)
+    @PrePersist
+    public void autofill() {
+        if (this.localMobileId == null) {
+            this.localMobileId = UUID.randomUUID().toString();
+        }
+    }
 }
