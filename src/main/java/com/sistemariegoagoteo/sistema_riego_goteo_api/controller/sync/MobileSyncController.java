@@ -2,7 +2,7 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.sync;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.sync.IrrigationSyncBatchRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.sync.IrrigationSyncResponse;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // Para obtener el User
+//import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // Para obtener el User
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.sync.MobileSyncService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

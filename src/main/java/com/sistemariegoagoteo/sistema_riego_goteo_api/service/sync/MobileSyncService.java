@@ -1,6 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.sync;
 
-import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.IrrigationRequest; // Reutilizamos el DTO de Irrigation
+//import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.IrrigationRequest; // Reutilizamos el DTO de Irrigation
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.sync.IrrigationSyncBatchRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.sync.IrrigationSyncItem;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.sync.IrrigationSyncResponse;
@@ -9,12 +9,12 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoun
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Irrigation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEquipment;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // Para obtener el usuario
+//import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // Para obtener el usuario
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.IrrigationService; // Para lógica de negocio de riego
+//import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.IrrigationService; // Para lógica de negocio de riego
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +43,7 @@ public class MobileSyncService {
     // Por simplicidad, cada ítem se procesa individualmente.
     @Transactional // Es buena idea que el procesamiento del lote sea transaccional
     public IrrigationSyncResponse processIrrigationBatch(String username, IrrigationSyncBatchRequest batchRequest) {
-        User operario = userRepository.findByUsername(username)
+        userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
 
         List<IrrigationSyncResultItem> results = new ArrayList<>();

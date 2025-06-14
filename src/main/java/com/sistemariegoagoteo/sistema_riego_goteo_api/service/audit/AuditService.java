@@ -1,6 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit;
 
-import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.audit.SynchronizationStatusUpdateRequest; // Asegúrate de que este DTO exista
+//import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.audit.SynchronizationStatusUpdateRequest; // Asegúrate de que este DTO exista
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.ChangeHistory;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.Synchronization; // Añadir import
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
@@ -74,7 +74,7 @@ public class AuditService {
             if (endDate != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("changeDatetime"), endDate));
             }
-            if (pageable.getSort().isUnsorted()) {
+            if (pageable.getSort().isUnsorted() && query != null) {
                  query.orderBy(criteriaBuilder.desc(root.get("changeDatetime")));
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -128,7 +128,7 @@ public class AuditService {
             if (isSynchronized != null) {
                 predicates.add(criteriaBuilder.equal(root.get("isSynchronized"), isSynchronized));
             }
-            if (pageable.getSort().isUnsorted()) {
+            if (pageable.getSort().isUnsorted() && query != null) {
                  query.orderBy(criteriaBuilder.desc(root.get("modificationDatetime")));
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
