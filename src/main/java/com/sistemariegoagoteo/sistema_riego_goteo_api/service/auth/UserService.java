@@ -35,9 +35,14 @@ public class UserService {
         String requestedRoleName = registerRequest.getRol().toUpperCase();
         log.info("Admin intentando registrar usuario: {} con rol: {}", registerRequest.getUsername(), requestedRoleName);
 
-        if (!"ANALISTA".equals(requestedRoleName) && !"OPERARIO".equals(requestedRoleName)) {
-            throw new IllegalArgumentException("Solo se pueden registrar usuarios con los roles ANALISTA u OPERARIO a través de esta función.");
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se reemplaza la validación anterior por una que incluye a ADMIN.
+        List<String> rolesPermitidos = List.of("ADMIN", "ANALISTA", "OPERARIO");
+        if (!rolesPermitidos.contains(requestedRoleName)) {
+            throw new IllegalArgumentException("El rol especificado no es válido. Roles permitidos: ADMIN, ANALISTA, OPERARIO.");
         }
+        // --- FIN DE LA MODIFICACIÓN ---
+
         Role targetRole = roleRepository.findByRoleName(requestedRoleName)
                 .orElseThrow(() -> new ResourceNotFoundException("Role", "nombreRol", requestedRoleName));
 
@@ -142,5 +147,32 @@ public class UserService {
         user.setFailedAttempts(0);
         userRepository.save(user);
         log.info("Contraseña del usuario con ID: {} actualizada exitosamente por admin.", userId);
+    }
+    @Transactional
+    public void updateOwnPassword(String username, String newPassword) {
+        log.info("Usuario {} intentando actualizar su propia contraseña.", username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        log.info("Contraseña del usuario {} actualizada exitosamente.", username);
+    }
+    @Transactional
+    public User updateOwnProfile(String username, UserUpdateRequest request) {
+        log.info("Usuario {} intentando actualizar su perfil.", username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+
+        // Validar si el nuevo email ya está en uso por OTRO usuario
+        if (!user.getEmail().equalsIgnoreCase(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("El email '" + request.getEmail() + "' ya está en uso por otro usuario.");
+        }
+
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+
+        return userRepository.save(user);
     }
 }

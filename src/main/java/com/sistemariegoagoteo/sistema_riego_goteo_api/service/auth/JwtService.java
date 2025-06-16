@@ -61,9 +61,14 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         // Puedes añadir claims adicionales si lo necesitas
         Map<String, Object> extraClaims = new HashMap<>();
-        // Ejemplo: añadir roles o permisos como claims (opcional)
-        // extraClaims.put("roles", userDetails.getAuthorities().stream()
-        //        .map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+        // Extraer el rol del UserDetails y añadirlo a los claims
+        String rol = userDetails.getAuthorities().stream()
+                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                .findFirst()
+                .orElse("SIN_ROL"); // Un valor por defecto por si acaso
+
+        extraClaims.put("rol", rol);
+        // --- FIN DE LA MODIFICACIÓN ---
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 

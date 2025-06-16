@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.util.List;
 
 
@@ -19,6 +20,7 @@ public class FarmService {
 
     private final FarmRepository farmRepository;
     private final AuditService auditService;
+
     
     @Transactional
     public Farm createFarm(FarmRequest farmRequest) {
@@ -71,4 +73,10 @@ public class FarmService {
         // Por ejemplo, ¿qué pasa si una finca tiene sectores asociados?
         farmRepository.delete(farm);
     }
+
+    @Transactional(readOnly = true)
+    public List<Farm> findFarmsByUsername(String username) {
+        return farmRepository.findFarmsByUsername(username);
+    }
+
 }
