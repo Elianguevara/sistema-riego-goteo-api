@@ -11,6 +11,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserReposi
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -149,11 +150,24 @@ public class UserService {
         log.info("Contraseña del usuario con ID: {} actualizada exitosamente por admin.", userId);
     }
     @Transactional
-    public void updateOwnPassword(String username, String newPassword) {
+    public void updateOwnPassword(String username, String currentPassword, String newPassword, String confirmPassword) {
         log.info("Usuario {} intentando actualizar su propia contraseña.", username);
+
+        // 1. Validar que la nueva contraseña y su confirmación coincidan
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("La nueva contraseña y su confirmación no coinciden.");
+        }
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
 
+        // 2. Verificar que la contraseña actual sea correcta
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            log.warn("Intento de cambio de contraseña fallido para el usuario {}: contraseña actual incorrecta.", username);
+            throw new BadCredentialsException("La contraseña actual es incorrecta.");
+        }
+
+        // 3. Si todo es correcto, actualizar la contraseña
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 

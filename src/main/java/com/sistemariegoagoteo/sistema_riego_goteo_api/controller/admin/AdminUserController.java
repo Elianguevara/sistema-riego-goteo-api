@@ -1,12 +1,12 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.admin;
 
-import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.PasswordUpdateRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserStatusUpdateRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserUpdateRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.AdminPasswordUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,10 +96,12 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}/password")
+    // Usamos el nuevo DTO específico para el admin
     public ResponseEntity<?> updatePassword(@PathVariable Long id,
-                                            @Valid @RequestBody PasswordUpdateRequest req) {
+                                            @Valid @RequestBody AdminPasswordUpdateRequest req) {
         log.debug("PUT /api/admin/users/{}/password", id);
         try {
+            // El servicio ya tenía un método específico para el admin que no pide la clave antigua
             userService.updatePassword(id, req.getNewPassword());
             return ResponseEntity.ok("Contraseña actualizada exitosamente.");
         } catch (ResourceNotFoundException e) {
