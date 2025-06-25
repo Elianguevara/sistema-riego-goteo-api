@@ -121,4 +121,53 @@ public class AdminUserController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    /**
+     * Asigna un usuario específico a una finca específica.
+     */
+    @PostMapping("/{userId}/farms/{farmId}")
+    public ResponseEntity<?> assignUserToFarm(@PathVariable Long userId, @PathVariable Integer farmId) {
+        log.info("Solicitud POST para asignar usuario ID {} a finca ID {}", userId, farmId);
+        try {
+            userService.assignUserToFarm(userId, farmId);
+            return ResponseEntity.ok().body(
+                    String.format("Usuario con ID %d asignado exitosamente a la finca con ID %d.", userId, farmId)
+            );
+        } catch (ResourceNotFoundException e) {
+            log.warn("No se pudo asignar usuario a finca: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+    /**
+     * Desasigna un usuario específico de una finca específica.
+     */
+    @DeleteMapping("/{userId}/farms/{farmId}")
+    public ResponseEntity<?> unassignUserFromFarm(@PathVariable Long userId, @PathVariable Integer farmId) {
+        log.info("Solicitud DELETE para desasignar usuario ID {} de la finca ID {}", userId, farmId);
+        try {
+            userService.unassignUserFromFarm(userId, farmId);
+            return ResponseEntity.noContent().build(); // 204 No Content es apropiado para un DELETE exitoso
+        } catch (ResourceNotFoundException e) {
+            log.warn("No se pudo desasignar usuario de finca: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene una lista de todos los usuarios asignados a una finca específica.
+     */
+    @GetMapping("/farms/{farmId}/users") // <<-- AÑADIR ESTE ENDPOINT
+    public ResponseEntity<?> getUsersAssignedToFarm(@PathVariable Integer farmId) {
+        log.info("Solicitud GET para obtener usuarios de la finca ID {}", farmId);
+        try {
+            List<UserResponse> users = userService.findUsersByFarm(farmId).stream()
+                    .map(UserResponse::new)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(users);
+        } catch (ResourceNotFoundException e) {
+            log.warn("No se pudieron obtener usuarios, recurso no encontrado: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
 }

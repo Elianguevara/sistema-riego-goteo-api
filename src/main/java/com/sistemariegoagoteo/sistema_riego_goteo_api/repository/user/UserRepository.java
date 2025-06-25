@@ -56,5 +56,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Una lista de usuarios que tienen ese rol.
      */
     List<User> findByRol(Role role); // <-- Método añadido
+    /**
+     * Busca todos los usuarios que están asociados con una finca específica por su ID.
+     * Spring Data JPA entiende que debe buscar en la colección 'farms' de la entidad User
+     * y filtrar por el 'id' de la finca.
+     *
+     * @param farmId El ID de la finca por la cual filtrar.
+     * @return Una lista de usuarios asociados a esa finca.
+     */
+    List<User> findByFarms_Id(Integer farmId); // <<-- AÑADIR ESTE MÉTODO
 
 }

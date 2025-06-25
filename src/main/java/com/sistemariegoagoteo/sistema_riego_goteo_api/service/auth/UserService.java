@@ -8,6 +8,9 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.RoleRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm; // <<-- AÑADIR IMPORT
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository; // <<-- AÑADIR IMPORT
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +32,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FarmRepository farmRepository;
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -188,5 +192,79 @@ public class UserService {
         user.setEmail(request.getEmail());
 
         return userRepository.save(user);
+    }
+    /**
+     * Asigna un usuario a una finca.
+     *
+     * @param userId El ID del usuario a asignar.
+     * @param farmId El ID de la finca a la que se asignará.
+     */
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void assignUserToFarm(Long userId, Integer farmId) {
+        log.info("Admin intentando asignar usuario ID {} a finca ID {}", userId, farmId);
+
+        // 1. Encontrar el usuario
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        // 2. Encontrar la finca
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
+
+        // 3. Añadir la finca al conjunto de fincas del usuario
+        user.getFarms().add(farm);
+
+        // 4. Guardar el usuario. JPA se encargará de actualizar la tabla de unión.
+        userRepository.save(user);
+        log.info("Usuario ID {} asignado exitosamente a la finca ID {}", userId, farmId);
+    }
+
+    /**
+     * Desasigna un usuario de una finca.
+     *
+     * @param userId El ID del usuario a desasignar.
+     * @param farmId El ID de la finca de la que se desasignará.
+     */
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void unassignUserFromFarm(Long userId, Integer farmId) {
+        log.info("Admin intentando desasignar usuario ID {} de la finca ID {}", userId, farmId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
+
+        // Remover la finca del conjunto de fincas del usuario
+        if (user.getFarms().remove(farm)) {
+            userRepository.save(user);
+            log.info("Usuario ID {} desasignado exitosamente de la finca ID {}", userId, farmId);
+        } else {
+            log.warn("El usuario ID {} no estaba asignado a la finca ID {}, no se realizó ninguna acción.", userId, farmId);
+            // Opcional: podrías lanzar una excepción si lo consideras un error
+        }
+    }
+
+    /**
+     * Busca y devuelve todos los usuarios asignados a una finca específica.
+     *
+     * @param farmId El ID de la finca.
+     * @return Una lista de entidades User.
+     * @throws ResourceNotFoundException si la finca no existe.
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<User> findUsersByFarm(Integer farmId) {
+        log.debug("Admin buscando usuarios para la finca ID: {}", farmId);
+
+        // 1. Validar que la finca exista para dar un error claro
+        if (!farmRepository.existsById(farmId)) {
+            throw new ResourceNotFoundException("Farm", "id", farmId);
+        }
+
+        // 2. Usar el nuevo método del repositorio para obtener los usuarios
+        return userRepository.findByFarms_Id(farmId);
     }
 }
