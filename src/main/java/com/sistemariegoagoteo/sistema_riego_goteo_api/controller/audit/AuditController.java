@@ -9,6 +9,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.Synchronizatio
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 
+
 import jakarta.validation.Valid; // Para @Valid
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

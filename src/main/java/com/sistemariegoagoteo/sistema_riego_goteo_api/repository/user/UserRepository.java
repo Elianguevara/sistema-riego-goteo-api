@@ -4,6 +4,7 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List; // Importar List
@@ -65,5 +66,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Una lista de usuarios asociados a esa finca.
      */
     List<User> findByFarms_Id(Integer farmId); // <<-- AÑADIR ESTE MÉTODO
+
+    // --- MÉTODOS PARA EL DASHBOARD ---
+
+    /**
+     * Cuenta usuarios según su estado de actividad.
+     * @param active el estado de actividad (true para activos, false para inactivos).
+     * @return el número de usuarios con ese estado.
+     */
+    long countByIsActive(boolean active);
+
+    /**
+     * Devuelve una lista de arrays de objetos donde cada array contiene
+     * el nombre del rol y la cantidad de usuarios para ese rol.
+     * JPQL es ideal para este tipo de agregación.
+     * @return Una lista de agregados [nombreRol, cantidadDeUsuarios].
+     */
+    @Query("SELECT r.roleName, COUNT(u) FROM User u JOIN u.rol r GROUP BY r.roleName")
+    List<Object[]> countUsersByRole();
 
 }

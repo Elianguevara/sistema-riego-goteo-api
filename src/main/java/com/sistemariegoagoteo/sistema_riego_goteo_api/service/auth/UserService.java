@@ -2,6 +2,7 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth;
 
 // Imports necesarios
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.auth.RegisterRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.dashboard.UserStatsResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserUpdateRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
@@ -22,7 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects; // <-- IMPORTAR
+import java.util.stream.Collectors;
 
 /**
  * Servicio para gestionar operaciones de usuario realizadas por un Administrador.
@@ -267,5 +270,24 @@ public class UserService {
             throw new ResourceNotFoundException("Farm", "id", farmId);
         }
         return userRepository.findByFarms_Id(farmId);
+    }
+    // --- MÉTODO PARA EL DASHBOARD ---
+
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserStatsResponse getUserStats() {
+        log.info("Generando estadísticas de usuarios para el dashboard de administrador.");
+
+        long totalUsers = userRepository.count();
+        long activeUsers = userRepository.countByIsActive(true);
+        long inactiveUsers = totalUsers - activeUsers;
+
+        Map<String, Long> usersByRole = userRepository.countUsersByRole().stream()
+                .collect(Collectors.toMap(
+                    row -> (String) row[0], // Nombre del rol
+                    row -> (Long) row[1]    // Conteo
+                ));
+
+        return new UserStatsResponse(totalUsers, activeUsers, inactiveUsers, usersByRole);
     }
 }
