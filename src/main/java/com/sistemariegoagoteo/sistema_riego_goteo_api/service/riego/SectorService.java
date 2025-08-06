@@ -44,10 +44,6 @@ public class SectorService {
         sector.setName(sectorRequest.getName());
         sector.setFarm(farm);
 
-        // --- AUDITORÍA DE CREACIÓN ---
-        auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "name", null, sectorRequest.getName());
-        auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "farm_id", null, farmId.toString());
-
         if (sectorRequest.getEquipmentId() != null) {
             IrrigationEquipment equipment = irrigationEquipmentRepository.findById(sectorRequest.getEquipmentId())
                     .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id", sectorRequest.getEquipmentId()));
@@ -55,11 +51,19 @@ public class SectorService {
                 throw new IllegalArgumentException("El equipo de irrigación seleccionado no pertenece a la finca especificada.");
             }
             sector.setEquipment(equipment);
-            auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "equipment_id", null, equipment.getId().toString());
         }
         
+        Sector savedSector = sectorRepository.save(sector);
+        
+        // --- AUDITORÍA DE CREACIÓN ---
+        auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "name", null, savedSector.getName());
+        auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "farm_id", null, farmId.toString());
+        if (savedSector.getEquipment() != null) {
+            auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "equipment_id", null, savedSector.getEquipment().getId().toString());
+        }
+
         log.info("Creando sector '{}' para la finca ID {}", sector.getName(), farmId);
-        return sectorRepository.save(sector);
+        return savedSector;
     }
 
     @Transactional
@@ -111,7 +115,8 @@ public class SectorService {
         sectorRepository.delete(sector);
     }
     
-    // ... (los métodos GET no necesitan auditoría de cambios)
+    // --- MÉTODOS GET (SIN CAMBIOS) ---
+    
     @Transactional(readOnly = true)
     public List<Sector> getSectorsByFarmId(Integer farmId) {
         if (!farmRepository.existsById(farmId)) {

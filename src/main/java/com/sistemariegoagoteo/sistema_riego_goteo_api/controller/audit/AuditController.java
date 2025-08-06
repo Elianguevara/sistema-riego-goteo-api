@@ -38,13 +38,18 @@ public class AuditController {
     public ResponseEntity<Page<ChangeHistoryResponse>> getChangeHistory(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String affectedTable,
+            @RequestParam(required = false) String actionType, // <-- PARÁMETRO AÑADIDO
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date endDate,
             @PageableDefault(size = 20, sort = "changeDatetime,desc") Pageable pageable) {
-        log.info("Fetching change history with params: userId={}, affectedTable={}, searchTerm={}, startDate={}, endDate={}, pageable={}",
-                userId, affectedTable, searchTerm, startDate, endDate, pageable);
-        Page<ChangeHistory> historyPage = auditService.getChangeHistory(userId, affectedTable, searchTerm, startDate, endDate, pageable);
+        
+        log.info("Fetching change history with params: userId={}, affectedTable={}, actionType={}, searchTerm={}",
+                userId, affectedTable, actionType, searchTerm);
+        
+        // --- LLAMADA AL SERVICIO ACTUALIZADA ---
+        Page<ChangeHistory> historyPage = auditService.getChangeHistory(userId, affectedTable, actionType, searchTerm, startDate, endDate, pageable);
+        
         Page<ChangeHistoryResponse> responsePage = historyPage.map(ChangeHistoryResponse::new);
         return ResponseEntity.ok(responsePage);
     }

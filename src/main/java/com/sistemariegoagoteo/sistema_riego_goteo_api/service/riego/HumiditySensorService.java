@@ -4,16 +4,19 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.HumiditySensorRe
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.HumiditySensor;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // <-- IMPORTAR
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.HumiditySensorRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder; // <-- IMPORTAR
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects; // <-- IMPORTAR
 
 @Service
 @RequiredArgsConstructor
@@ -26,44 +29,40 @@ public class HumiditySensorService {
 
     @Transactional
     public HumiditySensor createHumiditySensor(Integer farmId, Integer sectorId, HumiditySensorRequest request) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
-
-        // Opcional: Validar si ya existe un sensor con el mismo tipo en este sector
-        // humiditySensorRepository.findBySensorTypeAndSector(request.getSensorType(), sector).ifPresent(s -> {
-        //    throw new IllegalArgumentException("Ya existe un sensor de tipo '" + request.getSensorType() + "' en el sector '" + sector.getName() + "'.");
-        // });
 
         HumiditySensor sensor = new HumiditySensor();
         sensor.setSector(sector);
         sensor.setSensorType(request.getSensorType());
-        sensor.setHumidityLevel(request.getHumidityLevel()); // Puede ser nulo al crear
-        sensor.setMeasurementDatetime(request.getMeasurementDatetime()); // Puede ser nulo al crear
+        sensor.setHumidityLevel(request.getHumidityLevel());
+        sensor.setMeasurementDatetime(request.getMeasurementDatetime());
+
+        HumiditySensor savedSensor = humiditySensorRepository.save(sensor);
+
+        // --- AUDITORÍA DE CREACIÓN ---
+        auditService.logChange(currentUser, "CREATE", HumiditySensor.class.getSimpleName(), "sensorType", null, savedSensor.getSensorType());
 
         log.info("Creando sensor de humedad tipo '{}' para sector ID {}", request.getSensorType(), sectorId);
-        return humiditySensorRepository.save(sensor);
-    }
-
-    @Transactional(readOnly = true)
-    public List<HumiditySensor> getHumiditySensorsBySector(Integer farmId, Integer sectorId) {
-        Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
-        // Asumiendo que HumiditySensorRepository tiene findBySectorOrderBySensorTypeAsc
-        return humiditySensorRepository.findBySectorOrderBySensorTypeAsc(sector);
-    }
-
-    @Transactional(readOnly = true)
-    public HumiditySensor getHumiditySensorById(Integer sensorId) {
-        return humiditySensorRepository.findById(sensorId)
-                .orElseThrow(() -> new ResourceNotFoundException("HumiditySensor", "id", sensorId));
+        return savedSensor;
     }
 
     @Transactional
     public HumiditySensor updateHumiditySensor(Integer sensorId, HumiditySensorRequest request) {
-        HumiditySensor sensor = getHumiditySensorById(sensorId); // Valida existencia
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        HumiditySensor sensor = getHumiditySensorById(sensorId);
 
-        // El sector de un sensor no debería cambiar una vez creado.
-        // Si se necesitara, se validaría que el nuevo sector exista y pertenezca a la misma finca.
+        // --- AUDITORÍA DE ACTUALIZACIÓN ---
+        if (!Objects.equals(sensor.getSensorType(), request.getSensorType())) {
+            auditService.logChange(currentUser, "UPDATE", HumiditySensor.class.getSimpleName(), "sensorType", sensor.getSensorType(), request.getSensorType());
+        }
+        if (!Objects.equals(sensor.getHumidityLevel(), request.getHumidityLevel())) {
+             auditService.logChange(currentUser, "UPDATE", HumiditySensor.class.getSimpleName(), "humidityLevel", Objects.toString(sensor.getHumidityLevel(), null), Objects.toString(request.getHumidityLevel(), null));
+        }
+        if (!Objects.equals(sensor.getMeasurementDatetime(), request.getMeasurementDatetime())) {
+             auditService.logChange(currentUser, "UPDATE", HumiditySensor.class.getSimpleName(), "measurementDatetime", Objects.toString(sensor.getMeasurementDatetime(), null), Objects.toString(request.getMeasurementDatetime(), null));
+        }
 
         sensor.setSensorType(request.getSensorType());
         sensor.setHumidityLevel(request.getHumidityLevel());
@@ -73,22 +72,30 @@ public class HumiditySensorService {
         return humiditySensorRepository.save(sensor);
     }
 
-    // Si se decide tener un método específico para registrar lecturas:
-    // @Transactional
-    // public HumiditySensor logHumidityReading(Integer sensorId, BigDecimal humidityLevel, Date measurementTime) {
-    //     HumiditySensor sensor = getHumiditySensorById(sensorId);
-    //     sensor.setHumidityLevel(humidityLevel);
-    //     sensor.setMeasurementDatetime(measurementTime);
-    //     log.info("Registrando nueva lectura de humedad para sensor ID {}: {}% a las {}", sensorId, humidityLevel, measurementTime);
-    //     return humiditySensorRepository.save(sensor);
-    // }
-
     @Transactional
     public void deleteHumiditySensor(Integer sensorId) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         HumiditySensor sensor = getHumiditySensorById(sensorId);
-        // La entidad HumiditySensor tiene cascade = CascadeType.ALL para humidityAlerts.
-        // JPA eliminará automáticamente las HumidityAlert asociadas.
+
+        // --- AUDITORÍA DE BORRADO ---
+        auditService.logChange(currentUser, "DELETE", HumiditySensor.class.getSimpleName(), "id", sensor.getId().toString(), null);
+
         log.warn("Eliminando sensor de humedad ID {}", sensorId);
         humiditySensorRepository.delete(sensor);
+    }
+    
+    // --- MÉTODOS GET (SIN CAMBIOS) ---
+
+    @Transactional(readOnly = true)
+    public List<HumiditySensor> getHumiditySensorsBySector(Integer farmId, Integer sectorId) {
+        Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
+        return humiditySensorRepository.findBySectorOrderBySensorTypeAsc(sector);
+    }
+
+    @Transactional(readOnly = true)
+    public HumiditySensor getHumiditySensorById(Integer sensorId) {
+        return humiditySensorRepository.findById(sensorId)
+                .orElseThrow(() -> new ResourceNotFoundException("HumiditySensor", "id", sensorId));
     }
 }
