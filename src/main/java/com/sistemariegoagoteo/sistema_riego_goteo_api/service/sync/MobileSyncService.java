@@ -21,12 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.sql.Date;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -110,20 +107,5 @@ public class MobileSyncService {
         return new IrrigationSyncResponse(batchRequest.getIrrigations().size(), successfulItems, failedItems, results);
     }
 
-    // --- Métodos de Cálculo (sin cambios) ---
-    private BigDecimal calculateIrrigationHours(Date start, Date end) {
-        if (start == null || end == null || end.before(start)) {
-            return BigDecimal.ZERO;
-        }
-        long diffInMillis = end.getTime() - start.getTime();
-        double hours = (double) diffInMillis / TimeUnit.HOURS.toMillis(1);
-        return BigDecimal.valueOf(hours).setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal calculateWaterAmount(BigDecimal flowRateLitersPerHour, BigDecimal hours) {
-        if (flowRateLitersPerHour == null || hours == null || flowRateLitersPerHour.compareTo(BigDecimal.ZERO) <= 0 || hours.compareTo(BigDecimal.ZERO) <= 0) {
-            return null;
-        }
-        return flowRateLitersPerHour.multiply(hours).setScale(2, RoundingMode.HALF_UP);
-    }
+    
 }
