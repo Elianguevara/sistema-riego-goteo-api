@@ -10,6 +10,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class IrrigationService {
     private final IrrigationRepository irrigationRepository;
     private final SectorRepository sectorRepository;
     private final IrrigationEquipmentRepository equipmentRepository;
+    private final AuditService auditService;
     //private final FarmRepository farmRepository; // Para validar la finca
 
     @Transactional

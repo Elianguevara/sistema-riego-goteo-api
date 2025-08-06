@@ -6,6 +6,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEqui
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Maintenance;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.MaintenanceRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class MaintenanceService {
 
     private final MaintenanceRepository maintenanceRepository;
     private final IrrigationEquipmentRepository equipmentRepository;
+    private final AuditService auditService;
 
     @Transactional
     public Maintenance createMaintenance(Integer farmId, Integer equipmentId, MaintenanceRequest request) {

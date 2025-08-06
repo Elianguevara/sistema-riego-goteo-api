@@ -23,6 +23,9 @@ public class ChangeHistory {
     @JoinColumn(name = "user_id") 
     private User user;
 
+    @Column(name = "action_type", length = 20)
+    private String actionType;
+
     @Column(name = "affected_table", length = 100) 
     private String affectedTable;
 

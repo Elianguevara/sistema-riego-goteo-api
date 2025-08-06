@@ -6,6 +6,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.HumidityAlert;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.HumiditySensor;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.HumidityAlertRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.HumiditySensorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ public class HumidityAlertService {
 
     private final HumidityAlertRepository humidityAlertRepository;
     private final HumiditySensorRepository humiditySensorRepository;
+    private final AuditService auditService;
 
     @Transactional
     public HumidityAlert createHumidityAlert(Integer farmId, Integer sectorId, Integer sensorId, HumidityAlertRequest request) {

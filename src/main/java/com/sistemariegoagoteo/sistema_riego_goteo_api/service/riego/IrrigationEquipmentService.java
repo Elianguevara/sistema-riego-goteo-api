@@ -7,6 +7,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEqui
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class IrrigationEquipmentService {
     private final IrrigationEquipmentRepository equipmentRepository;
     private final FarmRepository farmRepository;
     private final SectorRepository sectorRepository; // Para validar si el equipo está en uso
+    private final AuditService auditService;
 
     @Transactional
     public IrrigationEquipment createEquipment(Integer farmId, IrrigationEquipmentRequest request) {

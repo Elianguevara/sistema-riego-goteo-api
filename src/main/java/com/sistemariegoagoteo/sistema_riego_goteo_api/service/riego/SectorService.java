@@ -8,6 +8,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class SectorService {
     private final SectorRepository sectorRepository;
     private final FarmRepository farmRepository;
     private final IrrigationEquipmentRepository irrigationEquipmentRepository; // Para asociar equipo
+    private final AuditService auditService;
 
     @Transactional
     public Sector createSector(Integer farmId, SectorRequest sectorRequest) {

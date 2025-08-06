@@ -6,6 +6,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.WaterSource;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.WaterSourceRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 // Importar ReservoirTurnRepository si se necesitan validaciones específicas antes de borrar
 // import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.ReservoirTurnRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class WaterSourceService {
     private final WaterSourceRepository waterSourceRepository;
     private final FarmRepository farmRepository;
     // private final ReservoirTurnRepository reservoirTurnRepository; // Descomentar si se usa
+    private final AuditService auditService;
 
     @Transactional
     public WaterSource createWaterSource(Integer farmId, WaterSourceRequest request) {

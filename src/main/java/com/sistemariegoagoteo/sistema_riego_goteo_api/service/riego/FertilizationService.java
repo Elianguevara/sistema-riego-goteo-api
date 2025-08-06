@@ -6,6 +6,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Fertilization;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FertilizationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class FertilizationService {
 
     private final FertilizationRepository fertilizationRepository;
     private final SectorRepository sectorRepository;
+    private final AuditService auditService;
 
     @Transactional
     public Fertilization createFertilization(Integer farmId, Integer sectorId, FertilizationRequest request) {

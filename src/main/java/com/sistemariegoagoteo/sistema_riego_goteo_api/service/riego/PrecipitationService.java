@@ -6,6 +6,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Precipitation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.PrecipitationRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class PrecipitationService {
 
     private final PrecipitationRepository precipitationRepository;
     private final FarmRepository farmRepository;
+    private final AuditService auditService;
 
     private static final BigDecimal FIVE_MM = new BigDecimal("5.00");
     private static final BigDecimal EFFECTIVE_RAIN_FACTOR = new BigDecimal("0.75");

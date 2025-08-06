@@ -1,11 +1,10 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit;
 
-//import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.audit.SynchronizationStatusUpdateRequest; // Asegúrate de que este DTO exista
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.ChangeHistory;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.Synchronization; // Añadir import
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.Synchronization;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.audit.ChangeHistoryRepository;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.audit.SynchronizationRepository; // Añadir import
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.audit.SynchronizationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 
@@ -30,28 +29,37 @@ import java.util.Optional;
 public class AuditService {
 
     private final ChangeHistoryRepository changeHistoryRepository;
-    private final SynchronizationRepository synchronizationRepository; // Inyectar nuevo repo
+    private final SynchronizationRepository synchronizationRepository;
     private final UserRepository userRepository;
 
-    // --- Métodos de ChangeHistory (existentes) ---
+    /**
+     * Guarda un registro de auditoría detallado.
+     * @param user El usuario que realiza la acción.
+     * @param actionType El tipo de acción (CREATE, UPDATE, DELETE).
+     * @param affectedTable La tabla afectada.
+     * @param changedField El campo que cambió (o el ID para deletes).
+     * @param oldValue El valor antiguo del campo.
+     * @param newValue El valor nuevo del campo.
+     */
     @Transactional
-    public void logChange(User user, String affectedTable, String changedField, String oldValue, String newValue) {
+    public void logChange(User user, String actionType, String affectedTable, String changedField, String oldValue, String newValue) {
         ChangeHistory logEntry = new ChangeHistory();
         logEntry.setUser(user);
+        logEntry.setActionType(actionType); // Se guarda el tipo de acción
         logEntry.setAffectedTable(affectedTable);
         logEntry.setChangedField(changedField);
         logEntry.setOldValue(oldValue);
         logEntry.setNewValue(newValue);
         logEntry.setChangeDatetime(new Date());
         changeHistoryRepository.save(logEntry);
-        log.debug("Change logged: User '{}' modified table '{}', field '{}'", user.getUsername(), affectedTable, changedField);
+        log.debug("Change logged: User '{}' performed {} on table '{}', field '{}'", user.getUsername(), actionType, affectedTable, changedField);
     }
 
     @Transactional(readOnly = true)
     public Page<ChangeHistory> getChangeHistory(
-            Long userId, String affectedTable, String searchTerm,
+            Long userId, String affectedTable, String actionType, String searchTerm,
             Date startDate, Date endDate, Pageable pageable) {
-        // ... (implementación existente)
+        
         Specification<ChangeHistory> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (userId != null) {
@@ -62,6 +70,11 @@ public class AuditService {
             if (affectedTable != null && !affectedTable.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("affectedTable"), affectedTable));
             }
+            // --- NUEVA LÓGICA DE FILTRADO POR ACCIÓN ---
+            if (actionType != null && !actionType.isEmpty()) {
+                predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("actionType")), actionType.toLowerCase()));
+            }
+            // ------------------------------------------
             if (searchTerm != null && !searchTerm.isEmpty()) {
                 Predicate oldValuePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("oldValue")), "%" + searchTerm.toLowerCase() + "%");
                 Predicate newValuePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("newValue")), "%" + searchTerm.toLowerCase() + "%");
@@ -87,23 +100,18 @@ public class AuditService {
         return changeHistoryRepository.findById(logId);
     }
 
-
-    // --- Nuevos Métodos para Synchronization ---
-
-    /**
-     * Registra o actualiza una entrada de sincronización cuando una entidad es modificada.
-     * Este método sería llamado internamente por otros servicios o listeners.
-     */
+    // --- Métodos de Synchronization (sin cambios) ---
+    
     @Transactional
     public void recordModificationForSync(String tableName, Integer recordId) {
         Synchronization syncRecord = synchronizationRepository
                 .findByModifiedTableAndModifiedRecordId(tableName, recordId)
-                .orElse(new Synchronization()); // Crea uno nuevo si no existe
+                .orElse(new Synchronization());
 
         syncRecord.setModifiedTable(tableName);
         syncRecord.setModifiedRecordId(recordId);
         syncRecord.setModificationDatetime(new Date());
-        syncRecord.setIsSynchronized(false); // Marcar como no sincronizado
+        syncRecord.setIsSynchronized(false);
 
         synchronizationRepository.save(syncRecord);
         log.info("Recorded modification for sync: Table '{}', Record ID '{}'", tableName, recordId);
@@ -136,14 +144,13 @@ public class AuditService {
         return synchronizationRepository.findAll(spec, pageable);
     }
 
-
     @Transactional
     public Synchronization updateSynchronizationStatus(Integer syncId, boolean synchronizedStatus) {
         Synchronization syncRecord = synchronizationRepository.findById(syncId)
                 .orElseThrow(() -> new ResourceNotFoundException("Synchronization", "id", syncId));
 
         syncRecord.setIsSynchronized(synchronizedStatus);
-        syncRecord.setModificationDatetime(new Date()); // Actualizar la fecha de la última acción sobre este registro de sync
+        syncRecord.setModificationDatetime(new Date());
         log.info("Updating synchronization status for sync ID {}: {}", syncId, synchronizedStatus);
         return synchronizationRepository.save(syncRecord);
     }

@@ -6,6 +6,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.ReservoirTurn;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.WaterSource;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.ReservoirTurnRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.WaterSourceRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class ReservoirTurnService {
 
     private final ReservoirTurnRepository reservoirTurnRepository;
     private final WaterSourceRepository waterSourceRepository;
+    private final AuditService auditService;
 
     @Transactional
     public ReservoirTurn createReservoirTurn(Integer farmId, Integer waterSourceId, ReservoirTurnRequest request) {
