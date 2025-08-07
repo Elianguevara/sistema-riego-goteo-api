@@ -11,8 +11,10 @@ import java.util.Date;
 @NoArgsConstructor
 public class ChangeHistoryResponse {
     private Integer id;
-    private Long userId; // ID del usuario que hizo el cambio
-    private String username; // Username para fácil visualización
+    private Long userId;
+    private String username;
+    // --- CAMPO AÑADIDO PARA LA COLUMNA "ACCIÓN" ---
+    private String actionType;
     private String affectedTable;
     private String changedField;
     private String oldValue;
@@ -26,6 +28,8 @@ public class ChangeHistoryResponse {
             this.userId = changeHistory.getUser().getId();
             this.username = changeHistory.getUser().getUsername();
         }
+        // --- ASIGNACIÓN DEL NUEVO CAMPO ---
+        this.actionType = changeHistory.getActionType(); // Se obtiene el valor desde la entidad
         this.affectedTable = changeHistory.getAffectedTable();
         this.changedField = changeHistory.getChangedField();
         this.oldValue = changeHistory.getOldValue();
