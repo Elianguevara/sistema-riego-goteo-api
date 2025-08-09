@@ -11,20 +11,21 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.RoleReposi
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService; // <-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService; // <-- IMPORTACIÓN CLAVE
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.context.SecurityContextHolder; // <-- IMPORTAR
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects; // <-- IMPORTAR
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -39,7 +40,8 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final FarmRepository farmRepository;
-    private final AuditService auditService; // <-- INYECTAR SERVICIO DE AUDITORÍA
+    private final AuditService auditService;
+    private final NotificationService notificationService; // <-- DEPENDENCIA INYECTADA
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -75,9 +77,18 @@ public class UserService {
 
         User savedUser = userRepository.save(newUser);
         log.info("Usuario {} registrado exitosamente por admin con ID: {}", requestedRoleName, savedUser.getId());
-        
+
         // --- AUDITORÍA DE CREACIÓN ---
         auditService.logChange(currentUser, "CREATE", User.class.getSimpleName(), "all", null, "Nuevo usuario ID: " + savedUser.getId());
+
+        // --- NOTIFICACIÓN ---
+        // Notificar al administrador que realizó la acción.
+        String messageForAdmin = String.format("Has registrado exitosamente al usuario '%s' con el rol de %s.", savedUser.getUsername(), savedUser.getRol().getRoleName());
+        notificationService.createNotification(currentUser, messageForAdmin, "/admin/users/" + savedUser.getId());
+
+        // Notificar al nuevo usuario.
+        String messageForNewUser = "¡Bienvenido! Tu cuenta ha sido creada por un administrador.";
+        notificationService.createNotification(savedUser, messageForNewUser, "/profile");
 
         return savedUser;
     }
@@ -108,6 +119,7 @@ public class UserService {
         return updatedUser;
     }
 
+
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public User updateUserStatus(Long id, boolean status) {
@@ -122,6 +134,12 @@ public class UserService {
 
         user.setActive(status);
         User updatedUser = userRepository.save(user);
+
+        // --- NOTIFICACIÓN ---
+        String statusText = status ? "activada" : "desactivada";
+        String message = String.format("El administrador %s ha cambiado el estado de tu cuenta a: %s.", currentUser.getUsername(), statusText);
+        notificationService.createNotification(user, message, "/profile");
+
         log.info("Estado activo del usuario con ID: {} cambiado a {} exitosamente por admin.", id, status);
         return updatedUser;
     }
@@ -154,6 +172,11 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setFailedAttempts(0);
         userRepository.save(user);
+
+        // --- NOTIFICACIÓN ---
+        String message = String.format("Un administrador (%s) ha restablecido tu contraseña.", currentUser.getUsername());
+        notificationService.createNotification(user, message, "/profile");
+
         log.info("Contraseña del usuario con ID: {} actualizada exitosamente por admin.", userId);
     }
 
@@ -174,6 +197,11 @@ public class UserService {
 
         user.getFarms().add(farm);
         userRepository.save(user);
+
+        // --- NOTIFICACIÓN ---
+        String message = String.format("Has sido asignado a la finca '%s' por el administrador %s.", farm.getName(), currentUser.getUsername());
+        notificationService.createNotification(user, message, "/farms/" + farmId);
+
         log.info("Usuario ID {} asignado exitosamente a la finca ID {}", userId, farmId);
     }
 
@@ -193,14 +221,19 @@ public class UserService {
             // --- AUDITORÍA DE DESASIGNACIÓN ---
             auditService.logChange(currentUser, "UNASSIGN", "user_farm", "farm_id", farmId.toString(), null);
             userRepository.save(user);
+
+            // --- NOTIFICACIÓN ---
+            String message = String.format("Has sido desasignado de la finca '%s'.", farm.getName());
+            notificationService.createNotification(user, message, "/farms");
+
             log.info("Usuario ID {} desasignado exitosamente de la finca ID {}", userId, farmId);
         } else {
             log.warn("El usuario ID {} no estaba asignado a la finca ID {}, no se realizó ninguna acción.", userId, farmId);
         }
     }
 
-    // --- MÉTODOS SIN CAMBIOS DE AUDITORÍA ---
-    
+    // --- MÉTODOS DE CONSULTA Y GESTIÓN PROPIA (SIN CAMBIOS) ---
+
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
     public List<User> findAllUsers() {
@@ -243,6 +276,9 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
+        // --- NOTIFICACIÓN ---
+        notificationService.createNotification(user, "Tu contraseña ha sido actualizada exitosamente.", "/profile/security");
+
         log.info("Contraseña del usuario {} actualizada exitosamente.", username);
     }
 
@@ -271,6 +307,7 @@ public class UserService {
         }
         return userRepository.findByFarms_Id(farmId);
     }
+
     // --- MÉTODO PARA EL DASHBOARD ---
 
     @Transactional(readOnly = true)
@@ -284,8 +321,8 @@ public class UserService {
 
         Map<String, Long> usersByRole = userRepository.countUsersByRole().stream()
                 .collect(Collectors.toMap(
-                    row -> (String) row[0], // Nombre del rol
-                    row -> (Long) row[1]    // Conteo
+                        row -> (String) row[0], // Nombre del rol
+                        row -> (Long) row[1]    // Conteo
                 ));
 
         return new UserStatsResponse(totalUsers, activeUsers, inactiveUsers, usersByRole);

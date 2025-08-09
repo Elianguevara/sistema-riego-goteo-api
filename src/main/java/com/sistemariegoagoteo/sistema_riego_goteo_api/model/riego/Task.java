@@ -1,0 +1,52 @@
+package com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@NoArgsConstructor
+@Entity
+@Table(name = "task")
+public class Task {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "task_id")
+    private Long id;
+
+    @Column(nullable = false, length = 255)
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private TaskStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id", nullable = false)
+    private User createdBy; // El Analista que crea la tarea
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to_user_id", nullable = false)
+    private User assignedTo; // El Operario al que se le asigna
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(nullable = false, updatable = false)
+    private Date createdAt;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = new Date();
+        status = TaskStatus.PENDIENTE; // Estado inicial por defecto
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = new Date();
+    }
+}
