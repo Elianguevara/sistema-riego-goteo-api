@@ -16,4 +16,11 @@ public class AuthResponse {
     private String token;
     // Podrías añadir más información si fuera necesario, como el tipo de token ("Bearer")
     private String tokenType = "Bearer";
+    private boolean active; //
+
+    // Constructor adicional para facilitar la creación
+    public AuthResponse(String token, String tokenType) {
+        this.token = token;
+        this.tokenType = tokenType;
+    }
 }

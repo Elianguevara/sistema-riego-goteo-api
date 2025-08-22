@@ -299,7 +299,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA')")
     public List<User> findUsersByFarm(Integer farmId) {
         log.debug("Admin buscando usuarios para la finca ID: {}", farmId);
         if (!farmRepository.existsById(farmId)) {

@@ -26,12 +26,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('ADMIN')")
+// @PreAuthorize("hasRole('ADMIN')") // <- Eliminamos la seguridad a nivel de clase
 public class AdminUserController {
 
     private final UserService userService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         log.debug("GET /api/admin/users");
         List<UserResponse> users = userService.findAllUsers().stream()
@@ -41,6 +42,7 @@ public class AdminUserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         log.debug("GET /api/admin/users/{}", id);
         try {
@@ -53,6 +55,7 @@ public class AdminUserController {
     }
 
     @GetMapping("/role/{roleName}")
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     public ResponseEntity<List<UserResponse>> getUsersByRole(@PathVariable String roleName) {
         log.debug("GET /api/admin/users/role/{}", roleName);
         try {
@@ -67,6 +70,7 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     public ResponseEntity<?> updateUser(@PathVariable Long id,
                                         @Valid @RequestBody UserUpdateRequest updateRequest) {
         log.debug("PUT /api/admin/users/{}", id);
@@ -83,6 +87,7 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     public ResponseEntity<?> updateUserStatus(@PathVariable Long id,
                                               @Valid @RequestBody UserStatusUpdateRequest statusRequest) {
         log.debug("PUT /api/admin/users/{}/status", id);
@@ -96,6 +101,7 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}/password")
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     // Usamos el nuevo DTO específico para el admin
     public ResponseEntity<?> updatePassword(@PathVariable Long id,
                                             @Valid @RequestBody AdminPasswordUpdateRequest req) {
@@ -111,6 +117,7 @@ public class AdminUserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         log.debug("DELETE /api/admin/users/{}", id);
         try {
@@ -126,6 +133,7 @@ public class AdminUserController {
      * Asigna un usuario específico a una finca específica.
      */
     @PostMapping("/{userId}/farms/{farmId}")
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     public ResponseEntity<?> assignUserToFarm(@PathVariable Long userId, @PathVariable Integer farmId) {
         log.info("Solicitud POST para asignar usuario ID {} a finca ID {}", userId, farmId);
         try {
@@ -142,6 +150,7 @@ public class AdminUserController {
      * Desasigna un usuario específico de una finca específica.
      */
     @DeleteMapping("/{userId}/farms/{farmId}")
+    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
     public ResponseEntity<?> unassignUserFromFarm(@PathVariable Long userId, @PathVariable Integer farmId) {
         log.info("Solicitud DELETE para desasignar usuario ID {} de la finca ID {}", userId, farmId);
         try {
@@ -156,7 +165,8 @@ public class AdminUserController {
     /**
      * Obtiene una lista de todos los usuarios asignados a una finca específica.
      */
-    @GetMapping("/farms/{farmId}/users") // <<-- AÑADIR ESTE ENDPOINT
+    @GetMapping("/farms/{farmId}/users")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA')")
     public ResponseEntity<?> getUsersAssignedToFarm(@PathVariable Integer farmId) {
         log.info("Solicitud GET para obtener usuarios de la finca ID {}", farmId);
         try {

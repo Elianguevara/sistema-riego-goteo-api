@@ -66,8 +66,8 @@ public class AuthService {
 
             // Validar si el usuario está activo (aunque UserDetails lo hace, doble check no está mal)
             if (!user.isActive()) {
-                 log.warn("Intento de login de usuario inactivo: {}", authRequest.getUsername());
-                 throw new RuntimeException("La cuenta del usuario está inactiva.");
+                log.warn("Intento de login de usuario inactivo: {}", authRequest.getUsername());
+                throw new RuntimeException("La cuenta del usuario está inactiva.");
             }
 
             // Actualizar fecha de último login (opcional pero útil)
@@ -79,7 +79,10 @@ public class AuthService {
             String jwtToken = jwtService.generateToken(userDetails);
             log.info("Usuario autenticado exitosamente: {}", authRequest.getUsername());
 
-            return new AuthResponse(jwtToken, "Bearer"); // Retornar el token en la respuesta
+            // --- MODIFICACIÓN ---
+            // Se retorna el AuthResponse incluyendo el estado 'active' del usuario.
+            // Asegúrate de que el DTO AuthResponse tenga el campo y constructor correspondiente.
+            return new AuthResponse(jwtToken, "Bearer", user.isActive());
 
         } catch (BadCredentialsException e) {
             log.warn("Credenciales inválidas para el usuario: {}", authRequest.getUsername());
@@ -87,9 +90,9 @@ public class AuthService {
             // handleFailedLoginAttempt(authRequest.getUsername());
             throw new BadCredentialsException("Credenciales inválidas.", e); // Re-lanzar para que el controlador la maneje
         } catch (Exception e) {
-             log.error("Error durante la autenticación para {}: {}", authRequest.getUsername(), e.getMessage());
-             // Captura otras posibles excepciones (ej. UsernameNotFoundException, DisabledException)
-             throw new RuntimeException("Error durante la autenticación: " + e.getMessage(), e);
+            log.error("Error durante la autenticación para {}: {}", authRequest.getUsername(), e.getMessage());
+            // Captura otras posibles excepciones (ej. UsernameNotFoundException, DisabledException)
+            throw new RuntimeException("Error durante la autenticación: " + e.getMessage(), e);
         }
     }
 
@@ -127,7 +130,7 @@ public class AuthService {
 
         // 4. Verificar si el email ya existe
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-             log.warn("Intento de registro con email existente: {}", registerRequest.getEmail());
+            log.warn("Intento de registro con email existente: {}", registerRequest.getEmail());
             throw new RuntimeException("El email '" + registerRequest.getEmail() + "' ya está en uso.");
         }
 
@@ -150,7 +153,7 @@ public class AuthService {
         return savedUser;
     }
 
-     // Opcional: Método para manejar intentos fallidos (podría bloquear la cuenta)
+    // Opcional: Método para manejar intentos fallidos (podría bloquear la cuenta)
     /*
     private void handleFailedLoginAttempt(String username) {
         userRepository.findByUsername(username).ifPresent(user -> {
