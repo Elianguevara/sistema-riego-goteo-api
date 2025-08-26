@@ -20,14 +20,24 @@ public class Fertilization {
     private Integer id;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "date")
+    @Column(name = "fertilization_date") // Considera renombrar a "fertilization_date" por claridad
     private Date date;
 
-    @Column(name = "fertilizer_type", length = 100) 
+    @Column(name = "fertilizer_type", length = 100)
     private String fertilizerType;
 
-    @Column(name = "liters_applied", precision = 10, scale = 2)
-    private BigDecimal litersApplied;
+    // --- CAMBIOS PRINCIPALES AQUÍ ---
+
+    // 1. Campo genérico para la cantidad (reemplaza a litersApplied)
+    @Column(name = "quantity", precision = 10, scale = 2, nullable = false)
+    private BigDecimal quantity;
+
+    // 2. Nuevo campo para la unidad de medida
+    @Enumerated(EnumType.STRING)
+    @Column(name = "quantity_unit", length = 10, nullable = false)
+    private UnitOfMeasure quantityUnit;
+
+    // --- FIN DE LOS CAMBIOS ---
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sector_id", nullable = false)

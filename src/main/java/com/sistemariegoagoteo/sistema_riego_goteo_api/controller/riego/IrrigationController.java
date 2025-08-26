@@ -15,42 +15,60 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.calendar.SectorMonthlyIrrigationDTO;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
-@RequestMapping() // La ruta base se definirá a nivel de método para más flexibilidad
+@RequestMapping()
 @RequiredArgsConstructor
 @Slf4j
 public class IrrigationController {
 
     private final IrrigationService irrigationService;
 
+    // --- MÉTODO AÑADIDO PARA LA CREACIÓN DE RIEGOS ---
     /**
-     * Registra un nuevo evento de irrigación para un sector específico.
+     * Crea un nuevo registro de irrigación.
+     * Permitido para Analistas y Operarios.
      */
-    @PostMapping("/api/farms/{farmId}/sectors/{sectorId}/irrigations")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('REGISTRAR_RIEGO')")
-    public ResponseEntity<?> logIrrigation(@PathVariable Integer farmId,
-                                           @PathVariable Integer sectorId,
-                                           @Valid @RequestBody IrrigationRequest request) {
-        log.info("Solicitud POST para registrar riego en finca ID {}, sector ID {}: inicio {}", farmId, sectorId, request.getStartDatetime());
+    @PostMapping("/api/irrigation")
+    @PreAuthorize("hasAnyRole('ANALISTA', 'OPERARIO') or hasAuthority('CREAR_RIEGO')")
+    public ResponseEntity<?> createIrrigation(@Valid @RequestBody IrrigationRequest request) {
+        log.info("Solicitud POST para crear un nuevo registro de riego para el sector ID {}", request.getSectorId());
         try {
-            Irrigation newIrrigation = irrigationService.logIrrigation(farmId, sectorId, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new IrrigationResponse(newIrrigation));
+            Irrigation newIrrigation = irrigationService.createIrrigation(request);
+            return new ResponseEntity<>(new IrrigationResponse(newIrrigation), HttpStatus.CREATED);
         } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo registrar riego, recurso no encontrado: {}", e.getMessage());
+            log.warn("No se pudo crear el riego, recurso no encontrado: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al registrar riego: {}", e.getMessage());
+            log.warn("Argumento inválido al crear riego: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    // --- FIN DEL MÉTODO AÑADIDO ---
 
-    /**
-     * Obtiene todos los registros de irrigación para un sector específico.
-     */
+    @GetMapping("/api/farms/{farmId}/irrigations/monthly-view")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
+    public ResponseEntity<List<SectorMonthlyIrrigationDTO>> getMonthlyIrrigationView(
+            @PathVariable Integer farmId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        log.info("Solicitud GET para la vista mensual de riegos en la finca ID {} para {}-{}", farmId, year, month);
+        // ... (resto del método sin cambios)
+        try {
+            List<SectorMonthlyIrrigationDTO> monthlyData = irrigationService.getMonthlyIrrigationData(farmId, year, month);
+            return ResponseEntity.ok(monthlyData);
+        } catch (ResourceNotFoundException e) {
+            log.warn("Recurso no encontrado al generar vista mensual: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
     @GetMapping("/api/farms/{farmId}/sectors/{sectorId}/irrigations")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_RIEGO')")
     public ResponseEntity<?> getIrrigationsBySector(@PathVariable Integer farmId, @PathVariable Integer sectorId) {
+        // ... (resto del método sin cambios)
         log.info("Solicitud GET para obtener riegos del sector ID {} en finca ID {}", sectorId, farmId);
         try {
             List<IrrigationResponse> responses = irrigationService.getIrrigationsBySector(farmId, sectorId).stream()
@@ -63,18 +81,13 @@ public class IrrigationController {
         }
     }
 
-    /**
-     * Obtiene un registro de irrigación específico por su ID.
-     * No está anidado ya que el ID del riego es único globalmente.
-     */
     @GetMapping("/api/irrigations/{irrigationId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_RIEGO')")
     public ResponseEntity<?> getIrrigationById(@PathVariable Integer irrigationId) {
+        // ... (resto del método sin cambios)
         log.info("Solicitud GET para obtener riego ID: {}", irrigationId);
         try {
             Irrigation irrigation = irrigationService.getIrrigationById(irrigationId);
-            // Se podría añadir una validación de seguridad aquí para asegurar que el usuario
-            // tiene permisos sobre la finca/sector de este riego, si fuera necesario.
             return ResponseEntity.ok(new IrrigationResponse(irrigation));
         } catch (ResourceNotFoundException e) {
             log.warn("Recurso no encontrado: {}", e.getMessage());
@@ -82,14 +95,12 @@ public class IrrigationController {
         }
     }
 
-    /**
-     * Actualiza un registro de irrigación existente.
-     */
     @PutMapping("/api/irrigations/{irrigationId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('MODIFICAR_RIEGO')")
     public ResponseEntity<?> updateIrrigation(@PathVariable Integer irrigationId,
                                               @Valid @RequestBody IrrigationRequest request) {
-        log.info("Solicitud PUT para actualizar riego ID {}: inicio {}, fin {}", irrigationId, request.getStartDatetime(), request.getEndDatetime());
+        // ... (resto del método sin cambios)
+        log.info("Solicitud PUT para actualizar riego ID {}: inicio {}, fin {}", irrigationId, request.getStartDateTime(), request.getEndDateTime());
         try {
             Irrigation updatedIrrigation = irrigationService.updateIrrigation(irrigationId, request);
             return ResponseEntity.ok(new IrrigationResponse(updatedIrrigation));
@@ -102,12 +113,10 @@ public class IrrigationController {
         }
     }
 
-    /**
-     * Elimina un registro de irrigación.
-     */
     @DeleteMapping("/api/irrigations/{irrigationId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ELIMINAR_RIEGO')")
     public ResponseEntity<?> deleteIrrigation(@PathVariable Integer irrigationId) {
+        // ... (resto del método sin cambios)
         log.info("Solicitud DELETE para eliminar riego ID: {}", irrigationId);
         try {
             irrigationService.deleteIrrigation(irrigationId);

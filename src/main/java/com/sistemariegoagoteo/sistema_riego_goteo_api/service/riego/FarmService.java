@@ -6,12 +6,14 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,23 +33,48 @@ public class FarmService {
         farm.setLocation(farmRequest.getLocation());
         farm.setReservoirCapacity(farmRequest.getReservoirCapacity());
         farm.setFarmSize(farmRequest.getFarmSize());
-        
+
         Farm savedFarm = farmRepository.save(farm);
 
-        // --- AUDITORÍA DE CREACIÓN ---
         auditService.logChange(currentUser, "CREATE", Farm.class.getSimpleName(), "name", null, savedFarm.getName());
         auditService.logChange(currentUser, "CREATE", Farm.class.getSimpleName(), "location", null, savedFarm.getLocation());
         auditService.logChange(currentUser, "CREATE", Farm.class.getSimpleName(), "reservoirCapacity", null, savedFarm.getReservoirCapacity().toString());
         auditService.logChange(currentUser, "CREATE", Farm.class.getSimpleName(), "farmSize", null, savedFarm.getFarmSize().toString());
-        
+
         auditService.recordModificationForSync(Farm.class.getSimpleName(), savedFarm.getId());
-        
+
         return savedFarm;
     }
 
+    /**
+     * Devuelve fincas según el rol del usuario autenticado.
+     * ADMIN/ANALISTA: Todas las fincas.
+     * OPERARIO: Solo las fincas asignadas.
+     */
     @Transactional(readOnly = true)
     public List<Farm> getAllFarms() {
-        return farmRepository.findAll();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return new ArrayList<>();
+        }
+
+        User currentUser = (User) authentication.getPrincipal();
+        String username = currentUser.getUsername();
+
+        String role = currentUser.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("");
+
+        if (role.equals("ROLE_ADMIN") || role.equals("ROLE_ANALISTA")) {
+            return farmRepository.findAll();
+        }
+
+        if (role.equals("ROLE_OPERARIO")) {
+            return farmRepository.findFarmsByUsername(username);
+        }
+
+        return new ArrayList<>();
     }
 
     @Transactional(readOnly = true)
@@ -61,7 +88,6 @@ public class FarmService {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Farm farm = getFarmById(farmId);
 
-        // --- AUDITORÍA DE ACTUALIZACIÓN ---
         if (!Objects.equals(farm.getName(), farmRequest.getName())) {
             auditService.logChange(currentUser, "UPDATE", Farm.class.getSimpleName(), "name", farm.getName(), farmRequest.getName());
         }
@@ -79,11 +105,11 @@ public class FarmService {
         farm.setLocation(farmRequest.getLocation());
         farm.setReservoirCapacity(farmRequest.getReservoirCapacity());
         farm.setFarmSize(farmRequest.getFarmSize());
-        
+
         Farm updatedFarm = farmRepository.save(farm);
 
         auditService.recordModificationForSync(Farm.class.getSimpleName(), updatedFarm.getId());
-        
+
         return updatedFarm;
     }
 
@@ -91,9 +117,7 @@ public class FarmService {
     public void deleteFarm(Integer farmId) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Farm farm = getFarmById(farmId);
-        
-        // --- AUDITORÍA DE BORRADO ---
-        // Registra la eliminación antes de que el objeto desaparezca de la BD
+
         auditService.logChange(currentUser, "DELETE", Farm.class.getSimpleName(), "id", farm.getId().toString(), null);
 
         farmRepository.delete(farm);

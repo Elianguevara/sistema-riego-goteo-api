@@ -20,8 +20,16 @@ public interface IrrigationRepository extends JpaRepository<Irrigation, Integer>
     List<Irrigation> findByStartDatetimeBetween(Date startDate, Date endDate);
     List<Irrigation> findBySectorAndStartDatetimeBetween(Sector sector, Date startDate, Date endDate);
     List<Irrigation> findBySectorOrderByStartDatetimeDesc(Sector sector);
-    // Si quieres buscar también por equipo:
-    // List<Irrigation> findByEquipmentOrderByStartDatetimeDesc(IrrigationEquipment equipment);
-    // List<Irrigation> findBySectorAndStartDatetimeBetweenOrderByStartDatetimeDesc(Sector sector, Date startDate, Date endDate);
     Optional<Irrigation> findByLocalMobileId(String localMobileId); // Nuevo método
+
+    // --- MÉTODO AÑADIDO PARA LA VISTA DE CALENDARIO ---
+    /**
+     * Busca todos los riegos que pertenecen a una lista de sectores y que ocurrieron
+     * dentro de un rango de fechas específico.
+     * @param sectors Lista de sectores a buscar.
+     * @param startDate Fecha de inicio del rango.
+     * @param endDate Fecha de fin del rango.
+     * @return Una lista de riegos que cumplen con los criterios.
+     */
+    List<Irrigation> findBySectorInAndStartDatetimeBetween(List<Sector> sectors, Date startDate, Date endDate);
 }

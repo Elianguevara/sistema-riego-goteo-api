@@ -18,21 +18,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/farms") // Ruta base para los endpoints de fincas
+@RequestMapping("/api/farms")
 @RequiredArgsConstructor
 @Slf4j
-// Podrías aplicar seguridad a nivel de clase si todas las operaciones requieren el mismo rol/permiso
-// @PreAuthorize("hasRole('ADMIN')") // o el rol que corresponda
 public class FarmController {
 
     private final FarmService farmService;
 
-    /**
-     * Crea una nueva finca.
-     * Requiere rol ADMIN (o el que definas).
-     */
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')") // O el rol/permiso específico
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FarmResponse> createFarm(@Valid @RequestBody FarmRequest farmRequest) {
         log.info("Solicitud POST para crear finca: {}", farmRequest.getName());
         Farm newFarm = farmService.createFarm(farmRequest);
@@ -40,24 +34,22 @@ public class FarmController {
     }
 
     /**
-     * Obtiene todas las fincas.
-     * Podría ser accesible por roles como ADMIN, ANALISTA.
+     * Obtiene las fincas. El comportamiento depende del rol del usuario.
+     * - ADMIN/ANALISTA: Obtiene todas las fincas.
+     * - OPERARIO: Obtiene solo las fincas a las que está asignado.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA')") // Ajusta los roles según sea necesario
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')") // <-- MODIFICACIÓN: Se añade OPERARIO
     public ResponseEntity<List<FarmResponse>> getAllFarms() {
-        log.info("Solicitud GET para obtener todas las fincas");
+        log.info("Solicitud GET para obtener fincas");
         List<FarmResponse> farmResponses = farmService.getAllFarms().stream()
                 .map(FarmResponse::new)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(farmResponses);
     }
 
-    /**
-     * Obtiene una finca específica por su ID.
-     */
     @GetMapping("/{farmId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')") // Ajusta según quién necesite ver detalles de una finca
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
     public ResponseEntity<FarmResponse> getFarmById(@PathVariable Integer farmId) {
         log.info("Solicitud GET para obtener finca con ID: {}", farmId);
         try {
@@ -69,42 +61,36 @@ public class FarmController {
         }
     }
 
-    /**
-     * Actualiza una finca existente.
-     */
-      @PutMapping("/{farmId}")
+    @PutMapping("/{farmId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateFarm(@PathVariable Integer farmId, // Cambiado de ResponseEntity<FarmResponse> a ResponseEntity<?>
-                                                   @Valid @RequestBody FarmRequest farmRequest) {
+    public ResponseEntity<?> updateFarm(@PathVariable Integer farmId,
+                                        @Valid @RequestBody FarmRequest farmRequest) {
         log.info("Solicitud PUT para actualizar finca con ID: {}", farmId);
         try {
             Farm updatedFarm = farmService.updateFarm(farmId, farmRequest);
-            return ResponseEntity.ok(new FarmResponse(updatedFarm)); // Esto sigue siendo ResponseEntity<FarmResponse>, compatible con <?>
+            return ResponseEntity.ok(new FarmResponse(updatedFarm));
         } catch (ResourceNotFoundException e) {
             log.warn("Finca no encontrada para actualizar con ID: {}", farmId);
-            return ResponseEntity.notFound().build(); // Esto es ResponseEntity<Void>, compatible con <?>
-        } catch (Exception e) { // Captura otras posibles excepciones de validación del servicio
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
             log.error("Error al actualizar finca {}: {}", farmId, e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage()); // Esto es ResponseEntity<String>, ahora compatible con <?>
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    /**
-     * Elimina una finca.
-     */
     @DeleteMapping("/{farmId}")
-    @PreAuthorize("hasRole('ADMIN')") // Usualmente una operación restringida
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteFarm(@PathVariable Integer farmId) {
         log.info("Solicitud DELETE para eliminar finca con ID: {}", farmId);
         try {
             farmService.deleteFarm(farmId);
-            return ResponseEntity.noContent().build(); // 204 No Content
+            return ResponseEntity.noContent().build();
         } catch (ResourceNotFoundException e) {
             log.warn("Finca no encontrada para eliminar con ID: {}", farmId);
             return ResponseEntity.notFound().build();
-        } catch (DeletionNotAllowedException e) { // Excepción personalizada para validaciones de borrado
+        } catch (DeletionNotAllowedException e) {
             log.warn("Intento de eliminación no permitido para finca ID {}: {}", farmId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null); // O .badRequest() con mensaje
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
     }
 }

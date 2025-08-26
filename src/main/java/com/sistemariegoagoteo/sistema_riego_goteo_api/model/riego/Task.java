@@ -17,6 +17,11 @@ public class Task {
     @Column(name = "task_id")
     private Long id;
 
+    // --- CAMPO NUEVO AÑADIDO ---
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sector_id", nullable = false) // Asumiendo que una tarea siempre pertenece a un sector
+    private Sector sector;
+
     @Column(nullable = false, length = 255)
     private String description;
 

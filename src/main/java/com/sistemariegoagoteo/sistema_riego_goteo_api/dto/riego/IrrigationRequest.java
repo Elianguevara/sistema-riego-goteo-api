@@ -11,21 +11,24 @@ import java.util.Date;
 @Data
 public class IrrigationRequest {
 
+    // --- CAMPO AÑADIDO Y OBLIGATORIO ---
+    @NotNull(message = "El ID del sector es requerido.")
+    private Integer sectorId;
+
     @NotNull(message = "El ID del equipo de irrigación es requerido.")
     private Integer equipmentId;
 
+    // --- NOMBRES CORREGIDOS a camelCase estándar ---
     @NotNull(message = "La fecha y hora de inicio del riego son requeridas.")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
-    private Date startDatetime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private Date startDateTime;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
-    private Date endDatetime; // Opcional al inicio, se puede actualizar después
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private Date endDateTime;
 
     @PositiveOrZero(message = "La cantidad de agua debe ser un valor positivo o cero.")
-    private BigDecimal waterAmount; // Opcional, podría calcularse o ingresarse manualmente
+    private BigDecimal waterAmount;
 
     @PositiveOrZero(message = "Las horas de riego deben ser un valor positivo o cero.")
-    private BigDecimal irrigationHours; // Opcional, podría calcularse
-
-    // El sectorId vendrá de la ruta del controlador
+    private BigDecimal irrigationHours;
 }

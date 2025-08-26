@@ -2,6 +2,7 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Fertilization;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.UnitOfMeasure; // <-- Importar el nuevo Enum
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,17 +13,18 @@ import java.util.Date;
 @NoArgsConstructor
 public class FertilizationResponse {
     private Integer id;
-
     private Integer sectorId;
     private String sectorName;
-
-    private Integer farmId; // Derivado del sector
-    private String farmName; // Derivado del sector
+    private Integer farmId;
+    private String farmName;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date date;
     private String fertilizerType;
-    private BigDecimal litersApplied;
+
+    // --- CAMPOS MODIFICADOS ---
+    private BigDecimal quantity; // Reemplaza a litersApplied
+    private UnitOfMeasure quantityUnit; // Campo nuevo para la unidad
 
     public FertilizationResponse(Fertilization fertilization) {
         this.id = fertilization.getId();
@@ -36,6 +38,9 @@ public class FertilizationResponse {
         }
         this.date = fertilization.getDate();
         this.fertilizerType = fertilization.getFertilizerType();
-        this.litersApplied = fertilization.getLitersApplied();
+
+        // --- LÓGICA DE MAPEO ACTUALIZADA ---
+        this.quantity = fertilization.getQuantity();
+        this.quantityUnit = fertilization.getQuantityUnit();
     }
 }

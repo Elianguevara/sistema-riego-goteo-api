@@ -2,16 +2,18 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class TaskRequest {
 
-    @NotBlank(message = "La descripción de la tarea no puede estar vacía.")
-    @Size(max = 255, message = "La descripción no puede exceder los 255 caracteres.")
+    @NotBlank(message = "La descripción no puede estar vacía")
     private String description;
 
-    @NotNull(message = "Debe especificar el ID del operario asignado.")
+    @NotNull(message = "El ID del usuario asignado no puede ser nulo")
     private Long assignedToUserId;
+
+    // --- CAMPO AÑADIDO Y OBLIGATORIO ---
+    @NotNull(message = "El ID del sector no puede ser nulo")
+    private Integer sectorId;
 }

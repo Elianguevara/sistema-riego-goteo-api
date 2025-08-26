@@ -4,19 +4,18 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.FertilizationReq
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Fertilization;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // <-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FertilizationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder; // <-- IMPORTAR
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects; // <-- IMPORTAR
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -28,24 +27,25 @@ public class FertilizationService {
     private final AuditService auditService;
 
     @Transactional
-    public Fertilization createFertilization(Integer farmId, Integer sectorId, FertilizationRequest request) {
+    public Fertilization createFertilization(FertilizationRequest request) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
+
+        Sector sector = sectorRepository.findById(request.getSectorId())
+                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", request.getSectorId()));
 
         Fertilization fertilization = new Fertilization();
         fertilization.setSector(sector);
         fertilization.setDate(request.getDate());
         fertilization.setFertilizerType(request.getFertilizerType());
-        fertilization.setLitersApplied(request.getLitersApplied());
+        fertilization.setQuantity(request.getQuantity());
+        fertilization.setQuantityUnit(request.getQuantityUnit());
 
         Fertilization savedFertilization = fertilizationRepository.save(fertilization);
 
-        // --- AUDITORÍA DE CREACIÓN ---
-        auditService.logChange(currentUser, "CREATE", Fertilization.class.getSimpleName(), "fertilizerType", null, savedFertilization.getFertilizerType());
-        auditService.logChange(currentUser, "CREATE", Fertilization.class.getSimpleName(), "litersApplied", null, savedFertilization.getLitersApplied().toString());
-        
-        log.info("Registrando fertilización para sector ID {} en fecha {}", sectorId, request.getDate());
+        // --- LLAMADA A AUDITORÍA CORREGIDA (6 argumentos) ---
+        auditService.logChange(currentUser, "CREATE", Fertilization.class.getSimpleName(), "id", null, savedFertilization.getId().toString());
+
+        log.info("Usuario {} registró fertilización (ID: {}) en sector {}", currentUser.getUsername(), savedFertilization.getId(), sector.getName());
         return savedFertilization;
     }
 
@@ -54,20 +54,23 @@ public class FertilizationService {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Fertilization fertilization = getFertilizationById(fertilizationId);
 
-        // --- AUDITORÍA DE ACTUALIZACIÓN ---
+        // ... Lógica de auditoría y actualización ...
         if (!Objects.equals(fertilization.getDate(), request.getDate())) {
             auditService.logChange(currentUser, "UPDATE", Fertilization.class.getSimpleName(), "date", Objects.toString(fertilization.getDate(), null), Objects.toString(request.getDate(), null));
+            fertilization.setDate(request.getDate());
         }
         if (!Objects.equals(fertilization.getFertilizerType(), request.getFertilizerType())) {
             auditService.logChange(currentUser, "UPDATE", Fertilization.class.getSimpleName(), "fertilizerType", fertilization.getFertilizerType(), request.getFertilizerType());
+            fertilization.setFertilizerType(request.getFertilizerType());
         }
-        if (fertilization.getLitersApplied().compareTo(request.getLitersApplied()) != 0) {
-            auditService.logChange(currentUser, "UPDATE", Fertilization.class.getSimpleName(), "litersApplied", fertilization.getLitersApplied().toString(), request.getLitersApplied().toString());
+        if (fertilization.getQuantity().compareTo(request.getQuantity()) != 0) {
+            auditService.logChange(currentUser, "UPDATE", Fertilization.class.getSimpleName(), "quantity", fertilization.getQuantity().toString(), request.getQuantity().toString());
+            fertilization.setQuantity(request.getQuantity());
         }
-
-        fertilization.setDate(request.getDate());
-        fertilization.setFertilizerType(request.getFertilizerType());
-        fertilization.setLitersApplied(request.getLitersApplied());
+        if (fertilization.getQuantityUnit() != request.getQuantityUnit()) {
+            auditService.logChange(currentUser, "UPDATE", Fertilization.class.getSimpleName(), "quantityUnit", fertilization.getQuantityUnit().name(), request.getQuantityUnit().name());
+            fertilization.setQuantityUnit(request.getQuantityUnit());
+        }
 
         log.info("Actualizando fertilización ID {}", fertilizationId);
         return fertilizationRepository.save(fertilization);
@@ -77,20 +80,16 @@ public class FertilizationService {
     public void deleteFertilization(Integer fertilizationId) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Fertilization fertilization = getFertilizationById(fertilizationId);
-
-        // --- AUDITORÍA DE BORRADO ---
         auditService.logChange(currentUser, "DELETE", Fertilization.class.getSimpleName(), "id", fertilization.getId().toString(), null);
-
         log.warn("Eliminando fertilización ID {}", fertilizationId);
         fertilizationRepository.delete(fertilization);
     }
 
-    // --- MÉTODOS GET (SIN CAMBIOS) ---
-
+    // --- FIRMA DEL MÉTODO CORREGIDA (solo 1 argumento) ---
     @Transactional(readOnly = true)
-    public List<Fertilization> getFertilizationsBySector(Integer farmId, Integer sectorId) {
-        Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
+    public List<Fertilization> getFertilizationsBySector(Integer sectorId) {
+        Sector sector = sectorRepository.findById(sectorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId));
         return fertilizationRepository.findBySectorOrderByDateDesc(sector);
     }
 
