@@ -70,4 +70,9 @@ public class Farm {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Precipitation> precipitations = new HashSet<>();
+    @Column(name = "latitude")
+    private BigDecimal latitude;
+
+    @Column(name = "longitude")
+    private BigDecimal longitude;
 }

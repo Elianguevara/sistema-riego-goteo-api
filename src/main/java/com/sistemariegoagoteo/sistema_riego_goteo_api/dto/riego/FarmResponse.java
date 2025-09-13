@@ -14,6 +14,10 @@ public class FarmResponse {
     private String location;
     private BigDecimal reservoirCapacity;
     private BigDecimal farmSize;
+    // --- CAMPOS NUEVOS AÑADIDOS ---
+    private BigDecimal latitude;
+    private BigDecimal longitude;
+
 
     public FarmResponse(Farm farm) {
         this.id = farm.getId();
@@ -21,5 +25,8 @@ public class FarmResponse {
         this.location = farm.getLocation();
         this.reservoirCapacity = farm.getReservoirCapacity();
         this.farmSize = farm.getFarmSize();
+        // --- LÓGICA DE MAPEO AÑADIDA ---
+        this.latitude = farm.getLatitude();
+        this.longitude = farm.getLongitude();
     }
 }

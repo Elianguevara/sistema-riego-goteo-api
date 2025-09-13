@@ -24,4 +24,11 @@ public class FarmRequest {
     @NotNull(message = "El tamaño de la finca es requerido.")
     @PositiveOrZero(message = "El tamaño de la finca debe ser un valor positivo o cero.")
     private BigDecimal farmSize;
+
+    // --- CAMPOS NUEVOS AÑADIDOS ---
+    @NotNull(message = "La latitud es requerida.")
+    private BigDecimal latitude;
+
+    @NotNull(message = "La longitud es requerida.")
+    private BigDecimal longitude;
 }
