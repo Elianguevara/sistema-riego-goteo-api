@@ -26,9 +26,6 @@ public class FarmRequest {
     private BigDecimal farmSize;
 
     // --- CAMPOS NUEVOS AÑADIDOS ---
-    @NotNull(message = "La latitud es requerida.")
     private BigDecimal latitude;
-
-    @NotNull(message = "La longitud es requerida.")
     private BigDecimal longitude;
 }

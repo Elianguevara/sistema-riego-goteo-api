@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map; // <-- IMPORTAR MAP
+
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
@@ -31,5 +33,14 @@ public class NotificationController {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         notificationService.markAsRead(id, currentUser);
         return ResponseEntity.noContent().build();
+    }
+
+    // --- NUEVO ENDPOINT AÑADIDO ---
+    @GetMapping("/unread-count")
+    public ResponseEntity<?> getUnreadNotificationsCount() {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        long count = notificationService.getUnreadNotificationsCount(currentUser);
+        // Retornamos un Map que Jackson convertirá a {"unreadCount": count}
+        return ResponseEntity.ok(Map.of("unreadCount", count));
     }
 }

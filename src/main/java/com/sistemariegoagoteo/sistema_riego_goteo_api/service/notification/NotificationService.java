@@ -46,4 +46,10 @@ public class NotificationService {
         notification.setRead(true);
         notificationRepository.save(notification);
     }
+
+    // --- NUEVO MÉTODO AÑADIDO ---
+    @Transactional(readOnly = true)
+    public long getUnreadNotificationsCount(User user) {
+        return notificationRepository.countByRecipientAndIsReadFalse(user);
+    }
 }

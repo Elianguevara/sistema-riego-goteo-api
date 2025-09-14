@@ -15,4 +15,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     // Para buscar todas las notificaciones de un usuario
     Page<Notification> findByRecipientOrderByCreatedAtDesc(User recipient, Pageable pageable);
+
+    // --- NUEVO MÉTODO AÑADIDO ---
+    /**
+     * Cuenta eficientemente las notificaciones no leídas de un usuario específico.
+     * @param recipient El usuario para el cual contar las notificaciones.
+     * @return El número total de notificaciones no leídas.
+     */
+    long countByRecipientAndIsReadFalse(User recipient);
 }

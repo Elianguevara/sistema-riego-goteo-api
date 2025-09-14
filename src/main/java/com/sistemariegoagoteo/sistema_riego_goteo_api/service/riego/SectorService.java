@@ -130,4 +130,18 @@ public class SectorService {
         return sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca " + farmId));
     }
+
+    /**
+     * NUEVO MÉTODO: Obtiene todos los sectores considerados "activos".
+     * La lógica de negocio define un sector activo como aquel que tiene un equipo
+     * de riego asociado en estado "Operativo".
+     *
+     * @return Una lista de todos los sectores activos en el sistema.
+     */
+    @Transactional(readOnly = true)
+    public List<Sector> getActiveSectors() {
+        log.info("Buscando todos los sectores con equipo de riego en estado 'Operativo'");
+        // La lógica asume que el estado de un equipo activo es "Operativo"
+        return sectorRepository.findSectorsByEquipmentStatus("Activo");
+    }
 }

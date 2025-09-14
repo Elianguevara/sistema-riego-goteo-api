@@ -4,7 +4,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.IrrigationReques
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.calendar.IrrigationCalendarEventDTO;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.calendar.SectorMonthlyIrrigationDTO;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
+
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Irrigation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEquipment;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;

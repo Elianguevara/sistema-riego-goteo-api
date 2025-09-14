@@ -1,5 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.config.jwt.JwtConfig; // <-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // <-- IMPORTAR USER
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -39,6 +40,12 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (userDetails instanceof User) {
+            User user = (User) userDetails;
+            extraClaims.put("name", user.getName()); // <-- AÑADIR EL NOMBRE COMPLETO
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
         String rol = userDetails.getAuthorities().stream()
                 .map(authority -> authority.getAuthority().replace("ROLE_", ""))
                 .findFirst()

@@ -31,11 +31,12 @@ public class GeocodingService {
             return Optional.empty();
         }
 
+        // Construimos la URL de la API con los parámetros necesarios
         String url = UriComponentsBuilder.fromHttpUrl(apiUrl)
                 .queryParam("q", location)
                 .queryParam("key", apiKey)
                 .queryParam("limit", 1) // Solo queremos el resultado más relevante
-                .queryParam("countrycode", "ar") // Priorizamos resultados en Argentina
+                .queryParam("countrycode", "ar") // Priorizamos resultados en Argentina (ideal para Mendoza)
                 .toUriString();
 
         try {
@@ -54,6 +55,6 @@ public class GeocodingService {
         return Optional.empty();
     }
 
-    // Clase auxiliar para devolver las coordenadas
+    // Clase auxiliar (record) para devolver las coordenadas de forma limpia
     public record Coordinates(BigDecimal latitude, BigDecimal longitude) {}
 }

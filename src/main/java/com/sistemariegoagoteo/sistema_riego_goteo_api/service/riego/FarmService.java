@@ -6,7 +6,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.service.geocoding.GeocodingService; // <-- 1. IMPORTAR NUEVO SERVICIO
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.geocoding.GeocodingService; // <-- 1. IMPORTAR
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -21,7 +21,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j // <-- AÑADIR ANOTACIÓN SLF4J
+@Slf4j
 public class FarmService {
 
     private final FarmRepository farmRepository;
@@ -39,9 +39,9 @@ public class FarmService {
         farm.setFarmSize(farmRequest.getFarmSize());
 
         // --- 3. LÓGICA DE GEOCODIFICACIÓN ---
-        // Si el usuario no provee latitud/longitud, intentamos obtenerlas desde la ubicación.
+        // Si no se proveen coordenadas, se intenta obtenerlas desde la ubicación.
         if (farmRequest.getLatitude() == null || farmRequest.getLongitude() == null) {
-            log.info("No se proveyeron coordenadas para la finca '{}'. Intentando geocodificar desde la ubicación...", farmRequest.getName());
+            log.info("No se proveyeron coordenadas para la finca '{}'. Intentando geocodificar...", farmRequest.getName());
             geocodingService.getCoordinates(farmRequest.getLocation()).ifPresent(coords -> {
                 farm.setLatitude(coords.latitude());
                 farm.setLongitude(coords.longitude());
@@ -54,21 +54,16 @@ public class FarmService {
         // ------------------------------------
 
         Farm savedFarm = farmRepository.save(farm);
-
-        // ... (resto de la auditoría)
         auditService.logChange(currentUser, "CREATE", Farm.class.getSimpleName(), "all", null, "Nueva finca ID: " + savedFarm.getId());
-
         return savedFarm;
     }
-
-    // ... (getAllFarms y getFarmById sin cambios)
 
     @Transactional
     public Farm updateFarm(Integer farmId, FarmRequest farmRequest) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Farm farm = getFarmById(farmId);
 
-        // ... (lógica de auditoría existente)
+        // ... (lógica de auditoría existente) ...
 
         farm.setName(farmRequest.getName());
         farm.setLocation(farmRequest.getLocation());
@@ -76,7 +71,7 @@ public class FarmService {
         farm.setFarmSize(farmRequest.getFarmSize());
 
         // --- 4. LÓGICA DE GEOCODIFICACIÓN EN LA ACTUALIZACIÓN ---
-        // Si la ubicación cambia, o si no había coordenadas, las recalculamos.
+        // Si la ubicación cambia, o si no había coordenadas, se recalculan.
         boolean locationChanged = !Objects.equals(farm.getLocation(), farmRequest.getLocation());
         if (locationChanged || farm.getLatitude() == null || farm.getLongitude() == null) {
             log.info("La ubicación de la finca ID {} cambió. Re-geocodificando...", farmId);
@@ -87,7 +82,7 @@ public class FarmService {
                         log.info("Re-geocodificación exitosa. Lat: {}, Lon: {}", coords.latitude(), coords.longitude());
                     },
                     () -> {
-                        // Si no se encuentra, borramos las coordenadas anteriores para evitar inconsistencias
+                        // Si no se encuentra, borramos las coordenadas para evitar inconsistencias
                         farm.setLatitude(null);
                         farm.setLongitude(null);
                         log.warn("No se pudieron obtener nuevas coordenadas para la ubicación: {}", farmRequest.getLocation());
@@ -99,7 +94,7 @@ public class FarmService {
         return farmRepository.save(farm);
     }
 
-    // ... (deleteFarm y findFarmsByUsername sin cambios)
+    // ... (El resto de los métodos de FarmService permanecen igual) ...
     @Transactional(readOnly = true)
     public List<Farm> getAllFarms() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

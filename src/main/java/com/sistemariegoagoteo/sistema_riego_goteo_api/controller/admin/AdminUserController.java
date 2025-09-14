@@ -10,6 +10,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.AdminPasswordUpda
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,13 +34,12 @@ public class AdminUserController {
     private final UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')") // <- Añadimos seguridad a nivel de método
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<UserResponse>> getAllUsers(Pageable pageable) {
         log.debug("GET /api/admin/users");
-        List<UserResponse> users = userService.findAllUsers().stream()
-                .map(UserResponse::new)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(users);
+        Page<User> users = userService.findAllUsers(pageable);
+        Page<UserResponse> usersResponse = users.map(UserResponse::new);
+        return ResponseEntity.ok(usersResponse);
     }
 
     @GetMapping("/{id}")

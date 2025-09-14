@@ -16,6 +16,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.Notif
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -236,9 +238,9 @@ public class UserService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User> findAllUsers() {
+    public Page<User> findAllUsers(Pageable pageable) {
         log.debug("Admin solicitando lista de todos los usuarios");
-        return userRepository.findAll();
+        return userRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
