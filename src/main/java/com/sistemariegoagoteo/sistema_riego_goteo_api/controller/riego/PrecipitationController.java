@@ -2,17 +2,20 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationSummaryResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Precipitation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -114,4 +117,37 @@ public class PrecipitationController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
+
+    @GetMapping("/api/farms/{farmId}/precipitations/summary/daily")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
+    public ResponseEntity<PrecipitationSummaryResponse> getDailyPrecipitation(
+            @PathVariable Integer farmId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date date) {
+        log.info("Solicitud GET para obtener la precipitación diaria de la finca ID {} para la fecha {}", farmId, date);
+        PrecipitationSummaryResponse summary = precipitationService.getDailyPrecipitation(farmId, date);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/api/farms/{farmId}/precipitations/summary/monthly")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
+    public ResponseEntity<PrecipitationSummaryResponse> getMonthlyPrecipitation(
+            @PathVariable Integer farmId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        log.info("Solicitud GET para obtener la precipitación mensual de la finca ID {} para el mes {}-{}", farmId, year, month);
+        PrecipitationSummaryResponse summary = precipitationService.getMonthlyPrecipitation(farmId, year, month);
+        return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/api/farms/{farmId}/precipitations/summary/annual")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
+    public ResponseEntity<PrecipitationSummaryResponse> getAnnualPrecipitation(
+            @PathVariable Integer farmId,
+            @RequestParam int year) {
+        log.info("Solicitud GET para obtener la precipitación anual de la finca ID {} para el año que comienza en mayo de {}", farmId, year);
+        PrecipitationSummaryResponse summary = precipitationService.getAnnualPrecipitation(farmId, year);
+        return ResponseEntity.ok(summary);
+    }
+
 }

@@ -12,7 +12,8 @@ import java.util.Date;
 public class PrecipitationRequest {
 
     @NotNull(message = "La fecha de la precipitación es requerida.")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    // --- AQUÍ LA CORRECCIÓN ---
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
     private Date precipitationDate;
 
     @NotNull(message = "Los milímetros de lluvia total son requeridos.")

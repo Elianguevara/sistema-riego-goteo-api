@@ -1,6 +1,7 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationSummaryResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Precipitation;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects; // <-- IMPORTAR
 
@@ -109,5 +112,43 @@ public class PrecipitationService {
         }
         BigDecimal effectiveRain = mmRainTotal.subtract(FIVE_MM).multiply(EFFECTIVE_RAIN_FACTOR);
         return effectiveRain.setScale(2, RoundingMode.HALF_UP);
+    }
+    @Transactional(readOnly = true)
+    public PrecipitationSummaryResponse getDailyPrecipitation(Integer farmId, Date date) {
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
+        BigDecimal totalRain = precipitationRepository.getDailyPrecipitation(farm, date);
+        return new PrecipitationSummaryResponse(date, date, totalRain, calculateEffectiveRain(totalRain));
+    }
+
+    @Transactional(readOnly = true)
+    public PrecipitationSummaryResponse getMonthlyPrecipitation(Integer farmId, int year, int month) {
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(year, month - 1, 1);
+        Date startDate = cal.getTime();
+        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH));
+        Date endDate = cal.getTime();
+
+        BigDecimal totalRain = precipitationRepository.getMonthlyPrecipitation(farm, year, month);
+        return new PrecipitationSummaryResponse(startDate, endDate, totalRain, calculateEffectiveRain(totalRain));
+    }
+
+    @Transactional(readOnly = true)
+    public PrecipitationSummaryResponse getAnnualPrecipitation(Integer farmId, int year) {
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(year, Calendar.MAY, 1);
+        Date startDate = cal.getTime();
+        cal.add(Calendar.YEAR, 1);
+        cal.add(Calendar.DAY_OF_YEAR, -1);
+        Date endDate = cal.getTime();
+
+        BigDecimal totalRain = precipitationRepository.getAnnualPrecipitation(farm, startDate, endDate);
+        return new PrecipitationSummaryResponse(startDate, endDate, totalRain, calculateEffectiveRain(totalRain));
     }
 }
