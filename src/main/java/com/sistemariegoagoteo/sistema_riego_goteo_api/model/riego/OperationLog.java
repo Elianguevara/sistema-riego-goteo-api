@@ -19,14 +19,18 @@ public class OperationLog {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "farm_id", nullable = false) // Columna en MER es "farm, id INT", se asume farm_id
+    @JoinColumn(name = "farm_id", nullable = false)
     private Farm farm;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "start_datetime")
-    private Date startDatetime;
+    @Column(name = "operation_datetime") // <-- CAMBIO DE NOMBRE
+    private Date operationDatetime;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "end_datetime")
-    private Date endDatetime;
+    // --- CAMPO AÑADIDO (SUGERENCIA) ---
+    @Column(name = "operation_type", length = 100)
+    private String operationType;
+
+    @Lob
+    @Column(name = "description", columnDefinition="TEXT")
+    private String description;
 }

@@ -10,9 +10,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Repositorio para la entidad Irrigation.
- */
 @Repository
 public interface IrrigationRepository extends JpaRepository<Irrigation, Integer> {
     List<Irrigation> findBySector(Sector sector);
@@ -20,16 +17,14 @@ public interface IrrigationRepository extends JpaRepository<Irrigation, Integer>
     List<Irrigation> findByStartDatetimeBetween(Date startDate, Date endDate);
     List<Irrigation> findBySectorAndStartDatetimeBetween(Sector sector, Date startDate, Date endDate);
     List<Irrigation> findBySectorOrderByStartDatetimeDesc(Sector sector);
-    Optional<Irrigation> findByLocalMobileId(String localMobileId); // Nuevo método
+    Optional<Irrigation> findByLocalMobileId(String localMobileId);
 
-    // --- MÉTODO AÑADIDO PARA LA VISTA DE CALENDARIO ---
-    /**
-     * Busca todos los riegos que pertenecen a una lista de sectores y que ocurrieron
-     * dentro de un rango de fechas específico.
-     * @param sectors Lista de sectores a buscar.
-     * @param startDate Fecha de inicio del rango.
-     * @param endDate Fecha de fin del rango.
-     * @return Una lista de riegos que cumplen con los criterios.
-     */
     List<Irrigation> findBySectorInAndStartDatetimeBetween(List<Sector> sectors, Date startDate, Date endDate);
+
+    // --- MÉTODO NUEVO AÑADIDO ---
+    /**
+     * Busca todos los riegos de una finca específica dentro de un rango de fechas.
+     * Spring Data JPA creará la consulta anidando las propiedades (Sector -> Farm -> Id).
+     */
+    List<Irrigation> findBySector_Farm_IdAndStartDatetimeBetween(Integer farmId, Date startDate, Date endDate);
 }

@@ -31,29 +31,33 @@ public class OperationLogController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('REGISTRAR_OPERACION')")
     public ResponseEntity<?> createOperationLog(@PathVariable Integer farmId,
                                                 @Valid @RequestBody OperationLogRequest request) {
-        log.info("Solicitud POST para crear entrada en bitácora de operaciones para finca ID {}", farmId);
+        log.info("Solicitud POST para crear entrada en bitácora para finca ID {}", farmId);
         try {
             OperationLog newLog = operationLogService.createOperationLog(farmId, request);
             return ResponseEntity.status(HttpStatus.CREATED).body(new OperationLogResponse(newLog));
         } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo crear entrada en bitácora, recurso no encontrado: {}", e.getMessage());
+            log.warn("No se pudo crear entrada, recurso no encontrado: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al crear entrada en bitácora: {}", e.getMessage());
+            log.warn("Argumento inválido al crear entrada: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     /**
-     * Obtiene todas las entradas de la bitácora de operaciones para una finca.
+     * Obtiene todas las entradas de la bitácora para una finca, con filtro opcional por tipo de operación.
      */
     @GetMapping("/api/farms/{farmId}/operationlogs")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_BITACORA_OPERACIONES')")
-    public ResponseEntity<?> getOperationLogsByFarm(@PathVariable Integer farmId) {
-        log.info("Solicitud GET para obtener bitácora de operaciones de la finca ID {}", farmId);
+    public ResponseEntity<?> getOperationLogsByFarm(
+            @PathVariable Integer farmId,
+            @RequestParam(required = false) String type) { // <-- Parámetro opcional para filtrar
+        log.info("Solicitud GET para obtener bitácora de la finca ID {}", farmId);
         try {
             List<OperationLogResponse> responses = operationLogService.getOperationLogsByFarm(farmId)
                     .stream()
+                    // --- Lógica de filtrado opcional ---
+                    .filter(log -> type == null || log.getOperationType().equalsIgnoreCase(type))
                     .map(OperationLogResponse::new)
                     .collect(Collectors.toList());
             return ResponseEntity.ok(responses);
@@ -64,7 +68,7 @@ public class OperationLogController {
     }
 
     /**
-     * Obtiene una entrada específica de la bitácora de operaciones por su ID global.
+     * Obtiene una entrada específica de la bitácora por su ID.
      */
     @GetMapping("/api/operationlogs/{logId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_BITACORA_OPERACIONES')")
@@ -72,7 +76,6 @@ public class OperationLogController {
         log.info("Solicitud GET para obtener entrada de bitácora ID: {}", logId);
         try {
             OperationLog operationLog = operationLogService.getOperationLogById(logId);
-            // Podrías añadir validación de acceso a la finca si es necesario
             return ResponseEntity.ok(new OperationLogResponse(operationLog));
         } catch (ResourceNotFoundException e) {
             log.warn("Recurso no encontrado: {}", e.getMessage());
@@ -81,7 +84,7 @@ public class OperationLogController {
     }
 
     /**
-     * Actualiza una entrada existente en la bitácora de operaciones.
+     * Actualiza una entrada existente en la bitácora.
      */
     @PutMapping("/api/operationlogs/{logId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('MODIFICAR_OPERACION')")
@@ -92,16 +95,16 @@ public class OperationLogController {
             OperationLog updatedLog = operationLogService.updateOperationLog(logId, request);
             return ResponseEntity.ok(new OperationLogResponse(updatedLog));
         } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo actualizar entrada de bitácora, recurso no encontrado: {}", e.getMessage());
+            log.warn("No se pudo actualizar entrada, recurso no encontrado: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al actualizar entrada de bitácora: {}", e.getMessage());
+            log.warn("Argumento inválido al actualizar entrada: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     /**
-     * Elimina una entrada de la bitácora de operaciones.
+     * Elimina una entrada de la bitácora.
      */
     @DeleteMapping("/api/operationlogs/{logId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ELIMINAR_OPERACION')")
@@ -111,7 +114,7 @@ public class OperationLogController {
             operationLogService.deleteOperationLog(logId);
             return ResponseEntity.noContent().build();
         } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo eliminar entrada de bitácora, recurso no encontrado: {}", e.getMessage());
+            log.warn("No se pudo eliminar entrada, recurso no encontrado: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }

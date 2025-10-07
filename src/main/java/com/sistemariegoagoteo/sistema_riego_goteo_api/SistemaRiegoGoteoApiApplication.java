@@ -12,7 +12,7 @@ import java.util.TimeZone; // Importa esta clase
 @EnableScheduling
 public class SistemaRiegoGoteoApiApplication {
 
-    // AÑADE ESTE MÉTODO
+    
     @PostConstruct
     public void init(){
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));

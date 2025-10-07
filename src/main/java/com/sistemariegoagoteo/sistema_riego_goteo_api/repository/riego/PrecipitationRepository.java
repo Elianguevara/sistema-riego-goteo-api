@@ -28,4 +28,10 @@ public interface PrecipitationRepository extends JpaRepository<Precipitation, In
 
     @Query("SELECT COALESCE(SUM(p.mmRain), 0) FROM Precipitation p WHERE p.farm = :farm AND p.precipitationDate BETWEEN :startDate AND :endDate")
     BigDecimal getAnnualPrecipitation(@Param("farm") Farm farm, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+
+    // --- MÉTODO NUEVO AÑADIDO ---
+    /**
+     * Busca todas las precipitaciones de una finca específica dentro de un rango de fechas.
+     */
+    List<Precipitation> findByFarm_IdAndPrecipitationDateBetween(Integer farmId, Date startDate, Date endDate);
 }

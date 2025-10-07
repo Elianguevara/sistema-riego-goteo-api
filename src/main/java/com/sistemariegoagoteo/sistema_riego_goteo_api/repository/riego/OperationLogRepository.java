@@ -13,8 +13,21 @@ import java.util.List;
  */
 @Repository
 public interface OperationLogRepository extends JpaRepository<OperationLog, Integer> {
+
+    /**
+     * Busca todas las entradas de la bitácora para una finca específica.
+     */
     List<OperationLog> findByFarm(Farm farm);
-    List<OperationLog> findByFarmAndStartDatetimeBetween(Farm farm, Date startDate, Date endDate);
-    List<OperationLog> findByFarmOrderByStartDatetimeDesc(Farm farm);
-    List<OperationLog> findByFarmAndStartDatetimeBetweenOrderByStartDatetimeDesc(Farm farm, Date startDate, Date endDate);
+
+    /**
+     * Busca todas las entradas de la bitácora para una finca en un rango de fechas,
+     * ordenadas por fecha descendente.
+     */
+    List<OperationLog> findByFarmAndOperationDatetimeBetweenOrderByOperationDatetimeDesc(Farm farm, Date startDate, Date endDate);
+
+    /**
+     * Busca todas las entradas de la bitácora para una finca,
+     * ordenadas por fecha descendente.
+     */
+    List<OperationLog> findByFarmOrderByOperationDatetimeDesc(Farm farm);
 }

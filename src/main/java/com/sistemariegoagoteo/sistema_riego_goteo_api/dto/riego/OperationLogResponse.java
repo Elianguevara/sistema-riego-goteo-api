@@ -11,15 +11,16 @@ import java.util.Date;
 @NoArgsConstructor
 public class OperationLogResponse {
     private Integer id;
-
     private Integer farmId;
     private String farmName;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
-    private Date startDatetime;
+    private Date operationDatetime; // <-- CAMBIO DE NOMBRE
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
-    private Date endDatetime;
+    // --- CAMPO AÑADIDO (SUGERENCIA) ---
+    private String operationType;
+
+    private String description;
 
     public OperationLogResponse(OperationLog operationLog) {
         this.id = operationLog.getId();
@@ -27,7 +28,8 @@ public class OperationLogResponse {
             this.farmId = operationLog.getFarm().getId();
             this.farmName = operationLog.getFarm().getName();
         }
-        this.startDatetime = operationLog.getStartDatetime();
-        this.endDatetime = operationLog.getEndDatetime();
+        this.operationDatetime = operationLog.getOperationDatetime();
+        this.operationType = operationLog.getOperationType(); // <-- Asignación
+        this.description = operationLog.getDescription();
     }
 }
