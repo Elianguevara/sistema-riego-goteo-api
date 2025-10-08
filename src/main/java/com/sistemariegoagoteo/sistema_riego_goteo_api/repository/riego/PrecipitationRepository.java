@@ -34,4 +34,9 @@ public interface PrecipitationRepository extends JpaRepository<Precipitation, In
      * Busca todas las precipitaciones de una finca específica dentro de un rango de fechas.
      */
     List<Precipitation> findByFarm_IdAndPrecipitationDateBetween(Integer farmId, Date startDate, Date endDate);
+
+    @Query("SELECT p.precipitationDate, SUM(p.mmEffectiveRain) FROM Precipitation p " +
+            "WHERE p.farm.id = :farmId AND p.precipitationDate BETWEEN :startDate AND :endDate " +
+            "GROUP BY p.precipitationDate")
+    List<Object[]> findDailyEffectiveRainByFarm(@Param("farmId") Integer farmId, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
 }

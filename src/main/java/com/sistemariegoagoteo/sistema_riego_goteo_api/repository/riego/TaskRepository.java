@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
@@ -28,4 +30,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * Cuenta las tareas creadas por un usuario específico que tienen un estado determinado.
      */
     long countByCreatedByAndStatus(User creator, TaskStatus status);
+
+    long countBySector_Farm_IdAndCreatedAtBetween(Integer farmId, Date startDate, Date endDate);
+
+    long countBySector_Farm_IdAndCreatedAtBetweenAndStatus(Integer farmId, Date startDate, Date endDate, TaskStatus status);
 }

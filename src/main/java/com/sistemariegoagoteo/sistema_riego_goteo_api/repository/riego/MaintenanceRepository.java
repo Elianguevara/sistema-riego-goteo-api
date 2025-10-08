@@ -19,4 +19,5 @@ public interface MaintenanceRepository extends JpaRepository<Maintenance, Intege
     List<Maintenance> findByIrrigationEquipmentOrderByDateDesc(IrrigationEquipment irrigationEquipment);
     // Podrías añadir otros métodos de búsqueda si son necesarios, por ejemplo, por rango de fechas:
     // List<Maintenance> findByIrrigationEquipmentAndDateBetweenOrderByDateDesc(IrrigationEquipment irrigationEquipment, Date startDate, Date endDate);
+    long countByIrrigationEquipment_Farm_IdAndDateBetween(Integer farmId, Date startDate, Date endDate);
 }
