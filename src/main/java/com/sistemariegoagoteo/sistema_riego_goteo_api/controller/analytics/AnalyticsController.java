@@ -13,10 +13,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Arrays;
+
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/analytics")
@@ -33,7 +32,8 @@ public class AnalyticsController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate,
             @RequestParam(required = false) List<Integer> sectorIds) {
 
-        List<IrrigationSectorSummaryDTO> summary = analyticsService.getIrrigationSummary(farmId, startDate, endDate, sectorIds);
+        List<IrrigationSectorSummaryDTO> summary = analyticsService.getIrrigationSummary(farmId, startDate, endDate,
+                sectorIds);
         return ResponseEntity.ok(summary);
     }
 
@@ -43,7 +43,8 @@ public class AnalyticsController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        List<IrrigationTimeseriesDTO> timeSeries = analyticsService.getIrrigationTimeseries(sectorId, startDate, endDate);
+        List<IrrigationTimeseriesDTO> timeSeries = analyticsService.getIrrigationTimeseries(sectorId, startDate,
+                endDate);
         return ResponseEntity.ok(timeSeries);
     }
 
@@ -55,7 +56,8 @@ public class AnalyticsController {
             @RequestParam(required = false) List<Integer> sectorIds,
             Pageable pageable) {
 
-        Page<IrrigationRecordDTO> records = analyticsService.getIrrigationRecords(farmId, startDate, endDate, sectorIds, pageable);
+        Page<IrrigationRecordDTO> records = analyticsService.getIrrigationRecords(farmId, startDate, endDate, sectorIds,
+                pageable);
         return ResponseEntity.ok(records);
     }
 }

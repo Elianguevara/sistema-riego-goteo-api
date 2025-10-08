@@ -6,7 +6,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.service.geocoding.GeocodingService; // <-- 1. IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.geocoding.GeocodingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -26,7 +26,7 @@ public class FarmService {
 
     private final FarmRepository farmRepository;
     private final AuditService auditService;
-    private final GeocodingService geocodingService; // <-- 2. INYECTAR EL SERVICIO
+    private final GeocodingService geocodingService;
 
     @Transactional
     public Farm createFarm(FarmRequest farmRequest) {
@@ -38,10 +38,9 @@ public class FarmService {
         farm.setReservoirCapacity(farmRequest.getReservoirCapacity());
         farm.setFarmSize(farmRequest.getFarmSize());
 
-        // --- 3. LÓGICA DE GEOCODIFICACIÓN ---
-        // Si no se proveen coordenadas, se intenta obtenerlas desde la ubicación.
         if (farmRequest.getLatitude() == null || farmRequest.getLongitude() == null) {
-            log.info("No se proveyeron coordenadas para la finca '{}'. Intentando geocodificar...", farmRequest.getName());
+            log.info("No se proveyeron coordenadas para la finca '{}'. Intentando geocodificar...",
+                    farmRequest.getName());
             geocodingService.getCoordinates(farmRequest.getLocation()).ifPresent(coords -> {
                 farm.setLatitude(coords.latitude());
                 farm.setLongitude(coords.longitude());
@@ -51,10 +50,10 @@ public class FarmService {
             farm.setLatitude(farmRequest.getLatitude());
             farm.setLongitude(farmRequest.getLongitude());
         }
-        // ------------------------------------
 
         Farm savedFarm = farmRepository.save(farm);
-        auditService.logChange(currentUser, "CREATE", Farm.class.getSimpleName(), "all", null, "Nueva finca ID: " + savedFarm.getId());
+        auditService.logChange(currentUser, "CREATE", Farm.class.getSimpleName(), "all", null,
+                "Nueva finca ID: " + savedFarm.getId());
         return savedFarm;
     }
 
@@ -63,38 +62,58 @@ public class FarmService {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Farm farm = getFarmById(farmId);
 
-        // ... (lógica de auditoría existente) ...
+        // --- LÓGICA DE AUDITORÍA IMPLEMENTADA ---
+        if (!Objects.equals(farm.getName(), farmRequest.getName())) {
+            auditService.logChange(currentUser, "UPDATE", Farm.class.getSimpleName(), "name", farm.getName(),
+                    farmRequest.getName());
+            farm.setName(farmRequest.getName());
+        }
+        if (farm.getReservoirCapacity().compareTo(farmRequest.getReservoirCapacity()) != 0) {
+            auditService.logChange(currentUser, "UPDATE", Farm.class.getSimpleName(), "reservoirCapacity",
+                    Objects.toString(farm.getReservoirCapacity()),
+                    Objects.toString(farmRequest.getReservoirCapacity()));
+            farm.setReservoirCapacity(farmRequest.getReservoirCapacity());
+        }
+        if (farm.getFarmSize().compareTo(farmRequest.getFarmSize()) != 0) {
+            auditService.logChange(currentUser, "UPDATE", Farm.class.getSimpleName(), "farmSize",
+                    Objects.toString(farm.getFarmSize()), Objects.toString(farmRequest.getFarmSize()));
+            farm.setFarmSize(farmRequest.getFarmSize());
+        }
 
-        farm.setName(farmRequest.getName());
-        farm.setLocation(farmRequest.getLocation());
-        farm.setReservoirCapacity(farmRequest.getReservoirCapacity());
-        farm.setFarmSize(farmRequest.getFarmSize());
-
-        // --- 4. LÓGICA DE GEOCODIFICACIÓN EN LA ACTUALIZACIÓN ---
-        // Si la ubicación cambia, o si no había coordenadas, se recalculan.
         boolean locationChanged = !Objects.equals(farm.getLocation(), farmRequest.getLocation());
+        if (locationChanged) {
+            auditService.logChange(currentUser, "UPDATE", Farm.class.getSimpleName(), "location", farm.getLocation(),
+                    farmRequest.getLocation());
+            farm.setLocation(farmRequest.getLocation());
+        }
+
         if (locationChanged || farm.getLatitude() == null || farm.getLongitude() == null) {
-            log.info("La ubicación de la finca ID {} cambió. Re-geocodificando...", farmId);
+            log.info("La ubicación de la finca ID {} cambió o no tiene coordenadas. Re-geocodificando...", farmId);
             geocodingService.getCoordinates(farmRequest.getLocation()).ifPresentOrElse(
                     coords -> {
-                        farm.setLatitude(coords.latitude());
-                        farm.setLongitude(coords.longitude());
+                        if (!Objects.equals(farm.getLatitude(), coords.latitude())) {
+                            auditService.logChange(currentUser, "UPDATE", Farm.class.getSimpleName(), "latitude",
+                                    Objects.toString(farm.getLatitude()), Objects.toString(coords.latitude()));
+                            farm.setLatitude(coords.latitude());
+                        }
+                        if (!Objects.equals(farm.getLongitude(), coords.longitude())) {
+                            auditService.logChange(currentUser, "UPDATE", Farm.class.getSimpleName(), "longitude",
+                                    Objects.toString(farm.getLongitude()), Objects.toString(coords.longitude()));
+                            farm.setLongitude(coords.longitude());
+                        }
                         log.info("Re-geocodificación exitosa. Lat: {}, Lon: {}", coords.latitude(), coords.longitude());
                     },
                     () -> {
-                        // Si no se encuentra, borramos las coordenadas para evitar inconsistencias
+                        log.warn("No se pudieron obtener nuevas coordenadas para la ubicación: {}",
+                                farmRequest.getLocation());
                         farm.setLatitude(null);
                         farm.setLongitude(null);
-                        log.warn("No se pudieron obtener nuevas coordenadas para la ubicación: {}", farmRequest.getLocation());
-                    }
-            );
+                    });
         }
-        // --------------------------------------------------------
 
         return farmRepository.save(farm);
     }
 
-    // ... (El resto de los métodos de FarmService permanecen igual) ...
     @Transactional(readOnly = true)
     public List<Farm> getAllFarms() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

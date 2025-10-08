@@ -26,7 +26,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -40,59 +40,80 @@ public class IrrigationService {
     private final AuditService auditService;
     private final FarmRepository farmRepository;
 
-    // --- NUEVO MÉTODO PARA CREAR RIEGO (LLAMADO DESDE EL CONTROLLER) ---
     @Transactional
     public Irrigation createIrrigation(IrrigationRequest request) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // 1. Buscar el sector
         Sector sector = sectorRepository.findById(request.getSectorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", request.getSectorId()));
 
-        // 2. Buscar el equipo de riego
         IrrigationEquipment equipment = equipmentRepository.findById(request.getEquipmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id", request.getEquipmentId()));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("IrrigationEquipment", "id", request.getEquipmentId()));
 
-        // 3. Crear el nuevo objeto de riego
+        // --- LÓGICA DE CÁLCULO CENTRALIZADA ---
+        BigDecimal irrigationHours = calculateIrrigationHours(request.getStartDateTime(), request.getEndDateTime());
+        BigDecimal waterAmount = calculateWaterAmount(equipment.getMeasuredFlow(), irrigationHours);
+
         Irrigation irrigation = new Irrigation();
         irrigation.setSector(sector);
         irrigation.setEquipment(equipment);
         irrigation.setStartDatetime(request.getStartDateTime());
         irrigation.setEndDatetime(request.getEndDateTime());
-        irrigation.setWaterAmount(request.getWaterAmount());
-        irrigation.setIrrigationHours(request.getIrrigationHours());
+        irrigation.setIrrigationHours(irrigationHours); // Valor calculado
+        irrigation.setWaterAmount(waterAmount); // Valor calculado
 
-        // Guardar en la base de datos
         Irrigation savedIrrigation = irrigationRepository.save(irrigation);
 
-        // Registrar en la auditoría
-        auditService.logChange(currentUser, "CREATE", Irrigation.class.getSimpleName(), "id", null, savedIrrigation.getId().toString());
+        auditService.logChange(currentUser, "CREATE", Irrigation.class.getSimpleName(), "id", null,
+                savedIrrigation.getId().toString());
 
-        log.info("Usuario {} registró un nuevo riego (ID: {}) para el sector {}", currentUser.getUsername(), savedIrrigation.getId(), sector.getName());
+        log.info("Usuario {} registró un nuevo riego (ID: {}) para el sector {}", currentUser.getUsername(),
+                savedIrrigation.getId(), sector.getName());
         return savedIrrigation;
     }
 
-    // El método 'logIrrigation' anterior se ha reemplazado por 'createIrrigation' para mayor claridad.
-    // Se mantiene la lógica de los otros métodos.
-
     @Transactional
     public Irrigation updateIrrigation(Integer irrigationId, IrrigationRequest request) {
-        // ... (resto de los métodos sin cambios)
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Irrigation irrigation = getIrrigationById(irrigationId);
 
+        IrrigationEquipment newEquipment = equipmentRepository.findById(request.getEquipmentId())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("IrrigationEquipment", "id", request.getEquipmentId()));
+
+        // --- LÓGICA DE CÁLCULO CENTRALIZADA EN LA ACTUALIZACIÓN ---
+        BigDecimal newIrrigationHours = calculateIrrigationHours(request.getStartDateTime(), request.getEndDateTime());
+        BigDecimal newWaterAmount = calculateWaterAmount(newEquipment.getMeasuredFlow(), newIrrigationHours);
+
+        // --- AUDITORÍA COMPLETA Y DETALLADA ---
         if (!Objects.equals(irrigation.getEquipment().getId(), request.getEquipmentId())) {
-            auditService.logChange(currentUser, "UPDATE", Irrigation.class.getSimpleName(), "equipment_id", Objects.toString(irrigation.getEquipment().getId(), null), Objects.toString(request.getEquipmentId(), null));
+            auditService.logChange(currentUser, "UPDATE", Irrigation.class.getSimpleName(), "equipment_id",
+                    Objects.toString(irrigation.getEquipment().getId()), Objects.toString(request.getEquipmentId()));
         }
         if (!Objects.equals(irrigation.getStartDatetime(), request.getStartDateTime())) {
-            auditService.logChange(currentUser, "UPDATE", Irrigation.class.getSimpleName(), "startDatetime", Objects.toString(irrigation.getStartDatetime(), null), Objects.toString(request.getStartDateTime(), null));
+            auditService.logChange(currentUser, "UPDATE", Irrigation.class.getSimpleName(), "startDatetime",
+                    Objects.toString(irrigation.getStartDatetime()), Objects.toString(request.getStartDateTime()));
         }
         if (!Objects.equals(irrigation.getEndDatetime(), request.getEndDateTime())) {
-            auditService.logChange(currentUser, "UPDATE", Irrigation.class.getSimpleName(), "endDatetime", Objects.toString(irrigation.getEndDatetime(), null), Objects.toString(request.getEndDateTime(), null));
+            auditService.logChange(currentUser, "UPDATE", Irrigation.class.getSimpleName(), "endDatetime",
+                    Objects.toString(irrigation.getEndDatetime()), Objects.toString(request.getEndDateTime()));
+        }
+        if (irrigation.getIrrigationHours().compareTo(newIrrigationHours) != 0) {
+            auditService.logChange(currentUser, "UPDATE", Irrigation.class.getSimpleName(), "irrigationHours",
+                    Objects.toString(irrigation.getIrrigationHours()), Objects.toString(newIrrigationHours));
+        }
+        if (!Objects.equals(irrigation.getWaterAmount(), newWaterAmount)) {
+            auditService.logChange(currentUser, "UPDATE", Irrigation.class.getSimpleName(), "waterAmount",
+                    Objects.toString(irrigation.getWaterAmount()), Objects.toString(newWaterAmount));
         }
 
+        // --- ACTUALIZACIÓN DE TODOS LOS CAMPOS ---
+        irrigation.setEquipment(newEquipment);
         irrigation.setStartDatetime(request.getStartDateTime());
         irrigation.setEndDatetime(request.getEndDateTime());
+        irrigation.setIrrigationHours(newIrrigationHours); // Valor recalculado
+        irrigation.setWaterAmount(newWaterAmount); // Valor recalculado
 
         log.info("Actualizando registro de riego ID {}", irrigationId);
         return irrigationRepository.save(irrigation);
@@ -102,9 +123,8 @@ public class IrrigationService {
     public void deleteIrrigation(Integer irrigationId) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Irrigation irrigation = getIrrigationById(irrigationId);
-
-        auditService.logChange(currentUser, "DELETE", Irrigation.class.getSimpleName(), "id", irrigation.getId().toString(), null);
-
+        auditService.logChange(currentUser, "DELETE", Irrigation.class.getSimpleName(), "id",
+                irrigation.getId().toString(), null);
         log.warn("Eliminando registro de riego ID {}", irrigationId);
         irrigationRepository.delete(irrigation);
     }
@@ -112,7 +132,8 @@ public class IrrigationService {
     @Transactional(readOnly = true)
     public List<Irrigation> getIrrigationsBySector(Integer farmId, Integer sectorId) {
         Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
         return irrigationRepository.findBySectorOrderByStartDatetimeDesc(sector);
     }
 
@@ -122,21 +143,23 @@ public class IrrigationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Irrigation", "id", irrigationId));
     }
 
-    // ... (métodos privados y getMonthlyIrrigationData sin cambios)
     private BigDecimal calculateIrrigationHours(Date start, Date end) {
         if (start == null || end == null || end.before(start)) {
-            return BigDecimal.ZERO;
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
         long diffInMillis = end.getTime() - start.getTime();
-        double hours = (double) diffInMillis / TimeUnit.HOURS.toMillis(1);
+        double hours = (double) diffInMillis / (1000 * 60 * 60); // Conversión explícita a horas
         return BigDecimal.valueOf(hours).setScale(2, RoundingMode.HALF_UP);
     }
 
-    private BigDecimal calculateWaterAmount(BigDecimal flowRateLitersPerHour, BigDecimal hours) {
-        if (flowRateLitersPerHour == null || hours == null || flowRateLitersPerHour.compareTo(BigDecimal.ZERO) <= 0 || hours.compareTo(BigDecimal.ZERO) <= 0) {
-            return null;
+    private BigDecimal calculateWaterAmount(BigDecimal flowRateCubicMetersPerHour, BigDecimal hours) {
+        if (flowRateCubicMetersPerHour == null || hours == null
+                || flowRateCubicMetersPerHour.compareTo(BigDecimal.ZERO) <= 0
+                || hours.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
-        return flowRateLitersPerHour.multiply(hours).setScale(2, RoundingMode.HALF_UP);
+        // Asumiendo que 'measuredFlow' está en m³/hora, la fórmula es directa.
+        return flowRateCubicMetersPerHour.multiply(hours).setScale(2, RoundingMode.HALF_UP);
     }
 
     @Transactional(readOnly = true)
@@ -156,7 +179,8 @@ public class IrrigationService {
             return new ArrayList<>();
         }
 
-        List<Irrigation> irrigations = irrigationRepository.findBySectorInAndStartDatetimeBetween(sectors, startOfMonth, endOfMonth);
+        List<Irrigation> irrigations = irrigationRepository.findBySectorInAndStartDatetimeBetween(sectors, startOfMonth,
+                endOfMonth);
 
         Map<Sector, List<Irrigation>> irrigationsBySector = irrigations.stream()
                 .collect(Collectors.groupingBy(Irrigation::getSector));
@@ -170,9 +194,9 @@ public class IrrigationService {
 
             Map<Integer, List<IrrigationCalendarEventDTO>> dailyIrrigations = sectorIrrigations.stream()
                     .collect(Collectors.groupingBy(
-                            irrigation -> irrigation.getStartDatetime().toInstant().atZone(ZoneId.systemDefault()).getDayOfMonth(),
-                            Collectors.mapping(IrrigationCalendarEventDTO::new, Collectors.toList())
-                    ));
+                            irrigation -> irrigation.getStartDatetime().toInstant().atZone(ZoneId.systemDefault())
+                                    .getDayOfMonth(),
+                            Collectors.mapping(IrrigationCalendarEventDTO::new, Collectors.toList())));
 
             sectorDTO.setDailyIrrigations(dailyIrrigations);
             return sectorDTO;

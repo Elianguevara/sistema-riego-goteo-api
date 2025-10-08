@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// ... (código existente) ...
-
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -33,10 +31,10 @@ public class DashboardService {
         Map<String, Long> equipmentStatusCount = equipmentRepository.countByStatus().stream()
                 .collect(Collectors.toMap(
                         row -> (String) row[0],
-                        row -> (Long) row[1]
-                ));
+                        row -> (Long) row[1]));
 
         // Se actualiza el constructor para incluir el nuevo campo
-        return new DashboardKpiResponse(totalUsers, totalFarms, totalSectors, activeSectors, activeAlerts, equipmentStatusCount);
+        return new DashboardKpiResponse(totalUsers, totalFarms, totalSectors, activeSectors, activeAlerts,
+                equipmentStatusCount);
     }
 }

@@ -37,7 +37,8 @@ public class SectorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
 
         sectorRepository.findByNameAndFarm(sectorRequest.getName(), farm).ifPresent(s -> {
-            throw new IllegalArgumentException("Ya existe un sector con el nombre '" + sectorRequest.getName() + "' en la finca '" + farm.getName() + "'.");
+            throw new IllegalArgumentException("Ya existe un sector con el nombre '" + sectorRequest.getName()
+                    + "' en la finca '" + farm.getName() + "'.");
         });
 
         Sector sector = new Sector();
@@ -46,20 +47,24 @@ public class SectorService {
 
         if (sectorRequest.getEquipmentId() != null) {
             IrrigationEquipment equipment = irrigationEquipmentRepository.findById(sectorRequest.getEquipmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id", sectorRequest.getEquipmentId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id",
+                            sectorRequest.getEquipmentId()));
             if (!equipment.getFarm().getId().equals(farmId)) {
-                throw new IllegalArgumentException("El equipo de irrigación seleccionado no pertenece a la finca especificada.");
+                throw new IllegalArgumentException(
+                        "El equipo de irrigación seleccionado no pertenece a la finca especificada.");
             }
             sector.setEquipment(equipment);
         }
-        
+
         Sector savedSector = sectorRepository.save(sector);
-        
+
         // --- AUDITORÍA DE CREACIÓN ---
-        auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "name", null, savedSector.getName());
+        auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "name", null,
+                savedSector.getName());
         auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "farm_id", null, farmId.toString());
         if (savedSector.getEquipment() != null) {
-            auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "equipment_id", null, savedSector.getEquipment().getId().toString());
+            auditService.logChange(currentUser, "CREATE", Sector.class.getSimpleName(), "equipment_id", null,
+                    savedSector.getEquipment().getId().toString());
         }
 
         log.info("Creando sector '{}' para la finca ID {}", sector.getName(), farmId);
@@ -73,31 +78,36 @@ public class SectorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
 
         Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca " + farmId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca " + farmId));
 
         // --- AUDITORÍA DE ACTUALIZACIÓN ---
         if (!Objects.equals(sector.getName(), sectorRequest.getName())) {
-            auditService.logChange(currentUser, "UPDATE", Sector.class.getSimpleName(), "name", sector.getName(), sectorRequest.getName());
+            auditService.logChange(currentUser, "UPDATE", Sector.class.getSimpleName(), "name", sector.getName(),
+                    sectorRequest.getName());
         }
 
         Integer oldEquipmentId = (sector.getEquipment() != null) ? sector.getEquipment().getId() : null;
         if (!Objects.equals(oldEquipmentId, sectorRequest.getEquipmentId())) {
-             auditService.logChange(currentUser, "UPDATE", Sector.class.getSimpleName(), "equipment_id", Objects.toString(oldEquipmentId, null), Objects.toString(sectorRequest.getEquipmentId(), null));
+            auditService.logChange(currentUser, "UPDATE", Sector.class.getSimpleName(), "equipment_id",
+                    Objects.toString(oldEquipmentId, null), Objects.toString(sectorRequest.getEquipmentId(), null));
         }
 
         sector.setName(sectorRequest.getName());
 
         if (sectorRequest.getEquipmentId() != null) {
             IrrigationEquipment equipment = irrigationEquipmentRepository.findById(sectorRequest.getEquipmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id", sectorRequest.getEquipmentId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id",
+                            sectorRequest.getEquipmentId()));
             if (!equipment.getFarm().getId().equals(farmId)) {
-                throw new IllegalArgumentException("El equipo de irrigación seleccionado no pertenece a la finca especificada.");
+                throw new IllegalArgumentException(
+                        "El equipo de irrigación seleccionado no pertenece a la finca especificada.");
             }
             sector.setEquipment(equipment);
         } else {
             sector.setEquipment(null);
         }
-        
+
         log.info("Actualizando sector ID {} para la finca ID {}", sectorId, farmId);
         return sectorRepository.save(sector);
     }
@@ -106,17 +116,19 @@ public class SectorService {
     public void deleteSector(Integer farmId, Integer sectorId) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca " + farmId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca " + farmId));
 
         // --- AUDITORÍA DE BORRADO ---
-        auditService.logChange(currentUser, "DELETE", Sector.class.getSimpleName(), "id", sector.getId().toString(), null);
-        
+        auditService.logChange(currentUser, "DELETE", Sector.class.getSimpleName(), "id", sector.getId().toString(),
+                null);
+
         log.warn("Eliminando sector ID {} de la finca ID {}", sectorId, farmId);
         sectorRepository.delete(sector);
     }
-    
+
     // --- MÉTODOS GET (SIN CAMBIOS) ---
-    
+
     @Transactional(readOnly = true)
     public List<Sector> getSectorsByFarmId(Integer farmId) {
         if (!farmRepository.existsById(farmId)) {
@@ -128,7 +140,8 @@ public class SectorService {
     @Transactional(readOnly = true)
     public Sector getSectorByIdAndFarmId(Integer farmId, Integer sectorId) {
         return sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca " + farmId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca " + farmId));
     }
 
     /**
