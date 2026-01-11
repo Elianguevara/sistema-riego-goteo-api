@@ -40,6 +40,9 @@ public class IrrigationService {
     private final AuditService auditService;
     private final FarmRepository farmRepository;
 
+    // --- CONSTANTE AÑADIDA PARA CONVERSIÓN (1 m³ = 10 hL) ---
+    private static final BigDecimal METERS_CUBIC_TO_HECTOLITERS = new BigDecimal("10");
+
     @Transactional
     public Irrigation createIrrigation(IrrigationRequest request) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -53,6 +56,7 @@ public class IrrigationService {
 
         // --- LÓGICA DE CÁLCULO CENTRALIZADA ---
         BigDecimal irrigationHours = calculateIrrigationHours(request.getStartDateTime(), request.getEndDateTime());
+        // El cálculo ahora es en Hectolitros
         BigDecimal waterAmount = calculateWaterAmount(equipment.getMeasuredFlow(), irrigationHours);
 
         Irrigation irrigation = new Irrigation();
@@ -61,7 +65,7 @@ public class IrrigationService {
         irrigation.setStartDatetime(request.getStartDateTime());
         irrigation.setEndDatetime(request.getEndDateTime());
         irrigation.setIrrigationHours(irrigationHours); // Valor calculado
-        irrigation.setWaterAmount(waterAmount); // Valor calculado
+        irrigation.setWaterAmount(waterAmount); // Valor calculado (en hL)
 
         Irrigation savedIrrigation = irrigationRepository.save(irrigation);
 
@@ -84,6 +88,7 @@ public class IrrigationService {
 
         // --- LÓGICA DE CÁLCULO CENTRALIZADA EN LA ACTUALIZACIÓN ---
         BigDecimal newIrrigationHours = calculateIrrigationHours(request.getStartDateTime(), request.getEndDateTime());
+        // El cálculo ahora es en Hectolitros
         BigDecimal newWaterAmount = calculateWaterAmount(newEquipment.getMeasuredFlow(), newIrrigationHours);
 
         // --- AUDITORÍA COMPLETA Y DETALLADA ---
@@ -113,7 +118,7 @@ public class IrrigationService {
         irrigation.setStartDatetime(request.getStartDateTime());
         irrigation.setEndDatetime(request.getEndDateTime());
         irrigation.setIrrigationHours(newIrrigationHours); // Valor recalculado
-        irrigation.setWaterAmount(newWaterAmount); // Valor recalculado
+        irrigation.setWaterAmount(newWaterAmount); // Valor recalculado (en hL)
 
         log.info("Actualizando registro de riego ID {}", irrigationId);
         return irrigationRepository.save(irrigation);
@@ -152,14 +157,19 @@ public class IrrigationService {
         return BigDecimal.valueOf(hours).setScale(2, RoundingMode.HALF_UP);
     }
 
+    // --- MÉTODO MODIFICADO PARA CALCULAR HECTOLITROS ---
     private BigDecimal calculateWaterAmount(BigDecimal flowRateCubicMetersPerHour, BigDecimal hours) {
         if (flowRateCubicMetersPerHour == null || hours == null
                 || flowRateCubicMetersPerHour.compareTo(BigDecimal.ZERO) <= 0
                 || hours.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
-        // Asumiendo que 'measuredFlow' está en m³/hora, la fórmula es directa.
-        return flowRateCubicMetersPerHour.multiply(hours).setScale(2, RoundingMode.HALF_UP);
+
+        // 1. Calcular el volumen en Metros Cúbicos (asumiendo que flowRateCubicMetersPerHour está en m³/h)
+        BigDecimal volumeInCubicMeters = flowRateCubicMetersPerHour.multiply(hours);
+
+        // 2. Convertir m³ a Hectolitros (1 m³ = 10 hL) y redondear
+        return volumeInCubicMeters.multiply(METERS_CUBIC_TO_HECTOLITERS).setScale(2, RoundingMode.HALF_UP);
     }
 
     @Transactional(readOnly = true)
