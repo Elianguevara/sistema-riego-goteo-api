@@ -18,7 +18,7 @@ public class OperationTypeController {
      * Esta lista centralizada permite que todos los clientes (web, móvil)
      * muestren las mismas opciones consistentes.
      *
-     * @return Una lista de strings con los tipos de operación.
+     * @return Una lista de strings con los tipos de operación estandarizados.
      */
     @GetMapping("/operation-types")
     @PreAuthorize("isAuthenticated()") // Solo para usuarios autenticados

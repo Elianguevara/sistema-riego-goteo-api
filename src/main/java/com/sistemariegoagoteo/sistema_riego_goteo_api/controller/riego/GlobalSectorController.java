@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/sectors") // Ruta base para endpoints de sectores globales
+@RequestMapping("/api/sectors")
 @RequiredArgsConstructor
 @Slf4j
 public class GlobalSectorController {
@@ -23,9 +23,6 @@ public class GlobalSectorController {
 
     /**
      * Obtiene una lista de todos los sectores activos del sistema.
-     * Un sector se considera activo si su equipo de riego asociado tiene el estado 'Operativo'.
-     *
-     * @return ResponseEntity con la lista de sectores activos.
      */
     @GetMapping("/active")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")

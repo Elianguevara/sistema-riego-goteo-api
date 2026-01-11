@@ -18,13 +18,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/dashboard/analyst")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ANALISTA')") // Proteger todo el controlador para analistas
+@PreAuthorize("hasRole('ANALISTA')")
 public class AnalystDashboardController {
 
     private final AnalystDashboardService analystDashboardService;
 
     /**
-     * Endpoint para la vista de mapa. Devuelve una lista de fincas con su estado.
+     * Endpoint para la vista de mapa.
+     * Devuelve una lista de fincas con su estado actual (riego activo, alertas, etc.).
+     *
+     * @return Lista de estados de fincas.
      */
     @GetMapping("/farm-statuses")
     public ResponseEntity<List<FarmStatusDTO>> getFarmStatuses() {
@@ -32,7 +35,13 @@ public class AnalystDashboardController {
     }
 
     /**
-     * Endpoint para el balance hídrico de una finca en un rango de fechas.
+     * Endpoint para obtener el balance hídrico de una finca en un rango de fechas.
+     * Útil para gráficos de evolución.
+     *
+     * @param farmId ID de la finca.
+     * @param startDate Fecha de inicio.
+     * @param endDate Fecha de fin.
+     * @return Lista de datos de balance hídrico.
      */
     @GetMapping("/water-balance/{farmId}")
     public ResponseEntity<List<WaterBalanceDTO>> getWaterBalance(
@@ -43,7 +52,9 @@ public class AnalystDashboardController {
     }
 
     /**
-     * Endpoint para el resumen de tareas creadas por el analista.
+     * Endpoint para el resumen de tareas creadas por el analista actual.
+     *
+     * @return Resumen de tareas (pendientes, completadas, etc.).
      */
     @GetMapping("/task-summary")
     public ResponseEntity<TaskSummaryDTO> getTaskSummary() {

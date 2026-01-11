@@ -16,8 +16,14 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
+    /**
+     * Obtiene los KPIs generales del sistema para el dashboard principal.
+     * Accesible para Administradores y Analistas.
+     *
+     * @return Objeto con los indicadores clave de rendimiento.
+     */
     @GetMapping("/kpis")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA')") // Permitir acceso a Admin y Analista
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA')")
     public ResponseEntity<DashboardKpiResponse> getDashboardKpis() {
         DashboardKpiResponse kpis = dashboardService.getDashboardKpis();
         return ResponseEntity.ok(kpis);

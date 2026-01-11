@@ -2,7 +2,6 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.ReservoirTurnRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.ReservoirTurnResponse;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.ReservoirTurn;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnService;
 import jakarta.validation.Valid;
@@ -17,7 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping() // Ruta base flexible
+@RequestMapping()
 @RequiredArgsConstructor
 @Slf4j
 public class ReservoirTurnController {
@@ -26,93 +25,76 @@ public class ReservoirTurnController {
 
     /**
      * Crea un nuevo turno de embalse para una fuente de agua específica de una finca.
+     * * @param farmId ID de la finca.
+     * @param waterSourceId ID de la fuente de agua (embalse).
+     * @param request Datos del turno.
+     * @return El turno creado.
      */
     @PostMapping("/api/farms/{farmId}/watersources/{waterSourceId}/reservoirturns")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_TURNOS_EMBALSE')")
-    public ResponseEntity<?> createReservoirTurn(@PathVariable Integer farmId,
-                                                 @PathVariable Integer waterSourceId,
-                                                 @Valid @RequestBody ReservoirTurnRequest request) {
+    public ResponseEntity<ReservoirTurnResponse> createReservoirTurn(@PathVariable Integer farmId,
+                                                                     @PathVariable Integer waterSourceId,
+                                                                     @Valid @RequestBody ReservoirTurnRequest request) {
         log.info("Solicitud POST para crear turno de embalse para fuente ID {} en finca ID {}", waterSourceId, farmId);
-        try {
-            ReservoirTurn newTurn = reservoirTurnService.createReservoirTurn(farmId, waterSourceId, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ReservoirTurnResponse(newTurn));
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo crear turno, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al crear turno: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        ReservoirTurn newTurn = reservoirTurnService.createReservoirTurn(farmId, waterSourceId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ReservoirTurnResponse(newTurn));
     }
 
     /**
      * Obtiene todos los turnos de embalse para una fuente de agua específica de una finca.
+     * * @param farmId ID de la finca.
+     * @param waterSourceId ID de la fuente de agua.
+     * @return Lista de turnos asignados a esa fuente.
      */
     @GetMapping("/api/farms/{farmId}/watersources/{waterSourceId}/reservoirturns")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_TURNOS_EMBALSE')")
-    public ResponseEntity<?> getReservoirTurnsByWaterSource(@PathVariable Integer farmId, @PathVariable Integer waterSourceId) {
+    public ResponseEntity<List<ReservoirTurnResponse>> getReservoirTurnsByWaterSource(@PathVariable Integer farmId, @PathVariable Integer waterSourceId) {
         log.info("Solicitud GET para obtener turnos de embalse para fuente ID {} en finca ID {}", waterSourceId, farmId);
-        try {
-            List<ReservoirTurnResponse> responses = reservoirTurnService.getReservoirTurnsByWaterSource(farmId, waterSourceId)
-                    .stream()
-                    .map(ReservoirTurnResponse::new)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(responses);
-        } catch (ResourceNotFoundException e) {
-            log.warn("Recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        List<ReservoirTurnResponse> responses = reservoirTurnService.getReservoirTurnsByWaterSource(farmId, waterSourceId)
+                .stream()
+                .map(ReservoirTurnResponse::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     /**
      * Obtiene un turno de embalse específico por su ID global.
+     * * @param turnId ID del turno.
+     * @return Detalle del turno.
      */
     @GetMapping("/api/reservoirturns/{turnId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_TURNOS_EMBALSE')")
-    public ResponseEntity<?> getReservoirTurnById(@PathVariable Integer turnId) {
+    public ResponseEntity<ReservoirTurnResponse> getReservoirTurnById(@PathVariable Integer turnId) {
         log.info("Solicitud GET para obtener turno de embalse ID: {}", turnId);
-        try {
-            ReservoirTurn turn = reservoirTurnService.getReservoirTurnById(turnId);
-            return ResponseEntity.ok(new ReservoirTurnResponse(turn));
-        } catch (ResourceNotFoundException e) {
-            log.warn("Recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        ReservoirTurn turn = reservoirTurnService.getReservoirTurnById(turnId);
+        return ResponseEntity.ok(new ReservoirTurnResponse(turn));
     }
 
     /**
      * Actualiza un turno de embalse existente.
+     * * @param turnId ID del turno a actualizar.
+     * @param request Nuevos datos del turno.
+     * @return Turno actualizado.
      */
     @PutMapping("/api/reservoirturns/{turnId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_TURNOS_EMBALSE')")
-    public ResponseEntity<?> updateReservoirTurn(@PathVariable Integer turnId,
-                                                 @Valid @RequestBody ReservoirTurnRequest request) {
+    public ResponseEntity<ReservoirTurnResponse> updateReservoirTurn(@PathVariable Integer turnId,
+                                                                     @Valid @RequestBody ReservoirTurnRequest request) {
         log.info("Solicitud PUT para actualizar turno de embalse ID {}", turnId);
-        try {
-            ReservoirTurn updatedTurn = reservoirTurnService.updateReservoirTurn(turnId, request);
-            return ResponseEntity.ok(new ReservoirTurnResponse(updatedTurn));
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo actualizar turno, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al actualizar turno: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        ReservoirTurn updatedTurn = reservoirTurnService.updateReservoirTurn(turnId, request);
+        return ResponseEntity.ok(new ReservoirTurnResponse(updatedTurn));
     }
 
     /**
      * Elimina un turno de embalse.
+     * * @param turnId ID del turno a eliminar.
+     * @return 204 No Content.
      */
     @DeleteMapping("/api/reservoirturns/{turnId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_TURNOS_EMBALSE')")
-    public ResponseEntity<?> deleteReservoirTurn(@PathVariable Integer turnId) {
+    public ResponseEntity<Void> deleteReservoirTurn(@PathVariable Integer turnId) {
         log.info("Solicitud DELETE para eliminar turno de embalse ID: {}", turnId);
-        try {
-            reservoirTurnService.deleteReservoirTurn(turnId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo eliminar turno, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        reservoirTurnService.deleteReservoirTurn(turnId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -28,20 +28,13 @@ public class SectorController {
      * Crea un nuevo sector para una finca específica.
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_SECTORES')") // Ajusta los permisos
-    public ResponseEntity<?> createSector(@PathVariable Integer farmId,
-                                          @Valid @RequestBody SectorRequest sectorRequest) {
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_SECTORES')")
+    public ResponseEntity<SectorResponse> createSector(@PathVariable Integer farmId,
+                                                       @Valid @RequestBody SectorRequest sectorRequest) {
         log.info("Solicitud POST para crear sector en finca ID {}: {}", farmId, sectorRequest.getName());
-        try {
-            Sector newSector = sectorService.createSector(farmId, sectorRequest);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new SectorResponse(newSector));
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo crear sector, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al crear sector: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        // El try-catch desaparece. Si falla, GlobalExceptionHandler lo atrapa.
+        Sector newSector = sectorService.createSector(farmId, sectorRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SectorResponse(newSector));
     }
 
     /**
@@ -49,17 +42,12 @@ public class SectorController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_SECTORES')")
-    public ResponseEntity<?> getSectorsByFarmId(@PathVariable Integer farmId) {
+    public ResponseEntity<List<SectorResponse>> getSectorsByFarmId(@PathVariable Integer farmId) {
         log.info("Solicitud GET para obtener sectores de la finca ID: {}", farmId);
-        try {
-            List<SectorResponse> sectorResponses = sectorService.getSectorsByFarmId(farmId).stream()
-                    .map(SectorResponse::new)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(sectorResponses);
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo obtener sectores, finca no encontrada: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        List<SectorResponse> sectorResponses = sectorService.getSectorsByFarmId(farmId).stream()
+                .map(SectorResponse::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(sectorResponses);
     }
 
     /**
@@ -67,15 +55,10 @@ public class SectorController {
      */
     @GetMapping("/{sectorId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_SECTORES')")
-    public ResponseEntity<?> getSectorById(@PathVariable Integer farmId, @PathVariable Integer sectorId) {
+    public ResponseEntity<SectorResponse> getSectorById(@PathVariable Integer farmId, @PathVariable Integer sectorId) {
         log.info("Solicitud GET para obtener sector ID {} de la finca ID: {}", sectorId, farmId);
-        try {
-            Sector sector = sectorService.getSectorByIdAndFarmId(farmId, sectorId);
-            return ResponseEntity.ok(new SectorResponse(sector));
-        } catch (ResourceNotFoundException e) {
-            log.warn("Recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        Sector sector = sectorService.getSectorByIdAndFarmId(farmId, sectorId);
+        return ResponseEntity.ok(new SectorResponse(sector));
     }
 
     /**
@@ -83,20 +66,12 @@ public class SectorController {
      */
     @PutMapping("/{sectorId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_SECTORES')")
-    public ResponseEntity<?> updateSector(@PathVariable Integer farmId,
-                                          @PathVariable Integer sectorId,
-                                          @Valid @RequestBody SectorRequest sectorRequest) {
+    public ResponseEntity<SectorResponse> updateSector(@PathVariable Integer farmId,
+                                                       @PathVariable Integer sectorId,
+                                                       @Valid @RequestBody SectorRequest sectorRequest) {
         log.info("Solicitud PUT para actualizar sector ID {} en finca ID {}: {}", sectorId, farmId, sectorRequest.getName());
-        try {
-            Sector updatedSector = sectorService.updateSector(farmId, sectorId, sectorRequest);
-            return ResponseEntity.ok(new SectorResponse(updatedSector));
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo actualizar sector, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al actualizar sector: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Sector updatedSector = sectorService.updateSector(farmId, sectorId, sectorRequest);
+        return ResponseEntity.ok(new SectorResponse(updatedSector));
     }
 
     /**
@@ -104,15 +79,9 @@ public class SectorController {
      */
     @DeleteMapping("/{sectorId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_SECTORES')")
-    public ResponseEntity<?> deleteSector(@PathVariable Integer farmId, @PathVariable Integer sectorId) {
+    public ResponseEntity<Void> deleteSector(@PathVariable Integer farmId, @PathVariable Integer sectorId) {
         log.info("Solicitud DELETE para eliminar sector ID {} de la finca ID: {}", sectorId, farmId);
-        try {
-            sectorService.deleteSector(farmId, sectorId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo eliminar sector, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
-        // Podrías añadir catch para DeletionNotAllowedException si lo implementas en el servicio
+        sectorService.deleteSector(farmId, sectorId);
+        return ResponseEntity.noContent().build();
     }
 }

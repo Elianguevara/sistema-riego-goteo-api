@@ -26,6 +26,22 @@ public class ReportController {
     private final ReportDataService reportDataService;
     private final ReportFileService reportFileService;
 
+    /**
+     * Genera y descarga reportes en formato PDF o CSV.
+     * Soporta múltiples tipos de reporte (Balance Hídrico, Bitácora, Resumen).
+     *
+     * @param reportType Tipo de reporte (WATER_BALANCE, OPERATIONS_LOG, PERIOD_SUMMARY).
+     * @param farmId ID de la finca.
+     * @param startDate Fecha inicio.
+     * @param endDate Fecha fin.
+     * @param format Formato de salida (PDF o CSV).
+     * @param sectorIds (Opcional) IDs de sectores para filtrar.
+     * @param operationType (Opcional) Tipo de operación para filtrar bitácora.
+     * @param userId (Opcional) ID de usuario para filtrar bitácora.
+     * @return Recurso binario con el archivo generado.
+     * @throws IOException Si ocurre un error de entrada/salida al generar el archivo.
+     * @throws DocumentException Si ocurre un error al generar el PDF.
+     */
     @GetMapping("/generate")
     public ResponseEntity<Resource> generateReport(
             @RequestParam String reportType,
@@ -41,8 +57,10 @@ public class ReportController {
         String filename;
         String contentType;
 
+        // Selección de lógica según el tipo de reporte
+        // Si reportType no es válido, lanzamos IllegalArgumentException (manejada globalmente)
         switch (reportType.toUpperCase()) {
-            case "WATER_BALANCE":
+            case "WATER_BALANCE" -> {
                 var waterData = reportDataService.getWaterBalanceData(farmId, startDate, endDate, sectorIds);
                 if ("CSV".equalsIgnoreCase(format)) {
                     reportContent = reportFileService.generateWaterBalanceCsv(waterData);
@@ -53,9 +71,8 @@ public class ReportController {
                     filename = "Balance_Hidrico.pdf";
                     contentType = MediaType.APPLICATION_PDF_VALUE;
                 }
-                break;
-
-            case "OPERATIONS_LOG":
+            }
+            case "OPERATIONS_LOG" -> {
                 var logData = reportDataService.getOperationsLogData(farmId, startDate, endDate, operationType, userId);
                 if ("CSV".equalsIgnoreCase(format)) {
                     reportContent = reportFileService.generateOperationsLogCsv(logData);
@@ -66,9 +83,8 @@ public class ReportController {
                     filename = "Bitacora_Operaciones.pdf";
                     contentType = MediaType.APPLICATION_PDF_VALUE;
                 }
-                break;
-
-            case "PERIOD_SUMMARY":
+            }
+            case "PERIOD_SUMMARY" -> {
                 var summaryData = reportDataService.getPeriodSummaryData(farmId, startDate, endDate);
                 if ("CSV".equalsIgnoreCase(format)) {
                     reportContent = reportFileService.generatePeriodSummaryCsv(summaryData);
@@ -79,10 +95,8 @@ public class ReportController {
                     filename = "Resumen_Periodo.pdf";
                     contentType = MediaType.APPLICATION_PDF_VALUE;
                 }
-                break;
-
-            default:
-                throw new IllegalArgumentException("Tipo de reporte no válido: " + reportType);
+            }
+            default -> throw new IllegalArgumentException("Tipo de reporte no válido: " + reportType);
         }
 
         ByteArrayResource resource = new ByteArrayResource(reportContent);

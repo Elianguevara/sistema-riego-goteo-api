@@ -17,6 +17,11 @@ public class AdminDashboardController {
 
     private final UserService userService;
 
+    /**
+     * Obtiene estadísticas generales de los usuarios para el dashboard de administración.
+     *
+     * @return Objeto con conteo de usuarios por rol y estado.
+     */
     @GetMapping("/user-stats")
     public ResponseEntity<UserStatsResponse> getUserStatistics() {
         UserStatsResponse stats = userService.getUserStats();

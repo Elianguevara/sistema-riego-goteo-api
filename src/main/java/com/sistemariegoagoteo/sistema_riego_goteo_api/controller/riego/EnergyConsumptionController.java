@@ -2,7 +2,6 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.EnergyConsumptionRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.EnergyConsumptionResponse;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.EnergyConsumption;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.EnergyConsumptionService;
 import jakarta.validation.Valid;
@@ -29,19 +28,13 @@ public class EnergyConsumptionController {
      */
     @PostMapping("/api/farms/{farmId}/energyconsumptions")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('REGISTRAR_CONSUMO_ENERGIA')")
-    public ResponseEntity<?> createEnergyConsumption(@PathVariable Integer farmId,
-                                                     @Valid @RequestBody EnergyConsumptionRequest request) {
+    public ResponseEntity<EnergyConsumptionResponse> createEnergyConsumption(@PathVariable Integer farmId,
+                                                                             @Valid @RequestBody EnergyConsumptionRequest request) {
         log.info("Solicitud POST para registrar consumo de energía para finca ID {}", farmId);
-        try {
-            EnergyConsumption newConsumption = energyConsumptionService.createEnergyConsumption(farmId, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(new EnergyConsumptionResponse(newConsumption));
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo registrar consumo, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al registrar consumo: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        // El servicio lanzará ResourceNotFoundException o IllegalArgumentException si algo falla,
+        // y el GlobalExceptionHandler se encargará de responder con el código HTTP correcto.
+        EnergyConsumption newConsumption = energyConsumptionService.createEnergyConsumption(farmId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new EnergyConsumptionResponse(newConsumption));
     }
 
     /**
@@ -49,18 +42,13 @@ public class EnergyConsumptionController {
      */
     @GetMapping("/api/farms/{farmId}/energyconsumptions")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_CONSUMO_ENERGIA')")
-    public ResponseEntity<?> getEnergyConsumptionsByFarm(@PathVariable Integer farmId) {
+    public ResponseEntity<List<EnergyConsumptionResponse>> getEnergyConsumptionsByFarm(@PathVariable Integer farmId) {
         log.info("Solicitud GET para obtener consumos de energía de la finca ID {}", farmId);
-        try {
-            List<EnergyConsumptionResponse> responses = energyConsumptionService.getEnergyConsumptionsByFarm(farmId)
-                    .stream()
-                    .map(EnergyConsumptionResponse::new)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(responses);
-        } catch (ResourceNotFoundException e) {
-            log.warn("Recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        List<EnergyConsumptionResponse> responses = energyConsumptionService.getEnergyConsumptionsByFarm(farmId)
+                .stream()
+                .map(EnergyConsumptionResponse::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     /**
@@ -68,16 +56,10 @@ public class EnergyConsumptionController {
      */
     @GetMapping("/api/energyconsumptions/{consumptionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_CONSUMO_ENERGIA')")
-    public ResponseEntity<?> getEnergyConsumptionById(@PathVariable Integer consumptionId) {
+    public ResponseEntity<EnergyConsumptionResponse> getEnergyConsumptionById(@PathVariable Integer consumptionId) {
         log.info("Solicitud GET para obtener consumo de energía ID: {}", consumptionId);
-        try {
-            EnergyConsumption consumption = energyConsumptionService.getEnergyConsumptionById(consumptionId);
-            // Podrías añadir validación de acceso a la finca si es necesario
-            return ResponseEntity.ok(new EnergyConsumptionResponse(consumption));
-        } catch (ResourceNotFoundException e) {
-            log.warn("Recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        EnergyConsumption consumption = energyConsumptionService.getEnergyConsumptionById(consumptionId);
+        return ResponseEntity.ok(new EnergyConsumptionResponse(consumption));
     }
 
     /**
@@ -85,19 +67,11 @@ public class EnergyConsumptionController {
      */
     @PutMapping("/api/energyconsumptions/{consumptionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('MODIFICAR_CONSUMO_ENERGIA')")
-    public ResponseEntity<?> updateEnergyConsumption(@PathVariable Integer consumptionId,
-                                                     @Valid @RequestBody EnergyConsumptionRequest request) {
+    public ResponseEntity<EnergyConsumptionResponse> updateEnergyConsumption(@PathVariable Integer consumptionId,
+                                                                             @Valid @RequestBody EnergyConsumptionRequest request) {
         log.info("Solicitud PUT para actualizar consumo de energía ID {}", consumptionId);
-        try {
-            EnergyConsumption updatedConsumption = energyConsumptionService.updateEnergyConsumption(consumptionId, request);
-            return ResponseEntity.ok(new EnergyConsumptionResponse(updatedConsumption));
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo actualizar consumo, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            log.warn("Argumento inválido al actualizar consumo: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        EnergyConsumption updatedConsumption = energyConsumptionService.updateEnergyConsumption(consumptionId, request);
+        return ResponseEntity.ok(new EnergyConsumptionResponse(updatedConsumption));
     }
 
     /**
@@ -105,14 +79,9 @@ public class EnergyConsumptionController {
      */
     @DeleteMapping("/api/energyconsumptions/{consumptionId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ELIMINAR_CONSUMO_ENERGIA')")
-    public ResponseEntity<?> deleteEnergyConsumption(@PathVariable Integer consumptionId) {
+    public ResponseEntity<Void> deleteEnergyConsumption(@PathVariable Integer consumptionId) {
         log.info("Solicitud DELETE para eliminar consumo de energía ID: {}", consumptionId);
-        try {
-            energyConsumptionService.deleteEnergyConsumption(consumptionId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo eliminar consumo, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        energyConsumptionService.deleteEnergyConsumption(consumptionId);
+        return ResponseEntity.noContent().build();
     }
 }

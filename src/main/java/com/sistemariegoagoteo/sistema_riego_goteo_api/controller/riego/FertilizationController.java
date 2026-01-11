@@ -2,7 +2,6 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.FertilizationRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.FertilizationResponse;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Fertilization;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.FertilizationService;
 import jakarta.validation.Valid;
@@ -26,60 +25,36 @@ public class FertilizationController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ANALISTA', 'OPERARIO') or hasAuthority('CREAR_FERTILIZACION')")
-    public ResponseEntity<?> createFertilization(@Valid @RequestBody FertilizationRequest request) {
-        // ... (sin cambios aquí)
+    public ResponseEntity<FertilizationResponse> createFertilization(@Valid @RequestBody FertilizationRequest request) {
         log.info("Solicitud POST para crear una nueva fertilización en el sector ID {}", request.getSectorId());
-        try {
-            Fertilization newFertilization = fertilizationService.createFertilization(request);
-            return new ResponseEntity<>(new FertilizationResponse(newFertilization), HttpStatus.CREATED);
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo crear la fertilización, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        Fertilization newFertilization = fertilizationService.createFertilization(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new FertilizationResponse(newFertilization));
     }
 
     @GetMapping("/sector/{sectorId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
-    public ResponseEntity<?> getFertilizationsBySector(@PathVariable Integer sectorId) {
+    public ResponseEntity<List<FertilizationResponse>> getFertilizationsBySector(@PathVariable Integer sectorId) {
         log.info("Solicitud GET para obtener fertilizaciones del sector ID {}", sectorId);
-        try {
-            // --- LLAMADA AL SERVICIO CORREGIDA (solo 1 argumento) ---
-            List<FertilizationResponse> responses = fertilizationService.getFertilizationsBySector(sectorId).stream()
-                    .map(FertilizationResponse::new)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(responses);
-        } catch (ResourceNotFoundException e) {
-            log.warn("Recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        List<FertilizationResponse> responses = fertilizationService.getFertilizationsBySector(sectorId).stream()
+                .map(FertilizationResponse::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     @PutMapping("/{fertilizationId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('MODIFICAR_FERTILIZACION')")
-    public ResponseEntity<?> updateFertilization(@PathVariable Integer fertilizationId,
-                                                 @Valid @RequestBody FertilizationRequest request) {
-        // ... (sin cambios aquí)
+    public ResponseEntity<FertilizationResponse> updateFertilization(@PathVariable Integer fertilizationId,
+                                                                     @Valid @RequestBody FertilizationRequest request) {
         log.info("Solicitud PUT para actualizar fertilización ID {}", fertilizationId);
-        try {
-            Fertilization updatedFertilization = fertilizationService.updateFertilization(fertilizationId, request);
-            return ResponseEntity.ok(new FertilizationResponse(updatedFertilization));
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo actualizar fertilización, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        Fertilization updatedFertilization = fertilizationService.updateFertilization(fertilizationId, request);
+        return ResponseEntity.ok(new FertilizationResponse(updatedFertilization));
     }
 
     @DeleteMapping("/{fertilizationId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ELIMINAR_FERTILIZACION')")
-    public ResponseEntity<?> deleteFertilization(@PathVariable Integer fertilizationId) {
-        // ... (sin cambios aquí)
+    public ResponseEntity<Void> deleteFertilization(@PathVariable Integer fertilizationId) {
         log.info("Solicitud DELETE para eliminar fertilización ID: {}", fertilizationId);
-        try {
-            fertilizationService.deleteFertilization(fertilizationId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo eliminar fertilización, recurso no encontrado: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+        fertilizationService.deleteFertilization(fertilizationId);
+        return ResponseEntity.noContent().build();
     }
 }

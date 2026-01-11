@@ -24,6 +24,13 @@ public class TaskController {
 
     private final TaskService taskService;
 
+    /**
+     * Crea una nueva tarea asignada a un operario.
+     * Acceso restringido a Analistas.
+     *
+     * @param request Datos de la tarea (descripción, fecha límite, asignado a).
+     * @return La tarea creada.
+     */
     @PostMapping
     @PreAuthorize("hasRole('ANALISTA')")
     public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest request) {
@@ -31,6 +38,14 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new TaskResponse(createdTask));
     }
 
+    /**
+     * Actualiza el estado de una tarea (ej. PENDIENTE -> COMPLETADA).
+     * Acceso permitido a Operarios.
+     *
+     * @param taskId ID de la tarea.
+     * @param request Nuevo estado y comentarios opcionales.
+     * @return La tarea actualizada.
+     */
     @PutMapping("/{taskId}/status")
     @PreAuthorize("hasRole('OPERARIO')")
     public ResponseEntity<TaskResponse> updateTaskStatus(@PathVariable Long taskId, @Valid @RequestBody TaskStatusUpdateRequest request) {
@@ -38,6 +53,12 @@ public class TaskController {
         return ResponseEntity.ok(new TaskResponse(updatedTask));
     }
 
+    /**
+     * Obtiene las tareas asignadas al usuario actualmente autenticado (Operario).
+     *
+     * @param pageable Paginación (página y tamaño).
+     * @return Página de tareas asignadas.
+     */
     @GetMapping("/assigned-to-me")
     @PreAuthorize("hasRole('OPERARIO')")
     public ResponseEntity<Page<TaskResponse>> getMyAssignedTasks(@PageableDefault(size = 20) Pageable pageable) {
@@ -46,6 +67,12 @@ public class TaskController {
         return ResponseEntity.ok(tasks);
     }
 
+    /**
+     * Obtiene las tareas creadas por el usuario actualmente autenticado (Analista).
+     *
+     * @param pageable Paginación (página y tamaño).
+     * @return Página de tareas creadas.
+     */
     @GetMapping("/created-by-me")
     @PreAuthorize("hasRole('ANALISTA')")
     public ResponseEntity<Page<TaskResponse>> getMyCreatedTasks(@PageableDefault(size = 20) Pageable pageable) {

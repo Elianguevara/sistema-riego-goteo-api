@@ -1,7 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.weather;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.weather.WeatherResponse;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.FarmService;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.weather.WeatherService;
@@ -23,21 +22,25 @@ public class WeatherController {
     private final WeatherService weatherService;
     private final FarmService farmService;
 
+    /**
+     * Obtiene el clima actual para una finca específica.
+     * Utiliza las coordenadas de la finca para consultar un servicio externo de clima.
+     *
+     * @param farmId ID de la finca.
+     * @return Datos del clima actual.
+     */
     @GetMapping("/current")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
-    public ResponseEntity<?> getCurrentWeatherForFarm(@PathVariable Integer farmId) {
+    public ResponseEntity<WeatherResponse> getCurrentWeatherForFarm(@PathVariable Integer farmId) {
         log.info("Solicitud GET para obtener el clima actual de la finca ID {}", farmId);
-        try {
-            Farm farm = farmService.getFarmById(farmId);
-            WeatherResponse weatherResponse = weatherService.getCurrentWeather(farm);
-            return ResponseEntity.ok(weatherResponse);
-        } catch (ResourceNotFoundException e) {
-            log.warn("No se pudo obtener el clima. Causa: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            log.error("Error al procesar la solicitud de clima para la finca ID {}: {}", farmId, e.getMessage());
-            // Devolvemos un 409 Conflict si la finca no tiene coordenadas, por ejemplo.
-            return ResponseEntity.status(409).body(e.getMessage());
-        }
+        
+        // Si la finca no existe, farmService lanza ResourceNotFoundException (manejado globalmente)
+        Farm farm = farmService.getFarmById(farmId);
+        
+        // Si falla la API externa o faltan coordenadas, weatherService lanza la excepción apropiada
+        // (asegúrate de que GlobalExceptionHandler capture IllegalStateException o una personalizada)
+        WeatherResponse weatherResponse = weatherService.getCurrentWeather(farm);
+        
+        return ResponseEntity.ok(weatherResponse);
     }
 }

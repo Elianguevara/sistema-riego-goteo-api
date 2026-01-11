@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map; // <-- IMPORTAR MAP
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -20,6 +20,12 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    /**
+     * Obtiene las notificaciones del usuario autenticado de forma paginada.
+     *
+     * @param pageable Configuración de paginación (por defecto ordena por fecha descendente).
+     * @return Página de notificaciones.
+     */
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getUserNotifications(
             @PageableDefault(size = 15, sort = "createdAt,desc") Pageable pageable) {
@@ -28,6 +34,12 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
+    /**
+     * Marca una notificación específica como leída.
+     *
+     * @param id ID de la notificación.
+     * @return 204 No Content.
+     */
     @PutMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -35,12 +47,16 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- NUEVO ENDPOINT AÑADIDO ---
+    /**
+     * Obtiene el conteo de notificaciones no leídas.
+     * Útil para mostrar badges en la interfaz de usuario.
+     *
+     * @return Mapa con la clave "unreadCount".
+     */
     @GetMapping("/unread-count")
-    public ResponseEntity<?> getUnreadNotificationsCount() {
+    public ResponseEntity<Map<String, Long>> getUnreadNotificationsCount() {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long count = notificationService.getUnreadNotificationsCount(currentUser);
-        // Retornamos un Map que Jackson convertirá a {"unreadCount": count}
         return ResponseEntity.ok(Map.of("unreadCount", count));
     }
 }
