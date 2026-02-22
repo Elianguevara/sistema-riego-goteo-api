@@ -8,23 +8,27 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoun
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Irrigation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEquipment;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // <-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService; // <-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * Servicio optimizado para la sincronización de datos desde dispositivos móviles.
+ * Implementa procesamiento por lotes para minimizar las transacciones de base de datos.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -34,78 +38,161 @@ public class MobileSyncService {
     private final UserRepository userRepository;
     private final SectorRepository sectorRepository;
     private final IrrigationEquipmentRepository equipmentRepository;
-    private final AuditService auditService; // <-- INYECTAR SERVICIO
+    private final AuditService auditService;
 
+    // Constantes para cálculos de precisión
+    private static final BigDecimal METERS_CUBIC_TO_HECTOLITERS = new BigDecimal("10");
+    private static final BigDecimal MILLIS_IN_HOUR = new BigDecimal("3600000");
+
+    /**
+     * Procesa un lote de registros de riego enviados desde el móvil.
+     * Utiliza optimización de consultas (Batch Fetching) para resolver el problema N+1.
+     */
     @Transactional
     public IrrigationSyncResponse processIrrigationBatch(String username, IrrigationSyncBatchRequest batchRequest) {
+        // 1. Obtener usuario
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
 
+        List<IrrigationSyncItem> items = batchRequest.getIrrigations();
         List<IrrigationSyncResultItem> results = new ArrayList<>();
-        int successfulItems = 0;
-        int failedItems = 0;
 
-        for (IrrigationSyncItem item : batchRequest.getIrrigations()) {
-            IrrigationSyncResultItem resultItem = new IrrigationSyncResultItem();
-            resultItem.setLocalId(item.getLocalId());
-            try {
-                Sector sector = sectorRepository.findById(item.getSectorId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", item.getSectorId()));
-
-                IrrigationEquipment equipment = equipmentRepository.findById(item.getEquipmentId())
-                        .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id", item.getEquipmentId()));
-
-                if (!equipment.getFarm().getId().equals(sector.getFarm().getId())) {
-                    throw new IllegalArgumentException("El equipo de irrigación ID " + equipment.getId() +
-                            " no pertenece a la finca ID " + sector.getFarm().getId() + " del sector.");
-                }
-                
-                // ... (resto de validaciones)
-
-                Optional<Irrigation> existingIrrigationOpt = irrigationRepository.findByLocalMobileId(item.getLocalId());
-
-                Irrigation irrigationToSave;
-                String actionTaken;
-
-                if (existingIrrigationOpt.isPresent()) {
-                    irrigationToSave = existingIrrigationOpt.get();
-                    log.info("Item con localId {} ya existe (serverId {}). Actualizando.", item.getLocalId(), irrigationToSave.getId());
-                    actionTaken = "UPDATE";
-                } else {
-                    irrigationToSave = new Irrigation();
-                    irrigationToSave.setLocalMobileId(item.getLocalId());
-                    actionTaken = "CREATE";
-                    log.info("Item con localId {} no existe. Creando nuevo registro.", item.getLocalId());
-                }
-                
-                // ... (lógica para poblar la entidad irrigationToSave)
-                irrigationToSave.setSector(sector);
-                irrigationToSave.setEquipment(equipment);
-                irrigationToSave.setStartDatetime(item.getStartDatetime());
-                irrigationToSave.setEndDatetime(item.getEndDatetime());
-                // ... (cálculos)
-
-                Irrigation savedIrrigation = irrigationRepository.save(irrigationToSave);
-
-                // --- AUDITORÍA DE SINCRONIZACIÓN MÓVIL ---
-                auditService.logChange(currentUser, actionTaken, Irrigation.class.getSimpleName(), "id", 
-                    actionTaken.equals("UPDATE") ? savedIrrigation.getId().toString() : null, 
-                    savedIrrigation.getId().toString());
-                
-                resultItem.setServerId(savedIrrigation.getId());
-                resultItem.setSuccess(true);
-                resultItem.setMessage(actionTaken + " y sincronizado correctamente.");
-                successfulItems++;
-
-            } catch (Exception e) {
-                // ... (manejo de errores)
-                failedItems++;
-            }
-            results.add(resultItem);
+        if (items.isEmpty()) {
+            return new IrrigationSyncResponse(0, 0, 0, results);
         }
 
-        return new IrrigationSyncResponse(batchRequest.getIrrigations().size(), successfulItems, failedItems, results);
+        // 2. PRE-CARGA DE DATOS (Bulk Fetching)
+        Set<Integer> sectorIds = items.stream().map(IrrigationSyncItem::getSectorId).collect(Collectors.toSet());
+        Set<Integer> equipmentIds = items.stream().map(IrrigationSyncItem::getEquipmentId).collect(Collectors.toSet());
+
+        // 3. MAPEO EN MEMORIA
+        Map<Integer, Sector> sectorMap = sectorRepository.findAllById(sectorIds).stream()
+                .collect(Collectors.toMap(Sector::getId, Function.identity()));
+
+        Map<Integer, IrrigationEquipment> equipmentMap = equipmentRepository.findAllById(equipmentIds).stream()
+                .collect(Collectors.toMap(IrrigationEquipment::getId, Function.identity()));
+
+        List<Irrigation> entitiesToSave = new ArrayList<>();
+        Map<String, IrrigationSyncResultItem> resultMap = new HashMap<>();
+
+        // CORRECCIÓN: Usamos un mapa auxiliar para recordar la acción (CREATE/UPDATE) de cada item
+        Map<String, String> actionMap = new HashMap<>();
+
+        // 4. PROCESAMIENTO EN MEMORIA
+        for (IrrigationSyncItem item : items) {
+            IrrigationSyncResultItem resultItem = new IrrigationSyncResultItem();
+            resultItem.setLocalId(item.getLocalId());
+
+            try {
+                // Validación rápida
+                Sector sector = sectorMap.get(item.getSectorId());
+                if (sector == null) {
+                    throw new ResourceNotFoundException("Sector", "id", item.getSectorId());
+                }
+
+                IrrigationEquipment equipment = equipmentMap.get(item.getEquipmentId());
+                if (equipment == null) {
+                    throw new ResourceNotFoundException("IrrigationEquipment", "id", item.getEquipmentId());
+                }
+
+                if (!equipment.getFarm().getId().equals(sector.getFarm().getId())) {
+                    throw new IllegalArgumentException("El equipo " + equipment.getId() + " no pertenece a la finca del sector.");
+                }
+
+                // Buscar existencia
+                Optional<Irrigation> existingOpt = irrigationRepository.findByLocalMobileId(item.getLocalId());
+
+                Irrigation irrigation;
+                String action;
+
+                if (existingOpt.isPresent()) {
+                    irrigation = existingOpt.get();
+                    action = "UPDATE";
+                } else {
+                    irrigation = new Irrigation();
+                    irrigation.setLocalMobileId(item.getLocalId());
+                    action = "CREATE";
+                }
+
+                // Guardamos la acción en el mapa auxiliar para usarla después
+                actionMap.put(item.getLocalId(), action);
+
+                // Actualizar campos
+                irrigation.setSector(sector);
+                irrigation.setEquipment(equipment);
+                irrigation.setStartDatetime(item.getStartDatetime());
+                irrigation.setEndDatetime(item.getEndDatetime());
+
+                // Cálculos precisos
+                BigDecimal hours = calculateIrrigationHours(item.getStartDatetime(), item.getEndDatetime());
+                BigDecimal water = calculateWaterAmount(equipment.getMeasuredFlow(), hours);
+
+                irrigation.setIrrigationHours(hours);
+                irrigation.setWaterAmount(water);
+
+                entitiesToSave.add(irrigation);
+
+                resultItem.setSuccess(true);
+                resultItem.setMessage(action + " procesado correctamente.");
+                resultItem.setServerId(null);
+
+            } catch (Exception e) {
+                log.error("Error procesando item móvil {}: {}", item.getLocalId(), e.getMessage());
+                resultItem.setSuccess(false);
+                resultItem.setMessage("Error: " + e.getMessage());
+            }
+
+            resultMap.put(item.getLocalId(), resultItem);
+        }
+
+        // 5. GUARDADO MASIVO (Batch Save)
+        List<Irrigation> savedEntities = new ArrayList<>();
+        if (!entitiesToSave.isEmpty()) {
+            savedEntities = irrigationRepository.saveAll(entitiesToSave);
+            log.info("Se han guardado/actualizado {} registros de riego en lote.", savedEntities.size());
+        }
+
+        // 6. POST-PROCESAMIENTO (Auditoría y IDs finales)
+        int successfulItems = 0;
+        int failedItems = items.size() - savedEntities.size();
+
+        for (Irrigation saved : savedEntities) {
+            IrrigationSyncResultItem res = resultMap.get(saved.getLocalMobileId());
+            if (res != null) {
+                res.setServerId(saved.getId());
+                successfulItems++;
+
+                // CORRECCIÓN: Recuperamos la acción del mapa en lugar de usar getCreatedAt()
+                String action = actionMap.getOrDefault(saved.getLocalMobileId(), "UPDATE");
+
+                // Si es UPDATE, el "valor anterior" (ID) es el mismo; si es CREATE, es null.
+                String oldValue = "UPDATE".equals(action) ? saved.getId().toString() : null;
+
+                auditService.logChange(currentUser, "SYNC_" + action, Irrigation.class.getSimpleName(),
+                        "id", oldValue, saved.getId().toString());
+            }
+        }
+
+        List<IrrigationSyncResultItem> finalResults = new ArrayList<>(resultMap.values());
+
+        return new IrrigationSyncResponse(items.size(), successfulItems, failedItems, finalResults);
     }
 
-    
+    // --- Métodos de cálculo precisos ---
+
+    private BigDecimal calculateIrrigationHours(Date start, Date end) {
+        if (start == null || end == null || end.before(start)) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        long diffInMillis = end.getTime() - start.getTime();
+        return BigDecimal.valueOf(diffInMillis).divide(MILLIS_IN_HOUR, 2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal calculateWaterAmount(BigDecimal flowRate, BigDecimal hours) {
+        if (flowRate == null || hours == null || flowRate.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        BigDecimal volumeM3 = flowRate.multiply(hours);
+        return volumeM3.multiply(METERS_CUBIC_TO_HECTOLITERS).setScale(2, RoundingMode.HALF_UP);
+    }
 }

@@ -12,14 +12,17 @@ import java.util.TimeZone; // Importa esta clase
 @EnableScheduling
 public class SistemaRiegoGoteoApiApplication {
 
-    
-    @PostConstruct
-    public void init(){
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-    }
+
+
 
     public static void main(String[] args) {
         SpringApplication.run(SistemaRiegoGoteoApiApplication.class, args);
+    }
+
+    @PostConstruct
+    public void init() {
+        // Establece la zona horaria por defecto a la de Argentina
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Argentina/Buenos_Aires"));
     }
 
     @Bean

@@ -12,14 +12,11 @@ import java.util.Date;
 public class PrecipitationRequest {
 
     @NotNull(message = "La fecha de la precipitación es requerida.")
-    // --- AQUÍ LA CORRECCIÓN ---
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "UTC")
+    // CORRECCIÓN: Cambiamos UTC por la zona horaria de Argentina
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "America/Argentina/Buenos_Aires")
     private Date precipitationDate;
 
     @NotNull(message = "Los milímetros de lluvia total son requeridos.")
     @PositiveOrZero(message = "Los milímetros de lluvia deben ser un valor positivo o cero.")
-    private BigDecimal mmRain; // Lluvia total
-
-    // farmId vendrá de la ruta del controlador
-    // mmEffectiveRain se calculará en el servicio
+    private BigDecimal mmRain;
 }
