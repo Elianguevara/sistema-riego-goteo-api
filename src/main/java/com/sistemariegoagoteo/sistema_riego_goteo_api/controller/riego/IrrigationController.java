@@ -2,7 +2,6 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.IrrigationRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.IrrigationResponse;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Irrigation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.IrrigationService;
 import jakarta.validation.Valid;
@@ -52,7 +51,8 @@ public class IrrigationController {
 
     @GetMapping("/api/farms/{farmId}/sectors/{sectorId}/irrigations")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_RIEGO')")
-    public ResponseEntity<List<IrrigationResponse>> getIrrigationsBySector(@PathVariable Integer farmId, @PathVariable Integer sectorId) {
+    public ResponseEntity<List<IrrigationResponse>> getIrrigationsBySector(@PathVariable Integer farmId,
+            @PathVariable Integer sectorId) {
         log.info("Solicitud GET para obtener riegos del sector ID {} en finca ID {}", sectorId, farmId);
         List<IrrigationResponse> responses = irrigationService.getIrrigationsBySector(farmId, sectorId).stream()
                 .map(IrrigationResponse::new)
@@ -71,8 +71,9 @@ public class IrrigationController {
     @PutMapping("/api/irrigations/{irrigationId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('MODIFICAR_RIEGO')")
     public ResponseEntity<IrrigationResponse> updateIrrigation(@PathVariable Integer irrigationId,
-                                              @Valid @RequestBody IrrigationRequest request) {
-        log.info("Solicitud PUT para actualizar riego ID {}: inicio {}, fin {}", irrigationId, request.getStartDateTime(), request.getEndDateTime());
+            @Valid @RequestBody IrrigationRequest request) {
+        log.info("Solicitud PUT para actualizar riego ID {}: inicio {}, fin {}", irrigationId,
+                request.getStartDateTime(), request.getEndDateTime());
         Irrigation updatedIrrigation = irrigationService.updateIrrigation(irrigationId, request);
         return ResponseEntity.ok(new IrrigationResponse(updatedIrrigation));
     }

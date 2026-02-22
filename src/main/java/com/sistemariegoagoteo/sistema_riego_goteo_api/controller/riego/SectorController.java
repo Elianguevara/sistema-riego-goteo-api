@@ -2,7 +2,6 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.SectorRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.SectorResponse;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.SectorService;
 import jakarta.validation.Valid;
@@ -30,7 +29,7 @@ public class SectorController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_SECTORES')")
     public ResponseEntity<SectorResponse> createSector(@PathVariable Integer farmId,
-                                                       @Valid @RequestBody SectorRequest sectorRequest) {
+            @Valid @RequestBody SectorRequest sectorRequest) {
         log.info("Solicitud POST para crear sector en finca ID {}: {}", farmId, sectorRequest.getName());
         // El try-catch desaparece. Si falla, GlobalExceptionHandler lo atrapa.
         Sector newSector = sectorService.createSector(farmId, sectorRequest);
@@ -67,9 +66,10 @@ public class SectorController {
     @PutMapping("/{sectorId}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('GESTIONAR_SECTORES')")
     public ResponseEntity<SectorResponse> updateSector(@PathVariable Integer farmId,
-                                                       @PathVariable Integer sectorId,
-                                                       @Valid @RequestBody SectorRequest sectorRequest) {
-        log.info("Solicitud PUT para actualizar sector ID {} en finca ID {}: {}", sectorId, farmId, sectorRequest.getName());
+            @PathVariable Integer sectorId,
+            @Valid @RequestBody SectorRequest sectorRequest) {
+        log.info("Solicitud PUT para actualizar sector ID {} en finca ID {}: {}", sectorId, farmId,
+                sectorRequest.getName());
         Sector updatedSector = sectorService.updateSector(farmId, sectorId, sectorRequest);
         return ResponseEntity.ok(new SectorResponse(updatedSector));
     }
