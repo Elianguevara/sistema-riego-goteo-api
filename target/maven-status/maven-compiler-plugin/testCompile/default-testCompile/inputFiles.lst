@@ -1,1 +1,8 @@
-C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sitemaderiegoagoteo\sistema_riego_goteo_api\SistemaRiegoGoteoApiApplicationTests.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sistemariegoagoteo\sistema_riego_goteo_api\controller\auth\AuthControllerTest.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sistemariegoagoteo\sistema_riego_goteo_api\controller\riego\FarmControllerTest.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\auth\AuthServiceTest.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\auth\JwtServiceTest.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\riego\FarmServiceTest.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\riego\IrrigationServiceTest.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\riego\SectorServiceTest.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\test\java\com\sistemariegoagoteo\sistema_riego_goteo_api\SistemaRiegoGoteoApiApplicationTests.java
