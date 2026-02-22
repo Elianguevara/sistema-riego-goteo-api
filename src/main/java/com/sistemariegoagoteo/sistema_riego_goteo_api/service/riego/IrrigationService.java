@@ -28,28 +28,54 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Servicio encargado de la lógica de negocio relacionada con los registros de riego.
- * Maneja la creación, cálculo de volúmenes, auditoría y recuperación de datos históricos.
+ * Servicio encargado de la lógica de negocio relacionada con los registros de
+ * riego.
+ * Maneja la creación, cálculo de volúmenes, auditoría y recuperación de datos
+ * históricos.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class IrrigationService {
 
+    /**
+     * Repositorio para la gestión de registros de riego.
+     */
     private final IrrigationRepository irrigationRepository;
+
+    /**
+     * Repositorio para la gestión de sectores.
+     */
     private final SectorRepository sectorRepository;
+
+    /**
+     * Repositorio para la gestión de equipos de riego.
+     */
     private final IrrigationEquipmentRepository equipmentRepository;
+
+    /**
+     * Servicio de auditoría para registrar cambios en los riegos.
+     */
     private final AuditService auditService;
+
+    /**
+     * Repositorio para la gestión de fincas.
+     */
     private final FarmRepository farmRepository;
 
-    // Factor de conversión: 1 Metro Cúbico (m³) = 10 Hectolitros (hL)
+    /**
+     * Factor de conversión de Metros Cúbicos a Hectolitros (1 m³ = 10 hL).
+     */
     private static final BigDecimal METERS_CUBIC_TO_HECTOLITERS = new BigDecimal("10");
-    
-    // Constante para milisegundos en una hora (1000 * 60 * 60)
+
+    /**
+     * Constante para la cantidad de milisegundos en una hora.
+     */
     private static final BigDecimal MILLIS_IN_HOUR = new BigDecimal("3600000");
 
     /**
-     * Crea un nuevo registro de riego calculando automáticamente la duración y el consumo de agua.
+     * Crea un nuevo registro de riego calculando automáticamente la duración y el
+     * consumo de agua.
      *
      * @param request DTO con los datos del riego (fechas, sector, equipo).
      * @return La entidad Irrigation persistida.
@@ -63,11 +89,12 @@ public class IrrigationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", request.getSectorId()));
 
         IrrigationEquipment equipment = equipmentRepository.findById(request.getEquipmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id", request.getEquipmentId()));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("IrrigationEquipment", "id", request.getEquipmentId()));
 
         // 1. Calcular duración precisa
         BigDecimal irrigationHours = calculateIrrigationHours(request.getStartDateTime(), request.getEndDateTime());
-        
+
         // 2. Calcular volumen de agua (en Hectolitros) basado en el flujo del equipo
         BigDecimal waterAmount = calculateWaterAmount(equipment.getMeasuredFlow(), irrigationHours);
 
@@ -77,21 +104,24 @@ public class IrrigationService {
         irrigation.setStartDatetime(request.getStartDateTime());
         irrigation.setEndDatetime(request.getEndDateTime());
         irrigation.setIrrigationHours(irrigationHours);
-        irrigation.setWaterAmount(waterAmount); 
+        irrigation.setWaterAmount(waterAmount);
 
         Irrigation savedIrrigation = irrigationRepository.save(irrigation);
 
-        auditService.logChange(currentUser, "CREATE", Irrigation.class.getSimpleName(), "id", null, savedIrrigation.getId().toString());
+        auditService.logChange(currentUser, "CREATE", Irrigation.class.getSimpleName(), "id", null,
+                savedIrrigation.getId().toString());
 
-        log.info("Usuario {} registró un nuevo riego (ID: {}) para el sector {}", currentUser.getUsername(), savedIrrigation.getId(), sector.getName());
+        log.info("Usuario {} registró un nuevo riego (ID: {}) para el sector {}", currentUser.getUsername(),
+                savedIrrigation.getId(), sector.getName());
         return savedIrrigation;
     }
 
     /**
-     * Actualiza un registro de riego existente, recalculando los valores derivados si cambian las fechas o el equipo.
+     * Actualiza un registro de riego existente, recalculando los valores derivados
+     * si cambian las fechas o el equipo.
      *
      * @param irrigationId ID del riego a actualizar.
-     * @param request DTO con los nuevos datos.
+     * @param request      DTO con los nuevos datos.
      * @return La entidad Irrigation actualizada.
      */
     @Transactional
@@ -100,7 +130,8 @@ public class IrrigationService {
         Irrigation irrigation = getIrrigationById(irrigationId);
 
         IrrigationEquipment newEquipment = equipmentRepository.findById(request.getEquipmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("IrrigationEquipment", "id", request.getEquipmentId()));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("IrrigationEquipment", "id", request.getEquipmentId()));
 
         // Recálculo de valores
         BigDecimal newIrrigationHours = calculateIrrigationHours(request.getStartDateTime(), request.getEndDateTime());
@@ -129,9 +160,10 @@ public class IrrigationService {
     public void deleteIrrigation(Integer irrigationId) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Irrigation irrigation = getIrrigationById(irrigationId);
-        
-        auditService.logChange(currentUser, "DELETE", Irrigation.class.getSimpleName(), "id", irrigation.getId().toString(), null);
-        
+
+        auditService.logChange(currentUser, "DELETE", Irrigation.class.getSimpleName(), "id",
+                irrigation.getId().toString(), null);
+
         log.warn("Eliminando registro de riego ID {}", irrigationId);
         irrigationRepository.delete(irrigation);
     }
@@ -142,7 +174,8 @@ public class IrrigationService {
     @Transactional(readOnly = true)
     public List<Irrigation> getIrrigationsBySector(Integer farmId, Integer sectorId) {
         Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca ID " + farmId));
         return irrigationRepository.findBySectorOrderByStartDatetimeDesc(sector);
     }
 
@@ -160,27 +193,28 @@ public class IrrigationService {
      * Evita el uso de 'double' para prevenir errores de punto flotante.
      *
      * @param start Fecha de inicio.
-     * @param end Fecha de fin.
+     * @param end   Fecha de fin.
      * @return Horas con 2 decimales de precisión.
      */
     private BigDecimal calculateIrrigationHours(Date start, Date end) {
         if (start == null || end == null || end.before(start)) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
-        
+
         long diffInMillis = end.getTime() - start.getTime();
         BigDecimal diff = BigDecimal.valueOf(diffInMillis);
-        
+
         // División precisa: (milisegundos / 3600000)
         return diff.divide(MILLIS_IN_HOUR, 2, RoundingMode.HALF_UP);
     }
 
     /**
      * Calcula la cantidad de agua consumida.
-     * Asume que el caudal (flowRate) está en m³/h y convierte el resultado a Hectolitros.
+     * Asume que el caudal (flowRate) está en m³/h y convierte el resultado a
+     * Hectolitros.
      *
      * @param flowRateCubicMetersPerHour Caudal del equipo.
-     * @param hours Horas de funcionamiento.
+     * @param hours                      Horas de funcionamiento.
      * @return Volumen en Hectolitros (hL).
      */
     private BigDecimal calculateWaterAmount(BigDecimal flowRateCubicMetersPerHour, BigDecimal hours) {
@@ -198,7 +232,8 @@ public class IrrigationService {
     }
 
     /**
-     * Obtiene los datos de riego mensual agrupados por sector y día para la vista de calendario.
+     * Obtiene los datos de riego mensual agrupados por sector y día para la vista
+     * de calendario.
      */
     @Transactional(readOnly = true)
     public List<SectorMonthlyIrrigationDTO> getMonthlyIrrigationData(Integer farmId, int year, int month) {
@@ -217,7 +252,8 @@ public class IrrigationService {
         }
 
         // Obtener riegos en una sola consulta
-        List<Irrigation> irrigations = irrigationRepository.findBySectorInAndStartDatetimeBetween(sectors, startOfMonth, endOfMonth);
+        List<Irrigation> irrigations = irrigationRepository.findBySectorInAndStartDatetimeBetween(sectors, startOfMonth,
+                endOfMonth);
 
         // Agrupar riegos por sector
         Map<Sector, List<Irrigation>> irrigationsBySector = irrigations.stream()
@@ -244,8 +280,8 @@ public class IrrigationService {
 
     // --- Métodos Auxiliares Privados ---
 
-    private void logAndAuditChanges(User user, Irrigation irrigation, IrrigationRequest request, 
-                                    IrrigationEquipment newEquipment, BigDecimal newHours, BigDecimal newWater) {
+    private void logAndAuditChanges(User user, Irrigation irrigation, IrrigationRequest request,
+            IrrigationEquipment newEquipment, BigDecimal newHours, BigDecimal newWater) {
         if (!Objects.equals(irrigation.getEquipment().getId(), request.getEquipmentId())) {
             auditService.logChange(user, "UPDATE", Irrigation.class.getSimpleName(), "equipment_id",
                     String.valueOf(irrigation.getEquipment().getId()), String.valueOf(request.getEquipmentId()));

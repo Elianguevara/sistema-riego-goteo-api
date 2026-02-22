@@ -14,10 +14,24 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manejador global de excepciones para la API.
+ * <p>
+ * Centraliza el tratamiento de errores y excepciones no capturadas,
+ * devolviendo respuestas estructuradas en formato {@link ErrorResponse}
+ * con los códigos HTTP correspondientes.
+ * </p>
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 1. Manejo de ResourceNotFoundException (404)
+    /**
+     * Maneja excepciones de recurso no encontrado (404).
+     *
+     * @param ex      La excepción capturada.
+     * @param request Información de la solicitud web.
+     * @return {@link ResponseEntity} con el error 404.
+     */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex,
             WebRequest request) {
@@ -30,7 +44,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
-    // 2. Manejo de IllegalArgumentException (400)
+    /**
+     * Maneja excepciones de argumentos ilegales (400).
+     *
+     * @param ex      La excepción capturada.
+     * @param request Información de la solicitud web.
+     * @return {@link ResponseEntity} con el error 400.
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex,
             WebRequest request) {
@@ -43,7 +63,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // 3. Manejo de errores de validación (@Valid)
+    /**
+     * Maneja errores de validación de campos envíados en DTOs (400).
+     *
+     * @param ex      La excepción de validación capturada.
+     * @param request Información de la solicitud web.
+     * @return {@link ResponseEntity} con el detalle de los campos inválidos.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex, WebRequest request) {
         Map<String, String> errors = new HashMap<>();
@@ -59,7 +85,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // 4. Manejo genérico de cualquier otra excepción (500)
+    /**
+     * Manejador genérico para cualquier excepción no controlada (500).
+     *
+     * @param ex      La excepción capturada.
+     * @param request Información de la solicitud web.
+     * @return {@link ResponseEntity} con el error 500.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
         ErrorResponse error = new ErrorResponse(
@@ -71,7 +103,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // 5. Manejo de DeletionNotAllowedException (403)
+    /**
+     * Maneja prohibiciones de eliminación de recursos (403).
+     *
+     * @param ex      La excepción capturada.
+     * @param request Información de la solicitud web.
+     * @return {@link ResponseEntity} con el error 403.
+     */
     @ExceptionHandler(DeletionNotAllowedException.class)
     public ResponseEntity<ErrorResponse> handleDeletionNotAllowedException(DeletionNotAllowedException ex,
             WebRequest request) {
@@ -84,7 +122,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
-    // 6. Manejo de BadCredentialsException (401)
+    /**
+     * Maneja fallos en la autenticación, como credenciales incorrectas (401).
+     *
+     * @param ex      La excepción capturada.
+     * @param request Información de la solicitud web.
+     * @return {@link ResponseEntity} con el error 401.
+     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex, WebRequest request) {
         ErrorResponse error = new ErrorResponse(
@@ -96,7 +140,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
-    // 7. Manejo de AccessDeniedException (403)
+    /**
+     * Maneja prohibiciones de acceso por falta de permisos/roles (403).
+     *
+     * @param ex      La excepción capturada.
+     * @param request Información de la solicitud web.
+     * @return {@link ResponseEntity} con el error 403.
+     */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         ErrorResponse error = new ErrorResponse(

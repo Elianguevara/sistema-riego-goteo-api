@@ -13,10 +13,20 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class AuthResponse {
 
+    /**
+     * Token JWT generado tras una autenticación exitosa.
+     */
     private String token;
-    // Podrías añadir más información si fuera necesario, como el tipo de token ("Bearer")
+
+    /**
+     * Tipo de token (por defecto "Bearer").
+     */
     private String tokenType = "Bearer";
-    private boolean active; //
+
+    /**
+     * Indica si la cuenta del usuario está activa.
+     */
+    private boolean active;
 
     // Constructor adicional para facilitar la creación
     public AuthResponse(String token, String tokenType) {

@@ -20,16 +20,47 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Servicio encargado de la gestión de sectores dentro de las fincas.
+ * <p>
+ * Permite organizar la finca en unidades menores y asignar equipos de riego
+ * específicos a cada sector.
+ * </p>
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SectorService {
 
+    /**
+     * Repositorio para la persistencia de sectores.
+     */
     private final SectorRepository sectorRepository;
+
+    /**
+     * Repositorio para la persistencia de fincas.
+     */
     private final FarmRepository farmRepository;
+
+    /**
+     * Repositorio para la persistencia de equipos de riego.
+     */
     private final IrrigationEquipmentRepository irrigationEquipmentRepository;
+
+    /**
+     * Servicio de auditoría para registrar operaciones sobre sectores.
+     */
     private final AuditService auditService;
 
+    /**
+     * Crea un nuevo sector dentro de una finca específica.
+     * Valida que no exista otro sector con el mismo nombre en la misma finca.
+     *
+     * @param farmId        Identificador de la finca.
+     * @param sectorRequest DTO con los datos del nuevo sector.
+     * @return El sector creado y persistido.
+     * @throws ResourceNotFoundException Si la finca o el equipo no existen.
+     */
     @Transactional
     public Sector createSector(Integer farmId, SectorRequest sectorRequest) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

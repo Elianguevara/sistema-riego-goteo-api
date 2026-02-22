@@ -12,38 +12,48 @@ import java.util.Set;
 
 /**
  * Entidad que representa un Rol en el sistema.
- * Mapea a la tabla 'role' del MER.
+ * <p>
+ * Define un conjunto de permisos y autoridades que pueden ser asignados a los
+ * usuarios.
+ * Los roles típicos incluyen "ADMIN", "ANALISTA" y "OPERARIO".
+ * </p>
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "role") // La tabla en el MER se llama 'role'
+@Table(name = "role")
 public class Role {
 
+    /**
+     * Identificador único del rol.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "role_id") // Mapea a la columna 'role_id' en la BD según el MER
+    @Column(name = "role_id")
     private Integer id;
 
     /**
-     * Nombre único del rol (ej. "ADMIN", "ANALISTA", "OPERARIO").
-     * Se usa para la lógica de autorización.
+     * Nombre único del rol.
+     * Se utiliza en la lógica de seguridad para restringir el acceso a endpoints y
+     * servicios.
      */
-    @Column(name = "role_name", nullable = false, unique = true, length = 50) // Columna 'role_name' en el MER
-    private String roleName; // Cambiado de 'nombreRol' para consistencia con el MER
+    @Column(name = "role_name", nullable = false, unique = true, length = 50)
+    private String roleName;
 
     /**
-     * Relación Many-to-Many con la entidad Permission, a través de la tabla intermedia 'role_permission'.
-     * FetchType.EAGER se usa aquí para asegurar que los permisos se carguen junto con el rol,
-     * lo cual puede ser útil al determinar las autoridades del usuario. Considera LAZY si tienes muchos permisos
+     * Relación Many-to-Many con la entidad Permission, a través de la tabla
+     * intermedia 'role_permission'.
+     * FetchType.EAGER se usa aquí para asegurar que los permisos se carguen junto
+     * con el rol,
+     * lo cual puede ser útil al determinar las autoridades del usuario. Considera
+     * LAZY si tienes muchos permisos
      * y no siempre los necesitas inmediatamente.
      */
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "role_permission", // Tabla de unión según el MER
-        joinColumns = @JoinColumn(name = "role_id"), // FK a esta entidad (Role)
-        inverseJoinColumns = @JoinColumn(name = "permission_id") // FK a la otra entidad (Permission)
+    @JoinTable(name = "role_permission", // Tabla de unión según el MER
+            joinColumns = @JoinColumn(name = "role_id"), // FK a esta entidad (Role)
+            inverseJoinColumns = @JoinColumn(name = "permission_id") // FK a la otra entidad (Permission)
     )
     @ToString.Exclude // Evitar recursión en toString con Lombok
     @EqualsAndHashCode.Exclude // Evitar recursión en equals/hashCode con Lombok
@@ -56,7 +66,7 @@ public class Role {
 
     // Si necesitas un constructor que también incluya permisos:
     // public Role(String roleName, Set<Permission> permissions) {
-    //     this.roleName = roleName;
-    //     this.permissions = permissions;
+    // this.roleName = roleName;
+    // this.permissions = permissions;
     // }
 }

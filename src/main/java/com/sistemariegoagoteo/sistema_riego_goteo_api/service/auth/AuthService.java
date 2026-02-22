@@ -30,11 +30,30 @@ import java.util.Date; // Para actualizar fecha_ultimo_login
 @Slf4j // Lombok: logger
 public class AuthService {
 
+    /**
+     * Repositorio para operaciones de persistencia de usuarios.
+     */
     private final UserRepository userRepository;
+
+    /**
+     * Repositorio para operaciones de persistencia de roles.
+     */
     private final RoleRepository roleRepository;
+
+    /**
+     * Componente para la codificación segura de contraseñas.
+     */
     private final PasswordEncoder passwordEncoder;
+
+    /**
+     * Servicio para la gestión de tokens JWT.
+     */
     private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager; // Para procesar el login
+
+    /**
+     * Gestor de autenticación de Spring Security.
+     */
+    private final AuthenticationManager authenticationManager;
 
     /**
      * Autentica a un usuario basado en sus credenciales (username/password).
@@ -44,27 +63,30 @@ public class AuthService {
      * @param authRequest DTO con username y password.
      * @return DTO con el token JWT.
      * @throws BadCredentialsException Si las credenciales son inválidas.
-     * @throws RuntimeException        Si el usuario no está activo o no se encuentra (manejado por AuthenticationManager).
+     * @throws RuntimeException        Si el usuario no está activo o no se
+     *                                 encuentra (manejado por
+     *                                 AuthenticationManager).
      */
-    @Transactional // La transacción asegura que la actualización de fecha_ultimo_login se haga junto con la autenticación exitosa
+    @Transactional // La transacción asegura que la actualización de fecha_ultimo_login se haga
+                   // junto con la autenticación exitosa
     public AuthResponse authenticate(AuthRequest authRequest) {
         log.info("Intentando autenticar al usuario: {}", authRequest.getUsername());
         try {
-            // Intenta autenticar usando el AuthenticationManager configurado en SecurityConfig.
+            // Intenta autenticar usando el AuthenticationManager configurado en
+            // SecurityConfig.
             // Este manager utiliza nuestro JpaUserDetailsService y PasswordEncoder.
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             authRequest.getUsername(),
-                            authRequest.getPassword()
-                    )
-            );
+                            authRequest.getPassword()));
 
             // Si la autenticación llega hasta aquí, fue exitosa.
             // Obtenemos los detalles del usuario autenticado.
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User user = (User) userDetails; // Hacemos cast a nuestra entidad User
 
-            // Validar si el usuario está activo (aunque UserDetails lo hace, doble check no está mal)
+            // Validar si el usuario está activo (aunque UserDetails lo hace, doble check no
+            // está mal)
             if (!user.isActive()) {
                 log.warn("Intento de login de usuario inactivo: {}", authRequest.getUsername());
                 throw new RuntimeException("La cuenta del usuario está inactiva.");
@@ -81,30 +103,36 @@ public class AuthService {
 
             // --- MODIFICACIÓN ---
             // Se retorna el AuthResponse incluyendo el estado 'active' del usuario.
-            // Asegúrate de que el DTO AuthResponse tenga el campo y constructor correspondiente.
+            // Asegúrate de que el DTO AuthResponse tenga el campo y constructor
+            // correspondiente.
             return new AuthResponse(jwtToken, "Bearer", user.isActive());
 
         } catch (BadCredentialsException e) {
             log.warn("Credenciales inválidas para el usuario: {}", authRequest.getUsername());
-            // Opcional: Incrementar contador de intentos fallidos aquí si se maneja el bloqueo
+            // Opcional: Incrementar contador de intentos fallidos aquí si se maneja el
+            // bloqueo
             // handleFailedLoginAttempt(authRequest.getUsername());
-            throw new BadCredentialsException("Credenciales inválidas.", e); // Re-lanzar para que el controlador la maneje
+            throw new BadCredentialsException("Credenciales inválidas.", e); // Re-lanzar para que el controlador la
+                                                                             // maneje
         } catch (Exception e) {
             log.error("Error durante la autenticación para {}: {}", authRequest.getUsername(), e.getMessage());
-            // Captura otras posibles excepciones (ej. UsernameNotFoundException, DisabledException)
+            // Captura otras posibles excepciones (ej. UsernameNotFoundException,
+            // DisabledException)
             throw new RuntimeException("Error durante la autenticación: " + e.getMessage(), e);
         }
     }
 
-
     /**
      * Registra el *primer* usuario Administrador en el sistema.
-     * Este método debería estar protegido o ser llamado de forma controlada (ej. al iniciar la app por primera vez).
+     * Este método debería estar protegido o ser llamado de forma controlada (ej. al
+     * iniciar la app por primera vez).
      *
      * @param registerRequest DTO con los datos del administrador a registrar.
      * @return El objeto User del administrador creado.
-     * @throws RuntimeException Si el rol ADMIN no existe, o si el username/email ya están en uso.
-     * @throws IllegalArgumentException Si el rol especificado en el DTO no es "ADMIN".
+     * @throws RuntimeException         Si el rol ADMIN no existe, o si el
+     *                                  username/email ya están en uso.
+     * @throws IllegalArgumentException Si el rol especificado en el DTO no es
+     *                                  "ADMIN".
      */
     @Transactional // Asegura que todas las operaciones de BD se hagan en una transacción
     public User registerAdmin(RegisterRequest registerRequest) {
@@ -155,17 +183,18 @@ public class AuthService {
 
     // Opcional: Método para manejar intentos fallidos (podría bloquear la cuenta)
     /*
-    private void handleFailedLoginAttempt(String username) {
-        userRepository.findByUsername(username).ifPresent(user -> {
-            int attempts = user.getIntentosFallidos() + 1;
-            user.setIntentosFallidos(attempts);
-            if (attempts >= MAX_LOGIN_ATTEMPTS) { // MAX_LOGIN_ATTEMPTS debería ser una constante
-                user.setActivo(false);
-                log.warn("Usuario {} bloqueado por exceso de intentos fallidos.", username);
-            }
-            userRepository.save(user);
-        });
-    }
-    */
+     * private void handleFailedLoginAttempt(String username) {
+     * userRepository.findByUsername(username).ifPresent(user -> {
+     * int attempts = user.getIntentosFallidos() + 1;
+     * user.setIntentosFallidos(attempts);
+     * if (attempts >= MAX_LOGIN_ATTEMPTS) { // MAX_LOGIN_ATTEMPTS debería ser una
+     * constante
+     * user.setActivo(false);
+     * log.warn("Usuario {} bloqueado por exceso de intentos fallidos.", username);
+     * }
+     * userRepository.save(user);
+     * });
+     * }
+     */
 
 }

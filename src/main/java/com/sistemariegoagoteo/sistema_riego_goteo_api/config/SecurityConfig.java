@@ -29,7 +29,8 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * Clase de configuración principal de Spring Security.
- * Define cómo se maneja la autenticación, autorización, CORS y la protección de endpoints.
+ * Define cómo se maneja la autenticación, autorización, CORS y la protección de
+ * endpoints.
  * Implementa una arquitectura Stateless basada en JWT.
  */
 @Configuration
@@ -38,11 +39,19 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    /**
+     * Filtro personalizado para procesar y validar tokens JWT en cada solicitud.
+     */
     private final JwtAuthenticationFilter jwtAuthFilter;
+
+    /**
+     * Servicio para cargar los detalles del usuario a partir del nombre de usuario.
+     */
     private final UserDetailsService userDetailsService;
 
     /**
-     * Lista de orígenes permitidos para CORS, inyectada desde application.properties.
+     * Lista de orígenes permitidos para CORS, inyectada desde
+     * application.properties.
      * Permite flexibilidad para cambiar dominios sin recompilar.
      */
     @Value("#{'${cors.allowed-origins}'.split(',')}")
@@ -61,7 +70,8 @@ public class SecurityConfig {
 
     /**
      * Configura el proveedor de autenticación.
-     * Conecta el UserDetailsService (para buscar usuarios en DB) con el PasswordEncoder
+     * Conecta el UserDetailsService (para buscar usuarios en DB) con el
+     * PasswordEncoder
      * (para verificar contraseñas).
      *
      * @return El AuthenticationProvider configurado.
@@ -96,18 +106,18 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Configura los orígenes permitidos desde el archivo de propiedades
         configuration.setAllowedOrigins(allowedOrigins);
-        
+
         // Métodos HTTP permitidos
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        
+
         // Cabeceras permitidas (necesario para enviar el token Authorization)
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        
+
         // Permite credenciales (cookies/headers de auth) si fuera necesario
-        configuration.setAllowCredentials(true); 
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -116,7 +126,8 @@ public class SecurityConfig {
 
     /**
      * Define la cadena de filtros de seguridad (Security Filter Chain).
-     * Aquí se establecen las reglas de acceso HTTP, manejo de sesiones y filtros personalizados.
+     * Aquí se establecen las reglas de acceso HTTP, manejo de sesiones y filtros
+     * personalizados.
      *
      * @param http Objeto HttpSecurity para configurar la seguridad web.
      * @return La cadena de filtros construida.
@@ -136,20 +147,21 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Endpoints públicos (Whitelist)
                         .requestMatchers("/api/auth/login").permitAll() // Login abierto
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Documentación API
-                        
-                        // NOTA: El registro de admins (/register/admin) se ha eliminado de aquí por seguridad.
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Documentación
+                                                                                                              // API
+
+                        // NOTA: El registro de admins (/register/admin) se ha eliminado de aquí por
+                        // seguridad.
                         // Solo se debe crear admins mediante DataInitializer o un admin existente.
 
                         // Todo lo demás requiere autenticación (Token válido)
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
 
                 // 4. Gestión de Sesiones
-                // Se define como STATELESS porque usamos JWT. El servidor no guarda sesión de usuario.
+                // Se define como STATELESS porque usamos JWT. El servidor no guarda sesión de
+                // usuario.
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // 5. Configuración de Filtros
                 .authenticationProvider(authenticationProvider())

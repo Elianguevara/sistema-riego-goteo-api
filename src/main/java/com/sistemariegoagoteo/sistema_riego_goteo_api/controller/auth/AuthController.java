@@ -26,31 +26,44 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class AuthController {
 
+    /**
+     * Servicio de autenticación.
+     */
     private final AuthService authService;
+
+    /**
+     * Servicio de gestión de usuarios.
+     */
     private final UserService userService;
 
     /**
      * Endpoint para la autenticación de usuarios (login).
+     * <p>
+     * Permite a los usuarios obtener un token JWT proporcionando sus credenciales
+     * válidas.
+     * </p>
      *
      * @param authRequest DTO con username y password.
-     * @return Token JWT si las credenciales son válidas.
+     * @return {@link AuthResponse} con el token JWT si las credenciales son
+     *         válidas.
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> authenticateUser(@Valid @RequestBody AuthRequest authRequest) {
-        // Si falla (BadCredentialsException), lo maneja el GlobalExceptionHandler devolviendo 401
         AuthResponse authResponse = authService.authenticate(authRequest);
         return ResponseEntity.ok(authResponse);
     }
 
     /**
-     * Endpoint para el registro INICIAL del usuario Administrador.
+     * Endpoint para el registro inicial del usuario Administrador.
+     * <p>
+     * Este endpoint suele utilizarse en el primer despliegue del sistema.
+     * </p>
      *
-     * @param registerRequest DTO con los datos del admin.
-     * @return Mensaje de éxito.
+     * @param registerRequest DTO con los datos del administrador.
+     * @return Mensaje de éxito tras el registro.
      */
     @PostMapping("/register/admin")
     public ResponseEntity<String> registerAdmin(@Valid @RequestBody RegisterRequest registerRequest) {
-        // Si hay errores de validación o duplicados, saltan excepciones manejadas globalmente
         User adminUser = authService.registerAdmin(registerRequest);
         String successMessage = "Administrador registrado exitosamente con username: " + adminUser.getUsername();
         log.info(successMessage);
@@ -58,16 +71,21 @@ public class AuthController {
     }
 
     /**
-     * Endpoint para que un Administrador registre nuevos usuarios (Analista/Operario).
+     * Endpoint para que un Administrador registre nuevos usuarios
+     * (Analista/Operario).
+     * <p>
+     * Requiere que el solicitante tenga el rol 'ADMIN'.
+     * </p>
      *
      * @param registerRequest DTO con los datos del nuevo usuario.
-     * @return Mensaje de éxito.
+     * @return Mensaje de éxito tras el registro.
      */
     @PostMapping("/register")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> registerUserByAdmin(@Valid @RequestBody RegisterRequest registerRequest) {
         User newUser = userService.registerUserByAdmin(registerRequest);
-        String successMessage = "Usuario '" + newUser.getUsername() + "' registrado exitosamente con rol: " + newUser.getRol().getRoleName();
+        String successMessage = "Usuario '" + newUser.getUsername() + "' registrado exitosamente con rol: "
+                + newUser.getRol().getRoleName();
         log.info(successMessage);
         return ResponseEntity.status(HttpStatus.CREATED).body(successMessage);
     }

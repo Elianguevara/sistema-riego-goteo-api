@@ -19,15 +19,44 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Servicio encargado de la gestión de fincas.
+ * <p>
+ * Incluye funcionalidades para la creación, actualización, recuperación y
+ * eliminación de fincas,
+ * integrando servicios de geocodificación automática para obtener coordenadas
+ * basadas en la ubicación.
+ * </p>
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class FarmService {
 
+    /**
+     * Repositorio para la persistencia de datos de fincas.
+     */
     private final FarmRepository farmRepository;
+
+    /**
+     * Servicio de auditoría para registrar cambios en las fincas.
+     */
     private final AuditService auditService;
+
+    /**
+     * Servicio de geocodificación externa para obtener coordenadas
+     * (latitud/longitud).
+     */
     private final GeocodingService geocodingService;
 
+    /**
+     * Crea una nueva finca en el sistema.
+     * Si no se proporcionan coordenadas, intenta obtenerlas automáticamente vía
+     * geocodificación.
+     *
+     * @param farmRequest DTO con los datos de la finca a crear.
+     * @return La entidad Farm persistida.
+     */
     @Transactional
     public Farm createFarm(FarmRequest farmRequest) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

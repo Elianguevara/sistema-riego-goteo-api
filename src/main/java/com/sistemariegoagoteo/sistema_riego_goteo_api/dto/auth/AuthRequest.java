@@ -13,9 +13,15 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class AuthRequest {
 
+    /**
+     * Nombre de usuario para la autenticación.
+     */
     @NotBlank(message = "El nombre de usuario no puede estar vacío")
     private String username;
 
+    /**
+     * Contraseña del usuario.
+     */
     @NotBlank(message = "La contraseña no puede estar vacía")
     private String password;
 }

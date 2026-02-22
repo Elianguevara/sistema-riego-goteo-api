@@ -21,54 +21,85 @@ import java.util.Set;
 
 /**
  * Entidad que representa un Usuario en el sistema.
- * Mapea a la tabla 'user' del MER y implementa UserDetails para Spring Security.
+ * <p>
+ * Mapea a la tabla 'user' del modelo de datos y implementa la interfaz
+ * {@link UserDetails} de Spring Security para manejar la autenticación y
+ * autorización.
+ * </p>
  */
-@Setter @Getter
+@Setter
+@Getter
 @NoArgsConstructor
 @Entity
-@Table(name = "user") // La tabla en el MER se llama 'user'
+@Table(name = "user")
 public class User implements UserDetails {
 
+    /**
+     * Identificador único del usuario.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id") // Mapea a la columna 'user_id' en la BD
+    @Column(name = "user_id")
     private Long id;
 
-    @Column(name = "name", nullable = false, length = 100) // Columna 'name' en el MER
-    private String name; // Cambiado de 'nombre'
+    /**
+     * Nombre completo o de mostrar del usuario.
+     */
+    @Column(name = "name", nullable = false, length = 100)
+    private String name;
 
+    /**
+     * Nombre de usuario único para el inicio de sesión.
+     */
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
+    /**
+     * Contraseña codificada del usuario.
+     */
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
+    /**
+     * Correo electrónico único del usuario.
+     */
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(name = "last_login") // Columna 'last_login' en el MER
+    /**
+     * Fecha y hora del último inicio de sesión exitoso.
+     */
+    @Column(name = "last_login")
     @Temporal(TemporalType.TIMESTAMP)
-    private Date lastLogin; // Cambiado de 'fechaUltimoLogin'
-
-    @Column(name = "failed_attempts", columnDefinition = "INT DEFAULT 0") // Columna 'failed_attempts' en el MER
-    private Integer failedAttempts = 0; // Cambiado de 'intentosFallidos'
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false) // Columna 'role_id' en el MER (FK a la tabla 'role')
-    private Role rol;
-
-    @Column(name = "is_active", columnDefinition = "TINYINT(1) DEFAULT 1") // Columna 'is_active' en el MER
-    private boolean isActive = true; // Cambiado de 'activo'
+    private Date lastLogin;
 
     /**
-     * Relación Many-to-Many con la entidad Farm, a través de la tabla intermedia 'user_farm'.
+     * Contador de intentos de inicio de sesión fallidos.
+     */
+    @Column(name = "failed_attempts", columnDefinition = "INT DEFAULT 0")
+    private Integer failedAttempts = 0;
+
+    /**
+     * Rol asignado al usuario que define sus permisos base.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role rol;
+
+    /**
+     * Estado de activación del usuario. Los usuarios inactivos no pueden iniciar
+     * sesión.
+     */
+    @Column(name = "is_active", columnDefinition = "TINYINT(1) DEFAULT 1")
+    private boolean isActive = true;
+
+    /**
+     * Relación Many-to-Many con la entidad Farm, a través de la tabla intermedia
+     * 'user_farm'.
      */
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "user_farm", // Tabla de unión según el MER
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "farm_id")
-    )
+    @JoinTable(name = "user_farm", // Tabla de unión según el MER
+            joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "farm_id"))
     @ToString.Exclude // Evitar recursión en toString con Lombok
     @EqualsAndHashCode.Exclude // Evitar recursión en equals/hashCode con Lombok
     private Set<Farm> farms = new HashSet<>();
@@ -90,7 +121,8 @@ public class User implements UserDetails {
      * Retorna las autoridades concedidas al usuario.
      * Por defecto, se basa en el rol principal del usuario.
      * Si se implementa un sistema de permisos más granular (Role <-> Permission),
-     * este método podría expandirse para incluir los permisos directamente como autoridades.
+     * este método podría expandirse para incluir los permisos directamente como
+     * autoridades.
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -101,21 +133,24 @@ public class User implements UserDetails {
         SimpleGrantedAuthority roleAuthority = new SimpleGrantedAuthority("ROLE_" + this.rol.getRoleName());
         return List.of(roleAuthority);
 
-        // Opción 2: Basado en Rol y sus Permisos asociados (si Role tiene una colección de Permission)
-        // Asegúrate de que Role.java tenga la relación @ManyToMany con Permission y que los permisos se carguen (EAGER o Fetch).
+        // Opción 2: Basado en Rol y sus Permisos asociados (si Role tiene una colección
+        // de Permission)
+        // Asegúrate de que Role.java tenga la relación @ManyToMany con Permission y que
+        // los permisos se carguen (EAGER o Fetch).
         /*
-        if (this.rol == null) {
-            return List.of();
-        }
-        Set<GrantedAuthority> authorities = new HashSet<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + this.rol.getNombreRol()));
-        if (this.rol.getPermissions() != null) {
-            this.rol.getPermissions().forEach(permission ->
-                authorities.add(new SimpleGrantedAuthority(permission.getPermissionName()))
-            );
-        }
-        return authorities;
-        */
+         * if (this.rol == null) {
+         * return List.of();
+         * }
+         * Set<GrantedAuthority> authorities = new HashSet<>();
+         * authorities.add(new SimpleGrantedAuthority("ROLE_" +
+         * this.rol.getNombreRol()));
+         * if (this.rol.getPermissions() != null) {
+         * this.rol.getPermissions().forEach(permission ->
+         * authorities.add(new SimpleGrantedAuthority(permission.getPermissionName()))
+         * );
+         * }
+         * return authorities;
+         */
     }
 
     // getPassword() y getUsername() son generados por Lombok (@Data)
