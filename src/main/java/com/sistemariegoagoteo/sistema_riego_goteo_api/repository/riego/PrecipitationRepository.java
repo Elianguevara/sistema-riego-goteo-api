@@ -15,9 +15,13 @@ import java.util.Optional;
 @Repository
 public interface PrecipitationRepository extends JpaRepository<Precipitation, Integer> {
     List<Precipitation> findByFarm(Farm farm);
+
     List<Precipitation> findByPrecipitationDate(Date date);
+
     List<Precipitation> findByFarmAndPrecipitationDateBetween(Farm farm, Date startDate, Date endDate);
+
     List<Precipitation> findByFarmOrderByPrecipitationDateDesc(Farm farm);
+
     Optional<Precipitation> findByFarmAndPrecipitationDate(Farm farm, Date date);
 
     @Query("SELECT COALESCE(SUM(p.mmRain), 0) FROM Precipitation p WHERE p.farm = :farm AND p.precipitationDate = :date")
@@ -27,16 +31,25 @@ public interface PrecipitationRepository extends JpaRepository<Precipitation, In
     BigDecimal getMonthlyPrecipitation(@Param("farm") Farm farm, @Param("year") int year, @Param("month") int month);
 
     @Query("SELECT COALESCE(SUM(p.mmRain), 0) FROM Precipitation p WHERE p.farm = :farm AND p.precipitationDate BETWEEN :startDate AND :endDate")
-    BigDecimal getAnnualPrecipitation(@Param("farm") Farm farm, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+    BigDecimal getAnnualPrecipitation(@Param("farm") Farm farm, @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate);
 
     // --- MÉTODO NUEVO AÑADIDO ---
     /**
-     * Busca todas las precipitaciones de una finca específica dentro de un rango de fechas.
+     * Busca todas las precipitaciones de una finca específica dentro de un rango de
+     * fechas.
      */
     List<Precipitation> findByFarm_IdAndPrecipitationDateBetween(Integer farmId, Date startDate, Date endDate);
+
+    @Query("SELECT p.precipitationDate as rainDate, SUM(p.mmEffectiveRain) as amount FROM Precipitation p " +
+            "WHERE p.farm.id = :farmId AND p.precipitationDate BETWEEN :startDate AND :endDate " +
+            "GROUP BY p.precipitationDate")
+    List<com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.DailyRainProjection> findDailyRainByFarm(
+            @Param("farmId") Integer farmId, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
     @Query("SELECT p.precipitationDate, SUM(p.mmEffectiveRain) FROM Precipitation p " +
             "WHERE p.farm.id = :farmId AND p.precipitationDate BETWEEN :startDate AND :endDate " +
             "GROUP BY p.precipitationDate")
-    List<Object[]> findDailyEffectiveRainByFarm(@Param("farmId") Integer farmId, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+    List<Object[]> findDailyEffectiveRainByFarm(@Param("farmId") Integer farmId, @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate);
 }

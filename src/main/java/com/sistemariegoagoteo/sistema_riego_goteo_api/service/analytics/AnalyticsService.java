@@ -31,50 +31,53 @@ public class AnalyticsService {
     private final IrrigationRepository irrigationRepository;
     private final SectorRepository sectorRepository;
 
-    public List<IrrigationSectorSummaryDTO> getIrrigationSummary(Integer farmId, Date startDate, Date endDate, List<Integer> sectorIds) {
+    public List<IrrigationSectorSummaryDTO> getIrrigationSummary(Integer farmId, Date startDate, Date endDate,
+            List<Integer> sectorIds) {
         List<Integer> targetSectorIds = sectorIds;
         if (targetSectorIds == null || targetSectorIds.isEmpty()) {
             targetSectorIds = sectorRepository.findByFarm_Id(farmId).stream()
                     .map(sector -> sector.getId())
                     .collect(Collectors.toList());
         }
-        if(targetSectorIds.isEmpty()){
+        if (targetSectorIds.isEmpty()) {
             return List.of();
         }
 
-        List<Object[]> results = irrigationRepository.getIrrigationSummaryBySectors(farmId, targetSectorIds, startDate, endDate);
+        List<com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.SectorIrrigationProjection> results = irrigationRepository
+                .getSectorIrrigationTotals(farmId, targetSectorIds, startDate, endDate);
         return results.stream()
                 .map(res -> new IrrigationSectorSummaryDTO(
-                        ((Number) res[0]).intValue(),
-                        (String) res[1],
-                        (BigDecimal) res[2],
-                        (BigDecimal) res[3]
-                ))
+                        res.getSectorId(),
+                        res.getSectorName(),
+                        res.getWaterAmount(),
+                        res.getHours()))
                 .collect(Collectors.toList());
     }
 
-    public List<IrrigationTimeseriesDTO> getIrrigationTimeseries(Integer sectorId, LocalDate startDate, LocalDate endDate) {
+    public List<IrrigationTimeseriesDTO> getIrrigationTimeseries(Integer sectorId, LocalDate startDate,
+            LocalDate endDate) {
         Date start = Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
         Date end = Date.from(endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-        List<Object[]> results = irrigationRepository.getDailyIrrigationTotals(sectorId, start, end);
+        List<com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.DailyIrrigationProjection> results = irrigationRepository
+                .getDailyIrrigationTotals(sectorId, start, end);
         Map<LocalDate, IrrigationTimeseriesDTO> dailyDataMap = results.stream()
                 .collect(Collectors.toMap(
-                        res -> ((java.sql.Date) res[0]).toLocalDate(),
+                        res -> res.getIrrigationDate(),
                         res -> new IrrigationTimeseriesDTO(
-                                ((java.sql.Date) res[0]).toLocalDate(),
-                                (BigDecimal) res[1],
-                                (BigDecimal) res[2]
-                        )
-                ));
+                                res.getIrrigationDate(),
+                                res.getWaterAmount(),
+                                res.getHours())));
 
         return Stream.iterate(startDate, date -> date.plusDays(1))
                 .limit(startDate.until(endDate).getDays() + 1)
-                .map(date -> dailyDataMap.getOrDefault(date, new IrrigationTimeseriesDTO(date, BigDecimal.ZERO, BigDecimal.ZERO)))
+                .map(date -> dailyDataMap.getOrDefault(date,
+                        new IrrigationTimeseriesDTO(date, BigDecimal.ZERO, BigDecimal.ZERO)))
                 .collect(Collectors.toList());
     }
 
-    public Page<IrrigationRecordDTO> getIrrigationRecords(Integer farmId, Date startDate, Date endDate, List<Integer> sectorIds, Pageable pageable) {
+    public Page<IrrigationRecordDTO> getIrrigationRecords(Integer farmId, Date startDate, Date endDate,
+            List<Integer> sectorIds, Pageable pageable) {
         Specification<Irrigation> spec = (root, query, cb) -> {
             Predicate p = cb.conjunction();
             p = cb.and(p, cb.equal(root.get("sector").get("farm").get("id"), farmId));

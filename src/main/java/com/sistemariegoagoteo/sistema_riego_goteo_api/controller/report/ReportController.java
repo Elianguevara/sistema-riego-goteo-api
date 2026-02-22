@@ -1,21 +1,23 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.report;
 
-import com.lowagie.text.DocumentException;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.service.report.ReportDataService;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.service.report.ReportFileService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.report.ReportTask;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.report.ReportTaskService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -23,27 +25,14 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA')")
 public class ReportController {
 
-    private final ReportDataService reportDataService;
-    private final ReportFileService reportFileService;
+    private final ReportTaskService reportTaskService;
 
     /**
-     * Genera y descarga reportes en formato PDF o CSV.
-     * Soporta múltiples tipos de reporte (Balance Hídrico, Bitácora, Resumen).
-     *
-     * @param reportType Tipo de reporte (WATER_BALANCE, OPERATIONS_LOG, PERIOD_SUMMARY).
-     * @param farmId ID de la finca.
-     * @param startDate Fecha inicio.
-     * @param endDate Fecha fin.
-     * @param format Formato de salida (PDF o CSV).
-     * @param sectorIds (Opcional) IDs de sectores para filtrar.
-     * @param operationType (Opcional) Tipo de operación para filtrar bitácora.
-     * @param userId (Opcional) ID de usuario para filtrar bitácora.
-     * @return Recurso binario con el archivo generado.
-     * @throws IOException Si ocurre un error de entrada/salida al generar el archivo.
-     * @throws DocumentException Si ocurre un error al generar el PDF.
+     * Inicia la generación asíncrona de reportes.
+     * Devuelve un 202 Accepted con el ID de la tarea.
      */
     @GetMapping("/generate")
-    public ResponseEntity<Resource> generateReport(
+    public ResponseEntity<ReportTask> generateReport(
             @RequestParam String reportType,
             @RequestParam Integer farmId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
@@ -51,60 +40,46 @@ public class ReportController {
             @RequestParam(defaultValue = "PDF") String format,
             @RequestParam(required = false) List<Integer> sectorIds,
             @RequestParam(required = false) String operationType,
-            @RequestParam(required = false) Long userId) throws IOException, DocumentException {
+            @RequestParam(required = false) Long userId) {
 
-        byte[] reportContent;
-        String filename;
-        String contentType;
+        ReportTask task = reportTaskService.createAndStartTask(
+                reportType, farmId, startDate, endDate, format, sectorIds, operationType, userId);
 
-        // Selección de lógica según el tipo de reporte
-        // Si reportType no es válido, lanzamos IllegalArgumentException (manejada globalmente)
-        switch (reportType.toUpperCase()) {
-            case "WATER_BALANCE" -> {
-                var waterData = reportDataService.getWaterBalanceData(farmId, startDate, endDate, sectorIds);
-                if ("CSV".equalsIgnoreCase(format)) {
-                    reportContent = reportFileService.generateWaterBalanceCsv(waterData);
-                    filename = "Balance_Hidrico.csv";
-                    contentType = "text/csv";
-                } else {
-                    reportContent = reportFileService.generateWaterBalancePdf(waterData);
-                    filename = "Balance_Hidrico.pdf";
-                    contentType = MediaType.APPLICATION_PDF_VALUE;
-                }
-            }
-            case "OPERATIONS_LOG" -> {
-                var logData = reportDataService.getOperationsLogData(farmId, startDate, endDate, operationType, userId);
-                if ("CSV".equalsIgnoreCase(format)) {
-                    reportContent = reportFileService.generateOperationsLogCsv(logData);
-                    filename = "Bitacora_Operaciones.csv";
-                    contentType = "text/csv";
-                } else {
-                    reportContent = reportFileService.generateOperationsLogPdf(logData);
-                    filename = "Bitacora_Operaciones.pdf";
-                    contentType = MediaType.APPLICATION_PDF_VALUE;
-                }
-            }
-            case "PERIOD_SUMMARY" -> {
-                var summaryData = reportDataService.getPeriodSummaryData(farmId, startDate, endDate);
-                if ("CSV".equalsIgnoreCase(format)) {
-                    reportContent = reportFileService.generatePeriodSummaryCsv(summaryData);
-                    filename = "Resumen_Periodo.csv";
-                    contentType = "text/csv";
-                } else {
-                    reportContent = reportFileService.generatePeriodSummaryPdf(summaryData);
-                    filename = "Resumen_Periodo.pdf";
-                    contentType = MediaType.APPLICATION_PDF_VALUE;
-                }
-            }
-            default -> throw new IllegalArgumentException("Tipo de reporte no válido: " + reportType);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(task);
+    }
+
+    /**
+     * Consulta el estado de una tarea de reporte.
+     */
+    @GetMapping("/status/{taskId}")
+    public ResponseEntity<ReportTask> getReportStatus(@PathVariable UUID taskId) {
+        return ResponseEntity.ok(reportTaskService.getTaskStatus(taskId));
+    }
+
+    /**
+     * Descarga el archivo de reporte generado.
+     */
+    @GetMapping("/download/{taskId}")
+    public ResponseEntity<Resource> downloadReport(@PathVariable UUID taskId) throws IOException {
+        ReportTask task = reportTaskService.getTaskStatus(taskId);
+
+        if (task.getStatus() != ReportTask.ReportStatus.COMPLETED) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        ByteArrayResource resource = new ByteArrayResource(reportContent);
+        File file = new File(task.getFilePath());
+        if (!file.exists()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        FileSystemResource resource = new FileSystemResource(file);
+        String contentType = task.getFormat().equalsIgnoreCase("CSV") ? "text/csv" : MediaType.APPLICATION_PDF_VALUE;
+        String filename = "Reporte_" + task.getReportType() + "." + task.getFormat().toLowerCase();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.parseMediaType(contentType))
-                .contentLength(resource.contentLength())
+                .contentLength(file.length())
                 .body(resource);
     }
 }
