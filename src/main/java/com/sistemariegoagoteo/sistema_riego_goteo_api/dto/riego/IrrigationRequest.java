@@ -6,7 +6,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 public class IrrigationRequest {
@@ -21,10 +21,10 @@ public class IrrigationRequest {
     // --- NOMBRES CORREGIDOS a camelCase estándar ---
     @NotNull(message = "La fecha y hora de inicio del riego son requeridas.")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private Date startDateTime;
+    private LocalDateTime startDateTime;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private Date endDateTime;
+    private LocalDateTime endDateTime;
 
     @PositiveOrZero(message = "La cantidad de agua debe ser un valor positivo o cero.")
     private BigDecimal waterAmount;

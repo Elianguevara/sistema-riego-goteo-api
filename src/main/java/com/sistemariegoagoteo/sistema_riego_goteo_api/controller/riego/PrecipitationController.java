@@ -5,6 +5,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationRes
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationSummaryResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Precipitation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,127 +16,99 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping()
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Precipitation", description = "API para la gestión de registros de lluvia")
 public class PrecipitationController {
 
     private final PrecipitationService precipitationService;
 
-    /**
-     * Registra una nueva precipitación para una finca específica.
-     * * @param farmId ID de la finca.
-     * @param request Datos de la precipitación (fecha, mm, notas).
-     * @return La precipitación registrada.
-     */
-    @PostMapping("/api/farms/{farmId}/precipitations")
+    @PostMapping("/farms/{farmId}/precipitations")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('REGISTRAR_PRECIPITACION')")
-    public ResponseEntity<PrecipitationResponse> createPrecipitation(@PathVariable Integer farmId,
-                                                                     @Valid @RequestBody PrecipitationRequest request) {
+    @Operation(summary = "Registrar nueva precipitación")
+    public ResponseEntity<PrecipitationResponse> createPrecipitation(
+            @PathVariable Integer farmId,
+            @Valid @RequestBody PrecipitationRequest request) {
         log.info("Solicitud POST para registrar precipitación para finca ID {}", farmId);
-        Precipitation newPrecipitation = precipitationService.createPrecipitation(farmId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new PrecipitationResponse(newPrecipitation));
+        Precipitation precipitation = precipitationService.createPrecipitation(farmId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new PrecipitationResponse(precipitation));
     }
 
-    /**
-     * Obtiene todos los registros de precipitación para una finca específica.
-     * * @param farmId ID de la finca.
-     * @return Lista histórica de precipitaciones.
-     */
-    @GetMapping("/api/farms/{farmId}/precipitations")
+    @GetMapping("/farms/{farmId}/precipitations")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_PRECIPITACION')")
+    @Operation(summary = "Obtener todas las precipitaciones de una finca")
     public ResponseEntity<List<PrecipitationResponse>> getPrecipitationsByFarm(@PathVariable Integer farmId) {
         log.info("Solicitud GET para obtener precipitaciones de la finca ID {}", farmId);
-        List<PrecipitationResponse> responses = precipitationService.getPrecipitationsByFarm(farmId)
-                .stream()
+        List<PrecipitationResponse> response = precipitationService.getPrecipitationsByFarm(farmId).stream()
                 .map(PrecipitationResponse::new)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * Obtiene un registro de precipitación específico por su ID global.
-     * * @param precipitationId ID del registro.
-     * @return Detalle de la precipitación.
-     */
-    @GetMapping("/api/precipitations/{precipitationId}")
+    @GetMapping("/precipitations/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_PRECIPITACION')")
-    public ResponseEntity<PrecipitationResponse> getPrecipitationById(@PathVariable Integer precipitationId) {
-        log.info("Solicitud GET para obtener precipitación ID: {}", precipitationId);
-        Precipitation precipitation = precipitationService.getPrecipitationById(precipitationId);
+    @Operation(summary = "Obtener detalle de una precipitación")
+    public ResponseEntity<PrecipitationResponse> getPrecipitationById(@PathVariable Integer id) {
+        log.info("Solicitud GET para obtener precipitación ID: {}", id);
+        Precipitation precipitation = precipitationService.getPrecipitationById(id);
         return ResponseEntity.ok(new PrecipitationResponse(precipitation));
     }
 
-    /**
-     * Actualiza un registro de precipitación existente.
-     * * @param precipitationId ID del registro a actualizar.
-     * @param request Nuevos datos.
-     * @return Registro actualizado.
-     */
-    @PutMapping("/api/precipitations/{precipitationId}")
+    @PutMapping("/precipitations/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('MODIFICAR_PRECIPITACION')")
-    public ResponseEntity<PrecipitationResponse> updatePrecipitation(@PathVariable Integer precipitationId,
-                                                                     @Valid @RequestBody PrecipitationRequest request) {
-        log.info("Solicitud PUT para actualizar precipitación ID {}", precipitationId);
-        Precipitation updatedPrecipitation = precipitationService.updatePrecipitation(precipitationId, request);
-        return ResponseEntity.ok(new PrecipitationResponse(updatedPrecipitation));
+    @Operation(summary = "Actualizar precipitación existente")
+    public ResponseEntity<PrecipitationResponse> updatePrecipitation(
+            @PathVariable Integer id,
+            @Valid @RequestBody PrecipitationRequest request) {
+        log.info("Solicitud PUT para actualizar precipitación ID {}", id);
+        Precipitation precipitation = precipitationService.updatePrecipitation(id, request);
+        return ResponseEntity.ok(new PrecipitationResponse(precipitation));
     }
 
-    /**
-     * Elimina un registro de precipitación.
-     * * @param precipitationId ID del registro a eliminar.
-     * @return 204 No Content.
-     */
-    @DeleteMapping("/api/precipitations/{precipitationId}")
+    @DeleteMapping("/precipitations/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ELIMINAR_PRECIPITACION')")
-    public ResponseEntity<Void> deletePrecipitation(@PathVariable Integer precipitationId) {
-        log.info("Solicitud DELETE para eliminar precipitación ID: {}", precipitationId);
-        precipitationService.deletePrecipitation(precipitationId);
+    @Operation(summary = "Eliminar registro de precipitación")
+    public ResponseEntity<Void> deletePrecipitation(@PathVariable Integer id) {
+        log.info("Solicitud DELETE para eliminar precipitación ID: {}", id);
+        precipitationService.deletePrecipitation(id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Obtiene el resumen de precipitación para una fecha específica.
-     */
-    @GetMapping("/api/farms/{farmId}/precipitations/summary/daily")
+    @GetMapping("/farms/{farmId}/precipitations/summary/daily")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
+    @Operation(summary = "Obtener resumen de lluvia diaria")
     public ResponseEntity<PrecipitationSummaryResponse> getDailyPrecipitation(
             @PathVariable Integer farmId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         log.info("Solicitud GET para obtener la precipitación diaria de la finca ID {} para la fecha {}", farmId, date);
-        PrecipitationSummaryResponse summary = precipitationService.getDailyPrecipitation(farmId, date);
-        return ResponseEntity.ok(summary);
+        return ResponseEntity.ok(precipitationService.getDailyPrecipitation(farmId, date));
     }
 
-    /**
-     * Obtiene el resumen de precipitación mensual.
-     */
-    @GetMapping("/api/farms/{farmId}/precipitations/summary/monthly")
+    @GetMapping("/farms/{farmId}/precipitations/summary/monthly")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
+    @Operation(summary = "Obtener resumen de lluvia mensual")
     public ResponseEntity<PrecipitationSummaryResponse> getMonthlyPrecipitation(
             @PathVariable Integer farmId,
             @RequestParam int year,
             @RequestParam int month) {
-        log.info("Solicitud GET para obtener la precipitación mensual de la finca ID {} para el mes {}-{}", farmId, year, month);
-        PrecipitationSummaryResponse summary = precipitationService.getMonthlyPrecipitation(farmId, year, month);
-        return ResponseEntity.ok(summary);
+        log.info("Solicitud GET para obtener la precipitación mensual de la finca ID {} para el mes {}-{}", farmId,
+                year, month);
+        return ResponseEntity.ok(precipitationService.getMonthlyPrecipitation(farmId, year, month));
     }
 
-    /**
-     * Obtiene el resumen de precipitación anual (generalmente para el año hidrológico o calendario).
-     */
-    @GetMapping("/api/farms/{farmId}/precipitations/summary/annual")
+    @GetMapping("/farms/{farmId}/precipitations/summary/annual")
     @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
+    @Operation(summary = "Obtener resumen de lluvia anual (año agrícola)")
     public ResponseEntity<PrecipitationSummaryResponse> getAnnualPrecipitation(
             @PathVariable Integer farmId,
             @RequestParam int year) {
         log.info("Solicitud GET para obtener la precipitación anual de la finca ID {} para el año {}", farmId, year);
-        PrecipitationSummaryResponse summary = precipitationService.getAnnualPrecipitation(farmId, year);
-        return ResponseEntity.ok(summary);
+        return ResponseEntity.ok(precipitationService.getAnnualPrecipitation(farmId, year));
     }
 }

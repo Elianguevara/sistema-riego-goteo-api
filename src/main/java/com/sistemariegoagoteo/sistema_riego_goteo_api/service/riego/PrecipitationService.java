@@ -18,8 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects; // <-- IMPORTAR
 
@@ -50,7 +49,8 @@ public class PrecipitationService {
         Precipitation savedPrecipitation = precipitationRepository.save(precipitation);
 
         // --- AUDITORÍA DE CREACIÓN ---
-        auditService.logChange(currentUser, "CREATE", Precipitation.class.getSimpleName(), "mmRain", null, savedPrecipitation.getMmRain().toString());
+        auditService.logChange(currentUser, "CREATE", Precipitation.class.getSimpleName(), "mmRain", null,
+                savedPrecipitation.getMmRain().toString());
 
         log.info("Registrando precipitación para finca ID {} en fecha {}: {}mm total, {}mm efectiva",
                 farmId, request.getPrecipitationDate(), precipitation.getMmRain(), precipitation.getMmEffectiveRain());
@@ -64,10 +64,13 @@ public class PrecipitationService {
 
         // --- AUDITORÍA DE ACTUALIZACIÓN ---
         if (!Objects.equals(precipitation.getPrecipitationDate(), request.getPrecipitationDate())) {
-            auditService.logChange(currentUser, "UPDATE", Precipitation.class.getSimpleName(), "precipitationDate", Objects.toString(precipitation.getPrecipitationDate(), null), Objects.toString(request.getPrecipitationDate(), null));
+            auditService.logChange(currentUser, "UPDATE", Precipitation.class.getSimpleName(), "precipitationDate",
+                    Objects.toString(precipitation.getPrecipitationDate(), null),
+                    Objects.toString(request.getPrecipitationDate(), null));
         }
         if (precipitation.getMmRain().compareTo(request.getMmRain()) != 0) {
-            auditService.logChange(currentUser, "UPDATE", Precipitation.class.getSimpleName(), "mmRain", precipitation.getMmRain().toString(), request.getMmRain().toString());
+            auditService.logChange(currentUser, "UPDATE", Precipitation.class.getSimpleName(), "mmRain",
+                    precipitation.getMmRain().toString(), request.getMmRain().toString());
         }
 
         precipitation.setPrecipitationDate(request.getPrecipitationDate());
@@ -85,7 +88,8 @@ public class PrecipitationService {
         Precipitation precipitation = getPrecipitationById(precipitationId);
 
         // --- AUDITORÍA DE BORRADO ---
-        auditService.logChange(currentUser, "DELETE", Precipitation.class.getSimpleName(), "id", precipitation.getId().toString(), null);
+        auditService.logChange(currentUser, "DELETE", Precipitation.class.getSimpleName(), "id",
+                precipitation.getId().toString(), null);
 
         log.warn("Eliminando precipitación ID {}", precipitationId);
         precipitationRepository.delete(precipitation);
@@ -113,8 +117,9 @@ public class PrecipitationService {
         BigDecimal effectiveRain = mmRainTotal.subtract(FIVE_MM).multiply(EFFECTIVE_RAIN_FACTOR);
         return effectiveRain.setScale(2, RoundingMode.HALF_UP);
     }
+
     @Transactional(readOnly = true)
-    public PrecipitationSummaryResponse getDailyPrecipitation(Integer farmId, Date date) {
+    public PrecipitationSummaryResponse getDailyPrecipitation(Integer farmId, LocalDate date) {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
         BigDecimal totalRain = precipitationRepository.getDailyPrecipitation(farm, date);
@@ -126,11 +131,8 @@ public class PrecipitationService {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
 
-        Calendar cal = Calendar.getInstance();
-        cal.set(year, month - 1, 1);
-        Date startDate = cal.getTime();
-        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH));
-        Date endDate = cal.getTime();
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         BigDecimal totalRain = precipitationRepository.getMonthlyPrecipitation(farm, year, month);
         return new PrecipitationSummaryResponse(startDate, endDate, totalRain, calculateEffectiveRain(totalRain));
@@ -141,12 +143,9 @@ public class PrecipitationService {
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
 
-        Calendar cal = Calendar.getInstance();
-        cal.set(year, Calendar.MAY, 1);
-        Date startDate = cal.getTime();
-        cal.add(Calendar.YEAR, 1);
-        cal.add(Calendar.DAY_OF_YEAR, -1);
-        Date endDate = cal.getTime();
+        // Asumimos año agrícola empieza en Mayo (según lógica anterior)
+        LocalDate startDate = LocalDate.of(year, 5, 1);
+        LocalDate endDate = startDate.plusYears(1).minusDays(1);
 
         BigDecimal totalRain = precipitationRepository.getAnnualPrecipitation(farm, startDate, endDate);
         return new PrecipitationSummaryResponse(startDate, endDate, totalRain, calculateEffectiveRain(totalRain));

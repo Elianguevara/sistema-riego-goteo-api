@@ -6,11 +6,13 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.calendar.SectorM
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Irrigation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEquipment;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Precipitation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.PrecipitationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,14 +66,14 @@ public class IrrigationService {
     private final FarmRepository farmRepository;
 
     /**
+     * Repositorio para la gestión de precipitaciones.
+     */
+    private final PrecipitationRepository precipitationRepository;
+
+    /**
      * Factor de conversión de Metros Cúbicos a Hectolitros (1 m³ = 10 hL).
      */
     private static final BigDecimal METERS_CUBIC_TO_HECTOLITERS = new BigDecimal("10");
-
-    /**
-     * Constante para la cantidad de milisegundos en una hora.
-     */
-    private static final BigDecimal MILLIS_IN_HOUR = new BigDecimal("3600000");
 
     /**
      * Crea un nuevo registro de riego calculando automáticamente la duración y el
@@ -196,16 +198,16 @@ public class IrrigationService {
      * @param end   Fecha de fin.
      * @return Horas con 2 decimales de precisión.
      */
-    private BigDecimal calculateIrrigationHours(Date start, Date end) {
-        if (start == null || end == null || end.before(start)) {
+    private BigDecimal calculateIrrigationHours(java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        if (start == null || end == null || end.isBefore(start)) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
 
-        long diffInMillis = end.getTime() - start.getTime();
-        BigDecimal diff = BigDecimal.valueOf(diffInMillis);
+        long diffInMinutes = java.time.Duration.between(start, end).toMinutes();
+        BigDecimal minutes = BigDecimal.valueOf(diffInMinutes);
 
-        // División precisa: (milisegundos / 3600000)
-        return diff.divide(MILLIS_IN_HOUR, 2, RoundingMode.HALF_UP);
+        // División precisa: (minutos / 60.0)
+        return minutes.divide(new BigDecimal("60"), 2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -243,8 +245,18 @@ public class IrrigationService {
 
         // Determinar rango de fechas del mes
         YearMonth yearMonth = YearMonth.of(year, month);
-        Date startOfMonth = toDate(yearMonth.atDay(1).atStartOfDay());
-        Date endOfMonth = toDate(yearMonth.atEndOfMonth().atTime(23, 59, 59));
+        LocalDate startOfMonth = yearMonth.atDay(1);
+        LocalDate endOfMonth = yearMonth.atEndOfMonth();
+
+        // Obtener precipitaciones del mes para la finca
+        List<Precipitation> precipitations = precipitationRepository.findByFarm_IdAndPrecipitationDateBetween(
+                farmId, startOfMonth, endOfMonth);
+
+        // Agrupar precipitaciones por día y sumar mmRain
+        Map<Integer, BigDecimal> dailyRain = precipitations.stream()
+                .collect(Collectors.groupingBy(
+                        p -> p.getPrecipitationDate().getDayOfMonth(),
+                        Collectors.reducing(BigDecimal.ZERO, Precipitation::getMmRain, BigDecimal::add)));
 
         List<Sector> sectors = sectorRepository.findByFarm_Id(farmId);
         if (sectors.isEmpty()) {
@@ -252,8 +264,12 @@ public class IrrigationService {
         }
 
         // Obtener riegos en una sola consulta
-        List<Irrigation> irrigations = irrigationRepository.findBySectorInAndStartDatetimeBetween(sectors, startOfMonth,
-                endOfMonth);
+        LocalDateTime startOfMonthDateTime = startOfMonth.atStartOfDay();
+        LocalDateTime endOfMonthDateTime = endOfMonth.atTime(23, 59, 59);
+
+        List<Irrigation> irrigations = irrigationRepository.findBySectorInAndStartDatetimeBetween(sectors,
+                startOfMonthDateTime,
+                endOfMonthDateTime);
 
         // Agrupar riegos por sector
         Map<Sector, List<Irrigation>> irrigationsBySector = irrigations.stream()
@@ -270,10 +286,11 @@ public class IrrigationService {
             // Agrupar por día del mes
             Map<Integer, List<IrrigationCalendarEventDTO>> dailyIrrigations = sectorIrrigations.stream()
                     .collect(Collectors.groupingBy(
-                            irrigation -> getDayOfMonth(irrigation.getStartDatetime()),
+                            irrigation -> irrigation.getStartDatetime().getDayOfMonth(),
                             Collectors.mapping(IrrigationCalendarEventDTO::new, Collectors.toList())));
 
             sectorDTO.setDailyIrrigations(dailyIrrigations);
+            sectorDTO.setDailyPrecipitations(dailyRain);
             return sectorDTO;
         }).collect(Collectors.toList());
     }
@@ -304,13 +321,4 @@ public class IrrigationService {
         }
     }
 
-    // Conversor auxiliar para facilitar futura migración a LocalDateTime
-    private Date toDate(java.time.LocalDateTime localDateTime) {
-        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-    }
-
-    // Obtener día del mes de forma segura
-    private int getDayOfMonth(Date date) {
-        return date.toInstant().atZone(ZoneId.systemDefault()).getDayOfMonth();
-    }
 }

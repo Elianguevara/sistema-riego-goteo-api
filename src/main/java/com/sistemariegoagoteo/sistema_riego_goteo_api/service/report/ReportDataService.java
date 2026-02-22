@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -58,15 +59,19 @@ public class ReportDataService {
                 }
 
                 // AGREGACIÓN EN DB: Precipitaciones
-                List<DailyRainProjection> dailyRains = precipitationRepository.findDailyRainByFarm(farmId, startDate,
-                                endDate);
+                LocalDate startL = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate endL = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                List<DailyRainProjection> dailyRains = precipitationRepository.findDailyRainByFarm(farmId, startL,
+                                endL);
                 Map<LocalDate, BigDecimal> dailyRainMap = dailyRains.stream()
                                 .collect(Collectors.toMap(DailyRainProjection::getRainDate,
                                                 DailyRainProjection::getAmount));
 
                 // AGREGACIÓN EN DB: Resumen por Sector
+                LocalDateTime startDT = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                LocalDateTime endDT = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
                 List<SectorIrrigationProjection> sectorSummaries = irrigationRepository
-                                .getSectorIrrigationTotals(farmId, targetSectorIds, startDate, endDate);
+                                .getSectorIrrigationTotals(farmId, targetSectorIds, startDT, endDT);
                 Map<Integer, SectorIrrigationProjection> sectorSummaryMap = sectorSummaries.stream()
                                 .collect(Collectors.toMap(SectorIrrigationProjection::getSectorId, s -> s));
 
@@ -84,8 +89,10 @@ public class ReportDataService {
                         sectorData.setSectorName(sector.getName());
 
                         // AGREGACIÓN EN DB: Riegos Diarios por Sector
+                        LocalDateTime startSDT = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                        LocalDateTime endSDT = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
                         List<DailyIrrigationProjection> dailyIrrigations = irrigationRepository
-                                        .getDailyIrrigationTotals(sectorId, startDate, endDate);
+                                        .getDailyIrrigationTotals(sectorId, startSDT, endSDT);
                         Map<LocalDate, DailyIrrigationProjection> dailyIrrigationMap = dailyIrrigations.stream()
                                         .collect(Collectors.toMap(DailyIrrigationProjection::getIrrigationDate,
                                                         i -> i));
@@ -137,8 +144,10 @@ public class ReportDataService {
                 List<OperationLogProjection> allLogs = new ArrayList<>();
 
                 // AGREGACIÓN/PROYECCIÓN EN DB
+                LocalDateTime startDT = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                LocalDateTime endDT = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
                 if (operationType == null || "RIEGO".equalsIgnoreCase(operationType)) {
-                        allLogs.addAll(irrigationRepository.getIrrigationLogs(farmId, startDate, endDate));
+                        allLogs.addAll(irrigationRepository.getIrrigationLogs(farmId, startDT, endDT));
                 }
                 if (operationType == null || "MANTENIMIENTO".equalsIgnoreCase(operationType)) {
                         allLogs.addAll(maintenanceRepository.getMaintenanceLogs(farmId, startDate, endDate));
@@ -189,8 +198,10 @@ public class ReportDataService {
                 // Obtenemos los sectores para el farm
                 List<Integer> sectorIds = sectorRepository.findByFarm_Id(farmId).stream().map(Sector::getId)
                                 .collect(Collectors.toList());
+                LocalDateTime startDT = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                LocalDateTime endDT = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
                 List<SectorIrrigationProjection> sectorSummaries = irrigationRepository
-                                .getSectorIrrigationTotals(farmId, sectorIds, startDate, endDate);
+                                .getSectorIrrigationTotals(farmId, sectorIds, startDT, endDT);
 
                 waterSummary.setTotalIrrigationWaterM3(
                                 sectorSummaries.stream().map(SectorIrrigationProjection::getWaterAmount)
@@ -198,8 +209,10 @@ public class ReportDataService {
                 waterSummary.setTotalIrrigationHours(sectorSummaries.stream().map(SectorIrrigationProjection::getHours)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add));
 
-                List<DailyRainProjection> rains = precipitationRepository.findDailyRainByFarm(farmId, startDate,
-                                endDate);
+                LocalDate startL = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                LocalDate endL = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                List<DailyRainProjection> rains = precipitationRepository.findDailyRainByFarm(farmId, startL,
+                                endL);
                 waterSummary.setTotalPrecipitationMM(rains.stream().map(DailyRainProjection::getAmount)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add));
                 waterSummary.setTotalEffectivePrecipitationMM(rains.stream().map(DailyRainProjection::getAmount)

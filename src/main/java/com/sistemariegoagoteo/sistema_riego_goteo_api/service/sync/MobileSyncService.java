@@ -21,13 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Servicio optimizado para la sincronización de datos desde dispositivos móviles.
- * Implementa procesamiento por lotes para minimizar las transacciones de base de datos.
+ * Servicio optimizado para la sincronización de datos desde dispositivos
+ * móviles.
+ * Implementa procesamiento por lotes para minimizar las transacciones de base
+ * de datos.
  */
 @Service
 @RequiredArgsConstructor
@@ -42,11 +45,11 @@ public class MobileSyncService {
 
     // Constantes para cálculos de precisión
     private static final BigDecimal METERS_CUBIC_TO_HECTOLITERS = new BigDecimal("10");
-    private static final BigDecimal MILLIS_IN_HOUR = new BigDecimal("3600000");
 
     /**
      * Procesa un lote de registros de riego enviados desde el móvil.
-     * Utiliza optimización de consultas (Batch Fetching) para resolver el problema N+1.
+     * Utiliza optimización de consultas (Batch Fetching) para resolver el problema
+     * N+1.
      */
     @Transactional
     public IrrigationSyncResponse processIrrigationBatch(String username, IrrigationSyncBatchRequest batchRequest) {
@@ -75,7 +78,8 @@ public class MobileSyncService {
         List<Irrigation> entitiesToSave = new ArrayList<>();
         Map<String, IrrigationSyncResultItem> resultMap = new HashMap<>();
 
-        // CORRECCIÓN: Usamos un mapa auxiliar para recordar la acción (CREATE/UPDATE) de cada item
+        // CORRECCIÓN: Usamos un mapa auxiliar para recordar la acción (CREATE/UPDATE)
+        // de cada item
         Map<String, String> actionMap = new HashMap<>();
 
         // 4. PROCESAMIENTO EN MEMORIA
@@ -96,7 +100,8 @@ public class MobileSyncService {
                 }
 
                 if (!equipment.getFarm().getId().equals(sector.getFarm().getId())) {
-                    throw new IllegalArgumentException("El equipo " + equipment.getId() + " no pertenece a la finca del sector.");
+                    throw new IllegalArgumentException(
+                            "El equipo " + equipment.getId() + " no pertenece a la finca del sector.");
                 }
 
                 // Buscar existencia
@@ -180,12 +185,12 @@ public class MobileSyncService {
 
     // --- Métodos de cálculo precisos ---
 
-    private BigDecimal calculateIrrigationHours(Date start, Date end) {
-        if (start == null || end == null || end.before(start)) {
+    private BigDecimal calculateIrrigationHours(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null || end.isBefore(start)) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
-        long diffInMillis = end.getTime() - start.getTime();
-        return BigDecimal.valueOf(diffInMillis).divide(MILLIS_IN_HOUR, 2, RoundingMode.HALF_UP);
+        long diffInMinutes = java.time.Duration.between(start, end).toMinutes();
+        return BigDecimal.valueOf(diffInMinutes).divide(new BigDecimal("60"), 2, RoundingMode.HALF_UP);
     }
 
     private BigDecimal calculateWaterAmount(BigDecimal flowRate, BigDecimal hours) {

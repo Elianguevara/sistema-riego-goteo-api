@@ -1,0 +1,48 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------< com.sitemaderiegoagoteo:sistema-riego-goteo-api >-----------
+[INFO] Building sistema-riego-goteo-api 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ sistema-riego-goteo-api ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ sistema-riego-goteo-api ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 179 source files with javac [debug parameters release 17] to target\classes
+[INFO] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/geocoding/GeocodingService.java: Some input files use or override a deprecated API.
+[INFO] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/geocoding/GeocodingService.java: Recompile with -Xlint:deprecation for details.
+[INFO] Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/dashboard/AnalystDashboardService.java:[54,119] incompatible types: java.util.Date cannot be converted to java.time.LocalDate
+[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/dashboard/AnalystDashboardService.java:[64,54] cannot find symbol
+  symbol:   method toInstant()
+  location: class java.time.LocalDate
+[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/report/ReportDataService.java:[61,108] incompatible types: java.util.Date cannot be converted to java.time.LocalDate
+[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/report/ReportDataService.java:[201,103] incompatible types: java.util.Date cannot be converted to java.time.LocalDate
+[INFO] 4 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  11.354 s
+[INFO] Finished at: 2026-02-22T20:23:33-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project sistema-riego-goteo-api: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/dashboard/AnalystDashboardService.java:[54,119] incompatible types: java.util.Date cannot be converted to java.time.LocalDate
+[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/dashboard/AnalystDashboardService.java:[64,54] cannot find symbol
+[ERROR]   symbol:   method toInstant()
+[ERROR]   location: class java.time.LocalDate
+[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/report/ReportDataService.java:[61,108] incompatible types: java.util.Date cannot be converted to java.time.LocalDate
+[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/report/ReportDataService.java:[201,103] incompatible types: java.util.Date cannot be converted to java.time.LocalDate
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

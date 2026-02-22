@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -25,11 +25,11 @@ public class IrrigationSyncItem {
     private Integer equipmentId;
 
     @NotNull(message = "La fecha y hora de inicio del riego son requeridas.")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
-    private Date startDatetime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime startDatetime;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
-    private Date endDatetime; // Puede ser nulo si el riego aún no ha terminado
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime endDatetime; // Puede ser nulo si el riego aún no ha terminado
 
     @PositiveOrZero(message = "La cantidad de agua debe ser un valor positivo o cero.")
     private BigDecimal waterAmount;

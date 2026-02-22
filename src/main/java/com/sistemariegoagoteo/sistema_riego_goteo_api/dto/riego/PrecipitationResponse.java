@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -17,7 +17,7 @@ public class PrecipitationResponse {
     private String farmName;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private Date precipitationDate;
+    private LocalDate precipitationDate;
     private BigDecimal mmRain; // Lluvia total
     private BigDecimal mmEffectiveRain; // Lluvia efectiva
 

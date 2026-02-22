@@ -50,6 +50,10 @@ C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\sr
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\notification\NotificationResponse.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\report\OperationsLogReportDTO.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\report\PeriodSummaryReportDTO.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\report\projection\DailyIrrigationProjection.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\report\projection\DailyRainProjection.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\report\projection\OperationLogProjection.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\report\projection\SectorIrrigationProjection.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\report\WaterBalanceReportDTO.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\riego\calendar\IrrigationCalendarEventDTO.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\dto\riego\calendar\SectorMonthlyIrrigationDTO.java
@@ -99,6 +103,7 @@ C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\sr
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\model\audit\ChangeHistory.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\model\audit\Synchronization.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\model\notification\Notification.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\model\report\ReportTask.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\model\riego\EnergyConsumption.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\model\riego\Farm.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\model\riego\Fertilization.java
@@ -121,6 +126,7 @@ C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\sr
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\repository\audit\ChangeHistoryRepository.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\repository\audit\SynchronizationRepository.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\repository\notification\NotificationRepository.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\repository\report\ReportTaskRepository.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\repository\riego\EnergyConsumptionRepository.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\repository\riego\FarmRepository.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\repository\riego\FertilizationRepository.java
@@ -151,6 +157,7 @@ C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\sr
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\notification\NotificationService.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\report\ReportDataService.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\report\ReportFileService.java
+C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\report\ReportTaskService.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\riego\EnergyConsumptionService.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\riego\FarmService.java
 C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\src\main\java\com\sistemariegoagoteo\sistema_riego_goteo_api\service\riego\FertilizationService.java

@@ -27,7 +27,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -109,9 +109,8 @@ class IrrigationServiceTest {
     void createIrrigation_calculosCorrectos_creaIrrigacion() {
         // Inicio: 8:00, Fin: 10:00 → 2 horas
         // 5 m³/h * 2h = 10 m³ * 10 hL/m³ = 100 hL
-        long now = System.currentTimeMillis();
-        Date startDate = new Date(now);
-        Date endDate = new Date(now + 2 * 3600000L); // + 2 horas en milisegundos
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = startDate.plusHours(2);
 
         IrrigationRequest request = new IrrigationRequest();
         request.setSectorId(100);
@@ -144,8 +143,8 @@ class IrrigationServiceTest {
         IrrigationRequest request = new IrrigationRequest();
         request.setSectorId(999);
         request.setEquipmentId(10);
-        request.setStartDateTime(new Date());
-        request.setEndDateTime(new Date());
+        request.setStartDateTime(LocalDateTime.now());
+        request.setEndDateTime(LocalDateTime.now());
 
         when(sectorRepository.findById(999)).thenReturn(Optional.empty());
 
@@ -160,8 +159,8 @@ class IrrigationServiceTest {
         IrrigationRequest request = new IrrigationRequest();
         request.setSectorId(100);
         request.setEquipmentId(999);
-        request.setStartDateTime(new Date());
-        request.setEndDateTime(new Date());
+        request.setStartDateTime(LocalDateTime.now());
+        request.setEndDateTime(LocalDateTime.now());
 
         when(sectorRepository.findById(100)).thenReturn(Optional.of(testSector));
         when(equipmentRepository.findById(999)).thenReturn(Optional.empty());

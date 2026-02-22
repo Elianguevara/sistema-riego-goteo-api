@@ -1,0 +1,70 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------< com.sitemaderiegoagoteo:sistema-riego-goteo-api >-----------
+[INFO] Building sistema-riego-goteo-api 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ sistema-riego-goteo-api ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ sistema-riego-goteo-api ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ sistema-riego-goteo-api ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ sistema-riego-goteo-api ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ sistema-riego-goteo-api ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running IrrigationService - Tests Unitarios
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+20:25:00.842 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.IrrigationService -- Usuario admin registr¾ un nuevo riego (ID: 1000) para el sector Sector Norte
+20:25:00.892 [main] WARN com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.IrrigationService -- Eliminando registro de riego ID 1000
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.917 s -- in IrrigationService - Tests Unitarios
+[INFO] Running PrecipitationService - Tests Unitarios
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.011 s <<< FAILURE! -- in PrecipitationService - Tests Unitarios
+[ERROR] com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest -- Time elapsed: 0.011 s <<< ERROR!
+java.lang.NoClassDefFoundError: PrecipitationRepository
+	at java.base/java.lang.Class.getDeclaredFields0(Native Method)
+	at java.base/java.lang.Class.privateGetDeclaredFields(Class.java:3397)
+	at java.base/java.lang.Class.getDeclaredFields(Class.java:2468)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.ClassNotFoundException: PrecipitationRepository
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:521)
+	... 4 more
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Errors: 
+[ERROR]   PrecipitationServiceTest ╗ NoClassDefFound PrecipitationRepository
+[INFO] 
+[ERROR] Tests run: 8, Failures: 0, Errors: 1, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  5.813 s
+[INFO] Finished at: 2026-02-22T20:25:01-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.4:test (default-test) on project sistema-riego-goteo-api: 
+[ERROR] 
+[ERROR] See C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\target\surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

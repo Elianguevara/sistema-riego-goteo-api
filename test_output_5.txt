@@ -1,0 +1,22 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------< com.sitemaderiegoagoteo:sistema-riego-goteo-api >-----------
+[INFO] Building sistema-riego-goteo-api 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.1:clean (default-clean) @ sistema-riego-goteo-api ---
+[INFO] Deleting C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\target
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.387 s
+[INFO] Finished at: 2026-02-22T20:25:27-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-clean-plugin:3.4.1:clean (default-clean) on project sistema-riego-goteo-api: Failed to clean project: Failed to delete C:\Users\elian\OneDrive\Documentos\1-Proyectos\Reales\sistema-riego-goteo-api\target\classes -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

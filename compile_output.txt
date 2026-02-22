@@ -1,0 +1,22 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------< com.sitemaderiegoagoteo:sistema-riego-goteo-api >-----------
+[INFO] Building sistema-riego-goteo-api 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ sistema-riego-goteo-api ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ sistema-riego-goteo-api ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 179 source files with javac [debug parameters release 17] to target\classes
+[INFO] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/geocoding/GeocodingService.java: Some input files use or override a deprecated API.
+[INFO] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/geocoding/GeocodingService.java: Recompile with -Xlint:deprecation for details.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.745 s
+[INFO] Finished at: 2026-02-22T20:25:57-03:00
+[INFO] ------------------------------------------------------------------------

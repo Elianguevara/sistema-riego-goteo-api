@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,22 +20,25 @@ public interface IrrigationRepository extends JpaRepository<Irrigation, Integer>
 
         List<Irrigation> findByEquipment(IrrigationEquipment equipment);
 
-        List<Irrigation> findByStartDatetimeBetween(Date startDate, Date endDate);
+        List<Irrigation> findByStartDatetimeBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-        List<Irrigation> findBySectorAndStartDatetimeBetween(Sector sector, Date startDate, Date endDate);
+        List<Irrigation> findBySectorAndStartDatetimeBetween(Sector sector, LocalDateTime startDate,
+                        LocalDateTime endDate);
 
         List<Irrigation> findBySectorOrderByStartDatetimeDesc(Sector sector);
 
         Optional<Irrigation> findByLocalMobileId(String localMobileId);
 
-        List<Irrigation> findBySectorInAndStartDatetimeBetween(List<Sector> sectors, Date startDate, Date endDate);
+        List<Irrigation> findBySectorInAndStartDatetimeBetween(List<Sector> sectors, LocalDateTime startDate,
+                        LocalDateTime endDate);
 
         /**
          * Busca todos los riegos de una finca específica dentro de un rango de fechas.
          * Spring Data JPA creará la consulta anidando las propiedades (Sector -> Farm
          * -> Id).
          */
-        List<Irrigation> findBySector_Farm_IdAndStartDatetimeBetween(Integer farmId, Date startDate, Date endDate);
+        List<Irrigation> findBySector_Farm_IdAndStartDatetimeBetween(Integer farmId, LocalDateTime startDate,
+                        LocalDateTime endDate);
 
         @Query("SELECT s.id as sectorId, s.name as sectorName, " +
                         "COALESCE(SUM(i.waterAmount), 0) as waterAmount, " +
@@ -47,8 +50,8 @@ public interface IrrigationRepository extends JpaRepository<Irrigation, Integer>
         List<com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.SectorIrrigationProjection> getSectorIrrigationTotals(
                         @Param("farmId") Integer farmId,
                         @Param("sectorIds") Collection<Integer> sectorIds,
-                        @Param("startDate") java.util.Date startDate,
-                        @Param("endDate") java.util.Date endDate);
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 
         @Query("SELECT CAST(i.startDatetime AS LocalDate) as irrigationDate, " +
                         "SUM(i.waterAmount) as waterAmount, " +
@@ -59,14 +62,14 @@ public interface IrrigationRepository extends JpaRepository<Irrigation, Integer>
                         "GROUP BY CAST(i.startDatetime AS LocalDate)")
         List<com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.DailyIrrigationProjection> getDailyIrrigationTotals(
                         @Param("sectorId") Integer sectorId,
-                        @Param("startDate") java.util.Date startDate,
-                        @Param("endDate") java.util.Date endDate);
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 
         @Query("SELECT i.startDatetime as datetime, 'RIEGO' as type, " +
                         "CONCAT('Riego: ', i.waterAmount, ' m³ en ', i.irrigationHours, ' horas.') as description, " +
                         "CONCAT('Sector: ', i.sector.name) as location, 'N/A' as userName " +
                         "FROM Irrigation i WHERE i.sector.farm.id = :farmId AND i.startDatetime BETWEEN :startDate AND :endDate")
         List<com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.OperationLogProjection> getIrrigationLogs(
-                        @Param("farmId") Integer farmId, @Param("startDate") java.util.Date startDate,
-                        @Param("endDate") java.util.Date endDate);
+                        @Param("farmId") Integer farmId, @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 }
