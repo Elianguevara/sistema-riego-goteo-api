@@ -1,4 +1,97 @@
 -------------------------------------------------------------------------------
 Test set: com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.918 s -- in com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest
+Tests run: 5, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.156 s <<< FAILURE! -- in com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest.deleteReservoirTurn_Success -- Time elapsed: 0.134 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@d4e17ec,
+    "DELETE",
+    "ReservoirTurn",
+    "id",
+    "1",
+    isNull()
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@18a9762,
+    "DELETE",
+    "ReservoirTurn",
+    "id",
+    "1",
+    null
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnService.deleteReservoirTurn(ReservoirTurnService.java:90)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest.deleteReservoirTurn_Success(ReservoirTurnServiceTest.java:153)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest.createReservoirTurn_Success -- Time elapsed: 0.005 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@45b4d2ff,
+    "CREATE",
+    "ReservoirTurn",
+    "id",
+    isNull(),
+    "2"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@18a9762,
+    "CREATE",
+    "ReservoirTurn",
+    "id",
+    null,
+    "2"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnService.createReservoirTurn(ReservoirTurnService.java:53)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest.createReservoirTurn_Success(ReservoirTurnServiceTest.java:106)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest.updateReservoirTurn_Success -- Time elapsed: 0.005 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@8d56ddd,
+    "UPDATE",
+    "ReservoirTurn",
+    <any string>,
+    <any string>,
+    <any string>
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@18a9762,
+    "UPDATE",
+    "ReservoirTurn",
+    "startDatetime",
+    "Fri Feb 27 20:44:05 ART 2026",
+    "Fri Feb 27 21:44:05 ART 2026"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnService.updateReservoirTurn(ReservoirTurnService.java:67)
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@18a9762,
+    "UPDATE",
+    "ReservoirTurn",
+    "endDatetime",
+    "Sat Feb 28 00:44:05 ART 2026",
+    "Sat Feb 28 01:44:05 ART 2026"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnService.updateReservoirTurn(ReservoirTurnService.java:70)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnServiceTest.updateReservoirTurn_Success(ReservoirTurnServiceTest.java:142)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+

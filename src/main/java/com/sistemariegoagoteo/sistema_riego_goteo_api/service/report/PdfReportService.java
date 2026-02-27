@@ -4,6 +4,9 @@ import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.config.OrganizationConfigDTO;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
@@ -12,7 +15,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PdfReportService {
+
+    private final SystemConfigService systemConfigService;
 
     public byte[] generateCorporateReport(List<String[]> tableData, String requesterName) {
         // Inicializamos el documento con márgenes adecuados (A4)
@@ -48,9 +54,14 @@ public class PdfReportService {
             document.add(title);
 
             // Subtítulo con Metadatos
+            OrganizationConfigDTO orgConfig = systemConfigService.getOrganizationConfig();
+
             Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 11, Color.GRAY);
             String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-            Paragraph subtitle = new Paragraph("Generado el: " + dateStr + " | Solicitado por: " + requesterName,
+
+            Paragraph subtitle = new Paragraph(
+                    orgConfig.getOrganizationName() + "\n" +
+                            "Generado el: " + dateStr + " | Solicitado por: " + requesterName,
                     subtitleFont);
             subtitle.setAlignment(Element.ALIGN_CENTER);
             subtitle.setSpacingAfter(30);

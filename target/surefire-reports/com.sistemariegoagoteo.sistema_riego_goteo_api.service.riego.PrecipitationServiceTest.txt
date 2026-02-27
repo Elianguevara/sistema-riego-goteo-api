@@ -1,4 +1,88 @@
 -------------------------------------------------------------------------------
 Test set: com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest
 -------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.038 s -- in com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest
+Tests run: 4, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.028 s <<< FAILURE! -- in com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest.createPrecipitation_Success_EffectiveRainCalculated -- Time elapsed: 0.011 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@40f88929,
+    "CREATE",
+    "Precipitation",
+    "mmRain",
+    isNull(),
+    "15.50"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@18a9762,
+    "CREATE",
+    "Precipitation",
+    "mmRain",
+    null,
+    "15.50"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationService.createPrecipitation(PrecipitationService.java:52)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest.createPrecipitation_Success_EffectiveRainCalculated(PrecipitationServiceTest.java:98)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest.updatePrecipitation_Success -- Time elapsed: 0.005 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@7207cb8b,
+    "UPDATE",
+    "Precipitation",
+    "mmRain",
+    "10.00",
+    "12.00"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@18a9762,
+    "UPDATE",
+    "Precipitation",
+    "mmRain",
+    "10.00",
+    "12.00"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationService.updatePrecipitation(PrecipitationService.java:72)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest.updatePrecipitation_Success(PrecipitationServiceTest.java:132)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest.deletePrecipitation_Success -- Time elapsed: 0.004 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@6e6bb211,
+    "DELETE",
+    "Precipitation",
+    "id",
+    "1",
+    isNull()
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@18a9762,
+    "DELETE",
+    "Precipitation",
+    "id",
+    "1",
+    null
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationService.deletePrecipitation(PrecipitationService.java:91)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest.deletePrecipitation_Success(PrecipitationServiceTest.java:143)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+

@@ -2,6 +2,8 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.service.report;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.report.ReportTask;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.report.ReportTaskRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.config.ReportConfigDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -23,9 +25,17 @@ public class ReportTaskService {
     private final ReportTaskRepository reportTaskRepository;
     private final ReportDataService reportDataService;
     private final ReportFileService reportFileService;
+    private final SystemConfigService systemConfigService;
 
     public ReportTask createAndStartTask(String reportType, Integer farmId, Date startDate, Date endDate,
             String format, List<Integer> sectorIds, String operationType, Long userId) {
+
+        // Si no mandan formato por frontend, usar el de la configuración
+        if (format == null || format.isBlank()) {
+            ReportConfigDTO reportConfig = systemConfigService.getReportConfig();
+            format = reportConfig.getDefaultReportFormat();
+        }
+
         ReportTask task = ReportTask.builder()
                 .reportType(reportType)
                 .format(format)

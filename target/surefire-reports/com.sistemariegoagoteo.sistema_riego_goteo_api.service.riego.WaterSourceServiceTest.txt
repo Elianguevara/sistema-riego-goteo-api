@@ -1,4 +1,88 @@
 -------------------------------------------------------------------------------
 Test set: com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest
 -------------------------------------------------------------------------------
-Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.150 s -- in com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest
+Tests run: 5, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.027 s <<< FAILURE! -- in com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest.createWaterSource_Success -- Time elapsed: 0.007 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@71669835,
+    "CREATE",
+    "WaterSource",
+    "type",
+    isNull(),
+    "REPRESA"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@727d937a,
+    "CREATE",
+    "WaterSource",
+    "type",
+    null,
+    "REPRESA"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceService.createWaterSource(WaterSourceService.java:47)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest.createWaterSource_Success(WaterSourceServiceTest.java:83)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest.updateWaterSource_Success -- Time elapsed: 0.006 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@73ec417b,
+    "UPDATE",
+    "WaterSource",
+    "type",
+    "POZO",
+    "CANAL"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@727d937a,
+    "UPDATE",
+    "WaterSource",
+    "type",
+    "POZO",
+    "CANAL"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceService.updateWaterSource(WaterSourceService.java:60)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest.updateWaterSource_Success(WaterSourceServiceTest.java:112)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest.deleteWaterSource_Success -- Time elapsed: 0.005 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@71b38b11,
+    "DELETE",
+    "WaterSource",
+    "id",
+    "1",
+    isNull()
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@727d937a,
+    "DELETE",
+    "WaterSource",
+    "id",
+    "1",
+    null
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceService.deleteWaterSource(WaterSourceService.java:83)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.WaterSourceServiceTest.deleteWaterSource_Success(WaterSourceServiceTest.java:123)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+

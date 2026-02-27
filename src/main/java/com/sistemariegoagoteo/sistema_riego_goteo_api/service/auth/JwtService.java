@@ -7,9 +7,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor; // <-- AÑADIR ESTA IMPORTACIÓN
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.config.SecurityConfigDTO;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -32,8 +34,8 @@ public class JwtService {
     /**
      * Configuración de JWT inyectada (secreto y tiempo de expiración).
      */
-    // Inyectamos la clase de configuración completa
     private final JwtConfig jwtConfig;
+    private final SystemConfigService systemConfigService;
 
     // Ya no necesitamos los campos individuales con @Value
     // @Value("${jwt.secret}")
@@ -83,8 +85,12 @@ public class JwtService {
                 .findFirst()
                 .orElse("SIN_ROL");
         extraClaims.put("rol", rol);
-        // Usamos el valor desde jwtConfig
-        return buildToken(extraClaims, userDetails, jwtConfig.getExpiration());
+
+        SecurityConfigDTO securityConfig = systemConfigService.getSecurityConfig();
+        // Convertir las horas configuradas a milisegundos
+        long expirationMs = securityConfig.getSessionDurationHours() * 3600000L;
+
+        return buildToken(extraClaims, userDetails, expirationMs);
     }
 
     /**

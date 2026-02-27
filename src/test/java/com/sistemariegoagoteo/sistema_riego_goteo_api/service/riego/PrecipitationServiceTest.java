@@ -8,6 +8,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.PrecipitationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.config.AgronomicConfigDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +38,8 @@ class PrecipitationServiceTest {
     private FarmRepository farmRepository;
     @Mock
     private AuditService auditService;
+    @Mock
+    private SystemConfigService systemConfigService;
 
     @InjectMocks
     private PrecipitationService precipitationService;
@@ -43,6 +47,7 @@ class PrecipitationServiceTest {
     private User authUser;
     private Farm farm;
     private Precipitation precipitation;
+    private AgronomicConfigDTO agConfig;
 
     @BeforeEach
     void setUp() {
@@ -62,6 +67,10 @@ class PrecipitationServiceTest {
         precipitation.setMmRain(new BigDecimal("10.00"));
         precipitation.setMmEffectiveRain(new BigDecimal("3.75")); // (10 - 5) * 0.75
         precipitation.setPrecipitationDate(LocalDate.of(2026, 2, 27));
+
+        agConfig = new AgronomicConfigDTO();
+        agConfig.setPrecipitationEffectivenessThresholdMm(5.0f);
+        agConfig.setEffectiveRainCoefficient(0.75f);
     }
 
     @Test
@@ -70,6 +79,7 @@ class PrecipitationServiceTest {
         request.setPrecipitationDate(LocalDate.of(2026, 2, 28));
         request.setMmRain(new BigDecimal("15.5"));
 
+        when(systemConfigService.getAgronomicConfig()).thenReturn(agConfig);
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(precipitationRepository.save(any(Precipitation.class))).thenAnswer(i -> {
             Precipitation p = i.getArgument(0);
@@ -95,6 +105,7 @@ class PrecipitationServiceTest {
         request.setPrecipitationDate(LocalDate.of(2026, 2, 28));
         request.setMmRain(new BigDecimal("4.0"));
 
+        when(systemConfigService.getAgronomicConfig()).thenReturn(agConfig);
         when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
         when(precipitationRepository.save(any(Precipitation.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -110,6 +121,7 @@ class PrecipitationServiceTest {
         request.setPrecipitationDate(LocalDate.of(2026, 2, 27));
         request.setMmRain(new BigDecimal("12.00")); // Change amount
 
+        when(systemConfigService.getAgronomicConfig()).thenReturn(agConfig);
         when(precipitationRepository.findById(1)).thenReturn(Optional.of(precipitation));
         when(precipitationRepository.save(any(Precipitation.class))).thenAnswer(i -> i.getArgument(0));
 

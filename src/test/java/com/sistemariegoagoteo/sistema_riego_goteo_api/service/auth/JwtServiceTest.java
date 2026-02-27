@@ -6,6 +6,12 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.when;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.config.SecurityConfigDTO;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,10 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * No requiere Spring Context, se instancia directamente con valores de prueba.
  */
 @DisplayName("JwtService - Tests Unitarios")
+@ExtendWith(MockitoExtension.class)
 class JwtServiceTest {
 
     private JwtService jwtService;
     private User testUser;
+
+    @Mock
+    private SystemConfigService systemConfigService;
 
     // Clave Base64 de exactamente 88 caracteres (528 bits >= 512 bits requerido por
     // HS512)
@@ -30,10 +40,14 @@ class JwtServiceTest {
         jwtConfig.setSecret(TEST_SECRET);
         jwtConfig.setExpiration(TEST_EXPIRATION);
 
-        jwtService = new JwtService(jwtConfig);
+        jwtService = new JwtService(jwtConfig, systemConfigService);
 
         Role adminRole = new Role("ADMIN");
         testUser = new User("Admin Test", "admin_test", "password123", "admin@test.com", adminRole);
+
+        SecurityConfigDTO securityConfigDTO = new SecurityConfigDTO();
+        securityConfigDTO.setSessionDurationHours(24);
+        when(systemConfigService.getSecurityConfig()).thenReturn(securityConfigDTO);
     }
 
     @Test

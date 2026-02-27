@@ -9,6 +9,8 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // <-- IM
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.PrecipitationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.config.AgronomicConfigDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +32,7 @@ public class PrecipitationService {
     private final PrecipitationRepository precipitationRepository;
     private final FarmRepository farmRepository;
     private final AuditService auditService;
-
-    private static final BigDecimal FIVE_MM = new BigDecimal("5.00");
-    private static final BigDecimal EFFECTIVE_RAIN_FACTOR = new BigDecimal("0.75");
+    private final SystemConfigService systemConfigService;
 
     @Transactional
     public Precipitation createPrecipitation(Integer farmId, PrecipitationRequest request) {
@@ -111,10 +111,14 @@ public class PrecipitationService {
     }
 
     private BigDecimal calculateEffectiveRain(BigDecimal mmRainTotal) {
-        if (mmRainTotal == null || mmRainTotal.compareTo(FIVE_MM) < 0) {
+        AgronomicConfigDTO config = systemConfigService.getAgronomicConfig();
+        BigDecimal threshold = BigDecimal.valueOf(config.getPrecipitationEffectivenessThresholdMm());
+        BigDecimal factor = BigDecimal.valueOf(config.getEffectiveRainCoefficient());
+
+        if (mmRainTotal == null || mmRainTotal.compareTo(threshold) < 0) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
-        BigDecimal effectiveRain = mmRainTotal.subtract(FIVE_MM).multiply(EFFECTIVE_RAIN_FACTOR);
+        BigDecimal effectiveRain = mmRainTotal.subtract(threshold).multiply(factor);
         return effectiveRain.setScale(2, RoundingMode.HALF_UP);
     }
 

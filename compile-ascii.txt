@@ -1,0 +1,65 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------< com.sitemaderiegoagoteo:sistema-riego-goteo-api >-----------
+[INFO] Building sistema-riego-goteo-api 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ sistema-riego-goteo-api ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ sistema-riego-goteo-api ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 188 source files with javac [debug parameters release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[10,72] package com.sistemariegoagoteo.sistema_riego_goteo_api.repository.config does not exist
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[25,19] cannot find symbol
+  symbol:   class SystemConfigRepository
+  location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[30,12] cannot find symbol
+  symbol:   class AgronomicConfigDTO
+  location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[41,53] cannot find symbol
+  symbol:   class AgronomicConfigDTO
+  location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[41,12] cannot find symbol
+  symbol:   class AgronomicConfigDTO
+  location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[21,1] cannot find symbol
+  symbol:   class SystemConfigRepository
+  location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[INFO] 6 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  9.198 s
+[INFO] Finished at: 2026-02-27T20:20:55-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project sistema-riego-goteo-api: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[10,72] package com.sistemariegoagoteo.sistema_riego_goteo_api.repository.config does not exist
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[25,19] cannot find symbol
+[ERROR]   symbol:   class SystemConfigRepository
+[ERROR]   location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[30,12] cannot find symbol
+[ERROR]   symbol:   class AgronomicConfigDTO
+[ERROR]   location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[41,53] cannot find symbol
+[ERROR]   symbol:   class AgronomicConfigDTO
+[ERROR]   location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[41,12] cannot find symbol
+[ERROR]   symbol:   class AgronomicConfigDTO
+[ERROR]   location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] /C:/Users/elian/OneDrive/Documentos/0-Tecnicatura Desarrollo de software/3-Tercer A?o Desarrollo De Software/Practica Profesionalizante 3/software/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/config/SystemConfigService.java:[21,1] cannot find symbol
+[ERROR]   symbol:   class SystemConfigRepository
+[ERROR]   location: class com.sistemariegoagoteo.sistema_riego_goteo_api.service.config.SystemConfigService
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

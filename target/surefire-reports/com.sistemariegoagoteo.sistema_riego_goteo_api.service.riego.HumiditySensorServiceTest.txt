@@ -1,4 +1,88 @@
 -------------------------------------------------------------------------------
 Test set: com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.097 s -- in com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest
+Tests run: 3, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.089 s <<< FAILURE! -- in com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest.updateHumiditySensor_Success -- Time elapsed: 0.078 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@ab5af13,
+    "UPDATE",
+    "HumiditySensor",
+    <any string>,
+    <any string>,
+    <any string>
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@77d80294,
+    "UPDATE",
+    "HumiditySensor",
+    "sensorType",
+    "TENSIOMETRO",
+    "SONDA"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorService.updateHumiditySensor(HumiditySensorService.java:58)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest.updateHumiditySensor_Success(HumiditySensorServiceTest.java:111)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest.createHumiditySensor_Success -- Time elapsed: 0.004 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@439c706,
+    "CREATE",
+    "HumiditySensor",
+    "sensorType",
+    isNull(),
+    "SONDA"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@77d80294,
+    "CREATE",
+    "HumiditySensor",
+    "sensorType",
+    null,
+    "SONDA"
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorService.createHumiditySensor(HumiditySensorService.java:45)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest.createHumiditySensor_Success(HumiditySensorServiceTest.java:94)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest.deleteHumiditySensor_Success -- Time elapsed: 0.005 s <<< FAILURE!
+Argument(s) are different! Wanted:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@3c32f3d8,
+    "DELETE",
+    "HumiditySensor",
+    "id",
+    "1",
+    isNull()
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+Actual invocations have different arguments at position [0]:
+auditService.logChange(
+    com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User@77d80294,
+    "DELETE",
+    "HumiditySensor",
+    "id",
+    "1",
+    null
+);
+-> at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorService.deleteHumiditySensor(HumiditySensorService.java:81)
+
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService.logChange(AuditService.java:46)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.HumiditySensorServiceTest.deleteHumiditySensor_Success(HumiditySensorServiceTest.java:122)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+

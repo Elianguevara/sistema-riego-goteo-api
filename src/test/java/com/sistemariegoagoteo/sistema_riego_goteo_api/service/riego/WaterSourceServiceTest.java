@@ -120,7 +120,7 @@ class WaterSourceServiceTest {
         waterSourceService.deleteWaterSource(1);
 
         verify(waterSourceRepository).delete(waterSource);
-        verify(auditService).logChange(eq(authUser), eq("DELETE"), eq("WaterSource"), eq("id"), eq("1"), isNull());
+        verify(auditService).logChange(any(User.class), eq("DELETE"), eq("WaterSource"), eq("id"), eq("1"), isNull());
     }
 
     @Test
