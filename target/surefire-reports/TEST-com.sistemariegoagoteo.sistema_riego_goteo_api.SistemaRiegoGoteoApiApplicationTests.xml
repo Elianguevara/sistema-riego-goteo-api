@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest" time="0.077" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.sistemariegoagoteo.sistema_riego_goteo_api.SistemaRiegoGoteoApiApplicationTests" time="6.226" tests="1" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="20"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -47,6 +47,7 @@
     <property name="localRepository" value="C:\Users\elian\.m2\repository"/>
     <property name="java.vendor.url.bug" value="https://bugreport.java.com/bugreport/"/>
     <property name="java.io.tmpdir" value="C:\Users\elian\AppData\Local\Temp\"/>
+    <property name="com.zaxxer.hikari.pool_number" value="1"/>
     <property name="java.version" value="20.0.2"/>
     <property name="user.dir" value="C:\Users\elian\OneDrive\Documentos\0-Tecnicatura Desarrollo de software\3-Tercer Año Desarrollo De Software\Practica Profesionalizante 3\software\sistema-riego-goteo-api"/>
     <property name="os.arch" value="amd64"/>
@@ -63,9 +64,32 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="64.0"/>
   </properties>
-  <testcase name="getMonthlyPrecipitation_Ok" classname="PrecipitationService - Tests Unitarios" time="0.069"/>
-  <testcase name="createPrecipitation_Ok" classname="PrecipitationService - Tests Unitarios" time="0.006">
-    <system-out><![CDATA[2026-02-26T21:57:17.587-03:00  INFO 25172 --- [           main] c.s.s.s.riego.PrecipitationService       : Registrando precipitación para finca ID 1 en fecha 2026-02-26: 10.00mm total, 3.75mm efectiva
+  <testcase name="contextLoads" classname="com.sistemariegoagoteo.sistema_riego_goteo_api.SistemaRiegoGoteoApiApplicationTests" time="0.008">
+    <system-out><![CDATA[
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.4.10)
+
+2026-02-26T21:57:17.735-03:00  INFO 25172 --- [           main] s.s.SistemaRiegoGoteoApiApplicationTests : Starting SistemaRiegoGoteoApiApplicationTests using Java 20.0.2 with PID 25172 (started by elian in C:\Users\elian\OneDrive\Documentos\0-Tecnicatura Desarrollo de software\3-Tercer Año Desarrollo De Software\Practica Profesionalizante 3\software\sistema-riego-goteo-api)
+2026-02-26T21:57:17.735-03:00  INFO 25172 --- [           main] s.s.SistemaRiegoGoteoApiApplicationTests : The following 1 profile is active: "test"
+2026-02-26T21:57:19.419-03:00  WARN 25172 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-02-26T21:57:22.597-03:00  INFO 25172 --- [           main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-02-26T21:57:22.598-03:00  WARN 25172 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-02-26T21:57:23.195-03:00  WARN 25172 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-02-26T21:57:23.345-03:00 DEBUG 25172 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, JwtAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-02-26T21:57:23.561-03:00  INFO 25172 --- [           main] s.s.SistemaRiegoGoteoApiApplicationTests : Started SistemaRiegoGoteoApiApplicationTests in 5.866 seconds (process running for 14.055)
+2026-02-26T21:57:23.568-03:00  INFO 25172 --- [   scheduling-1] c.s.s.scheduler.WeatherScheduler         : Ejecutando tarea programada: Verificando pronóstico de lluvia...
+2026-02-26T21:57:23.571-03:00  INFO 25172 --- [           main] c.s.s.config.DataInitializer             : Iniciando verificación e inicialización de roles esenciales...
+2026-02-26T21:57:23.736-03:00  INFO 25172 --- [           main] c.s.s.config.DataInitializer             : Rol 'ADMIN' creado exitosamente.
+2026-02-26T21:57:23.754-03:00  INFO 25172 --- [           main] c.s.s.config.DataInitializer             : Rol 'ANALISTA' creado exitosamente.
+2026-02-26T21:57:23.756-03:00  INFO 25172 --- [           main] c.s.s.config.DataInitializer             : Rol 'OPERARIO' creado exitosamente.
+2026-02-26T21:57:23.756-03:00  INFO 25172 --- [           main] c.s.s.config.DataInitializer             : Verificación e inicialización de roles completada.
+2026-02-26T21:57:23.835-03:00  INFO 25172 --- [           main] c.s.s.config.DataInitializer             : Usuario administrador por defecto 'admin' creado.
 ]]></system-out>
   </testcase>
 </testsuite>

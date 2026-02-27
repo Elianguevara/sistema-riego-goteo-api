@@ -36,12 +36,10 @@ public class WeatherScheduler {
                             String message = String.format(
                                     "Alerta de Lluvia para la finca '%s': %s.",
                                     farm.getName(),
-                                    weather.getDescription()
-                            );
+                                    weather.getDescription());
                             // Notificar a todos los usuarios de la finca
-                            farm.getUsers().forEach(user ->
-                                    notificationService.createNotification(user, message, "/farms/" + farm.getId() + "/dashboard")
-                            );
+                            farm.getUsers().forEach(user -> notificationService.createNotification(user, message,
+                                    "FARM", Long.valueOf(farm.getId()), "/farms/" + farm.getId() + "/dashboard"));
                         });
             } catch (Exception e) {
                 log.error("Error al obtener el clima para la finca ID {}: {}", farm.getId(), e.getMessage());

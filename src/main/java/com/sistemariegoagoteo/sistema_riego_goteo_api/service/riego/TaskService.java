@@ -51,12 +51,14 @@ public class TaskService {
         task.setSector(sector); // 2. Asignar el objeto Sector encontrado a la tarea
 
         Task savedTask = taskRepository.save(task);
-        log.info("Analista {} ha creado la tarea {} para el operario {}", creator.getUsername(), savedTask.getId(), assignee.getUsername());
+        log.info("Analista {} ha creado la tarea {} para el operario {}", creator.getUsername(), savedTask.getId(),
+                assignee.getUsername());
 
         // --- NOTIFICACIÓN AL OPERARIO ---
-        String message = String.format("Nueva tarea asignada por %s: \"%s\"", creator.getName(), savedTask.getDescription());
+        String message = String.format("Nueva tarea asignada por %s: \"%s\"", creator.getName(),
+                savedTask.getDescription());
         String link = "/tasks/assigned-to-me/" + savedTask.getId();
-        notificationService.createNotification(assignee, message, link);
+        notificationService.createNotification(assignee, message, "TASK", savedTask.getId(), link);
 
         return savedTask;
     }
@@ -73,12 +75,14 @@ public class TaskService {
 
         task.setStatus(request.getStatus());
         Task updatedTask = taskRepository.save(task);
-        log.info("Operario {} ha actualizado el estado de la tarea {} a {}", currentUser.getUsername(), taskId, request.getStatus());
+        log.info("Operario {} ha actualizado el estado de la tarea {} a {}", currentUser.getUsername(), taskId,
+                request.getStatus());
 
         // --- NOTIFICACIÓN AL ANALISTA ---
-        String message = String.format("El operario %s ha actualizado el estado de tu tarea a: %s", currentUser.getName(), updatedTask.getStatus());
+        String message = String.format("El operario %s ha actualizado el estado de tu tarea a: %s",
+                currentUser.getName(), updatedTask.getStatus());
         String link = "/tasks/created-by-me/" + updatedTask.getId();
-        notificationService.createNotification(task.getCreatedBy(), message, link);
+        notificationService.createNotification(task.getCreatedBy(), message, "TASK", updatedTask.getId(), link);
 
         return updatedTask;
     }

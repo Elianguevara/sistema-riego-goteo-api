@@ -5,7 +5,6 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.*;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.*;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.*;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,11 +24,9 @@ public class ReportDataService {
         private final SectorRepository sectorRepository;
         private final IrrigationRepository irrigationRepository;
         private final PrecipitationRepository precipitationRepository;
-        private final OperationLogRepository operationLogRepository;
         private final MaintenanceRepository maintenanceRepository;
         private final FertilizationRepository fertilizationRepository;
         private final TaskRepository taskRepository;
-        private final UserRepository userRepository;
 
         public WaterBalanceReportDTO getWaterBalanceData(Integer farmId, Date startDate, Date endDate,
                         List<Integer> sectorIds) {

@@ -11,15 +11,19 @@ import java.util.Date;
 public class NotificationResponse {
     private Long id;
     private String message;
-    private String link;
+    private String actionUrl;
     private boolean isRead;
     private Date createdAt;
+    private String entityType;
+    private Long entityId;
 
     public NotificationResponse(Notification notification) {
         this.id = notification.getId();
         this.message = notification.getMessage();
-        this.link = notification.getLink();
+        this.actionUrl = notification.getActionUrl();
         this.isRead = notification.isRead();
         this.createdAt = notification.getCreatedAt();
+        this.entityType = notification.getEntityType();
+        this.entityId = notification.getEntityId();
     }
 }

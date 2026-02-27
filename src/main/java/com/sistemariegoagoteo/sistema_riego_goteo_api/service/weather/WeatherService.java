@@ -29,12 +29,12 @@ public class WeatherService {
             throw new IllegalStateException("La finca no tiene coordenadas para consultar el clima.");
         }
 
-        String url = UriComponentsBuilder.fromHttpUrl(apiUrl)
+        String url = UriComponentsBuilder.fromUriString(apiUrl)
                 .queryParam("lat", farm.getLatitude())
                 .queryParam("lon", farm.getLongitude())
                 .queryParam("appid", apiKey)
                 .queryParam("units", "metric") // Para obtener temperatura en Celsius
-                .queryParam("lang", "es")     // Para descripciones en español
+                .queryParam("lang", "es") // Para descripciones en español
                 .toUriString();
 
         return restTemplate.getForObject(url, WeatherResponse.class);

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest" time="0.077" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthServiceTest" time="0.373" tests="8" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="20"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -63,9 +63,44 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="64.0"/>
   </properties>
-  <testcase name="getMonthlyPrecipitation_Ok" classname="PrecipitationService - Tests Unitarios" time="0.069"/>
-  <testcase name="createPrecipitation_Ok" classname="PrecipitationService - Tests Unitarios" time="0.006">
-    <system-out><![CDATA[2026-02-26T21:57:17.587-03:00  INFO 25172 --- [           main] c.s.s.s.riego.PrecipitationService       : Registrando precipitación para finca ID 1 en fecha 2026-02-26: 10.00mm total, 3.75mm efectiva
+  <testcase name="registerAdmin_usernameExistente_lanzaRuntimeException" classname="AuthService - Tests Unitarios" time="0.299">
+    <system-out><![CDATA[2026-02-26T21:57:16.821-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Intentando registrar al usuario ADMIN: admin_test
+2026-02-26T21:57:16.822-03:00  WARN 25172 --- [           main] c.s.s.service.auth.AuthService           : Intento de registro con username existente: admin_test
+]]></system-out>
+  </testcase>
+  <testcase name="registerAdmin_rolAdminNoExisteEnBD_lanzaRuntimeException" classname="AuthService - Tests Unitarios" time="0.003">
+    <system-out><![CDATA[2026-02-26T21:57:16.845-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Intentando registrar al usuario ADMIN: nuevo_admin
+2026-02-26T21:57:16.845-03:00 ERROR 25172 --- [           main] c.s.s.service.auth.AuthService           : El rol ADMIN no existe en la base de datos. Debe ser creado primero.
+]]></system-out>
+  </testcase>
+  <testcase name="registerAdmin_datosValidos_retornaUsuarioCreado" classname="AuthService - Tests Unitarios" time="0.004">
+    <system-out><![CDATA[2026-02-26T21:57:16.849-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Intentando registrar al usuario ADMIN: nuevo_admin
+2026-02-26T21:57:16.849-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Usuario ADMIN registrado exitosamente con ID: null
+]]></system-out>
+  </testcase>
+  <testcase name="authenticate_usuarioInactivo_lanzaRuntimeException" classname="AuthService - Tests Unitarios" time="0.044">
+    <system-out><![CDATA[2026-02-26T21:57:16.893-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Intentando autenticar al usuario: admin_test
+2026-02-26T21:57:16.893-03:00  WARN 25172 --- [           main] c.s.s.service.auth.AuthService           : Intento de login de usuario inactivo: admin_test
+2026-02-26T21:57:16.894-03:00 ERROR 25172 --- [           main] c.s.s.service.auth.AuthService           : Error durante la autenticación para admin_test: La cuenta del usuario está inactiva.
+]]></system-out>
+  </testcase>
+  <testcase name="authenticate_credencialesInvalidas_lanzaBadCredentialsException" classname="AuthService - Tests Unitarios" time="0.005">
+    <system-out><![CDATA[2026-02-26T21:57:16.898-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Intentando autenticar al usuario: admin_test
+2026-02-26T21:57:16.899-03:00  WARN 25172 --- [           main] c.s.s.service.auth.AuthService           : Credenciales inválidas para el usuario: admin_test
+]]></system-out>
+  </testcase>
+  <testcase name="registerAdmin_emailExistente_lanzaRuntimeException" classname="AuthService - Tests Unitarios" time="0.003">
+    <system-out><![CDATA[2026-02-26T21:57:16.902-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Intentando registrar al usuario ADMIN: nuevo_admin
+2026-02-26T21:57:16.902-03:00  WARN 25172 --- [           main] c.s.s.service.auth.AuthService           : Intento de registro con email existente: admin@test.com
+]]></system-out>
+  </testcase>
+  <testcase name="authenticate_credencialesValidas_retornaAuthResponse" classname="AuthService - Tests Unitarios" time="0.008">
+    <system-out><![CDATA[2026-02-26T21:57:16.906-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Intentando autenticar al usuario: admin_test
+2026-02-26T21:57:16.907-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Usuario autenticado exitosamente: admin_test
+]]></system-out>
+  </testcase>
+  <testcase name="registerAdmin_rolNoAdmin_lanzaIllegalArgumentException" classname="AuthService - Tests Unitarios" time="0.003">
+    <system-out><![CDATA[2026-02-26T21:57:16.915-03:00  INFO 25172 --- [           main] c.s.s.service.auth.AuthService           : Intentando registrar al usuario ADMIN: operario1
 ]]></system-out>
   </testcase>
 </testsuite>

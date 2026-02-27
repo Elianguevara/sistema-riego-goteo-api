@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest" time="0.077" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.SectorServiceTest" time="0.029" tests="7" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="20"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -63,9 +63,17 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="64.0"/>
   </properties>
-  <testcase name="getMonthlyPrecipitation_Ok" classname="PrecipitationService - Tests Unitarios" time="0.069"/>
-  <testcase name="createPrecipitation_Ok" classname="PrecipitationService - Tests Unitarios" time="0.006">
-    <system-out><![CDATA[2026-02-26T21:57:17.587-03:00  INFO 25172 --- [           main] c.s.s.s.riego.PrecipitationService       : Registrando precipitación para finca ID 1 en fecha 2026-02-26: 10.00mm total, 3.75mm efectiva
+  <testcase name="getSectorsByFarmId_farmaExiste_retornaSectores" classname="SectorService - Tests Unitarios" time="0.005"/>
+  <testcase name="deleteSector_sectorExistente_eliminaYRegistraAuditoria" classname="SectorService - Tests Unitarios" time="0.004">
+    <system-out><![CDATA[2026-02-26T21:57:17.603-03:00  WARN 25172 --- [           main] c.s.s.service.riego.SectorService        : Eliminando sector ID 100 de la finca ID 1
 ]]></system-out>
   </testcase>
+  <testcase name="createSector_equipoNoPerteneceFinca_lanzaIllegalArgumentException" classname="SectorService - Tests Unitarios" time="0.004"/>
+  <testcase name="createSector_sectorDuplicado_lanzaIllegalArgumentException" classname="SectorService - Tests Unitarios" time="0.004"/>
+  <testcase name="createSector_datosValidos_creaYRetornaSector" classname="SectorService - Tests Unitarios" time="0.003">
+    <system-out><![CDATA[2026-02-26T21:57:17.616-03:00  INFO 25172 --- [           main] c.s.s.service.riego.SectorService        : Creando sector 'Sector Norte' para la finca ID 1
+]]></system-out>
+  </testcase>
+  <testcase name="createSector_farmaNoExiste_lanzaResourceNotFoundException" classname="SectorService - Tests Unitarios" time="0.003"/>
+  <testcase name="getSectorsByFarmId_farmaNoExiste_lanzaResourceNotFoundException" classname="SectorService - Tests Unitarios" time="0.003"/>
 </testsuite>

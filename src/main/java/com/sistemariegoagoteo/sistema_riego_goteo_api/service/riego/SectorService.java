@@ -105,8 +105,9 @@ public class SectorService {
     @Transactional
     public Sector updateSector(Integer farmId, Integer sectorId, SectorRequest sectorRequest) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Farm farm = farmRepository.findById(farmId)
-                .orElseThrow(() -> new ResourceNotFoundException("Farm", "id", farmId));
+        if (!farmRepository.existsById(farmId)) {
+            throw new ResourceNotFoundException("Farm", "id", farmId);
+        }
 
         Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
                 .orElseThrow(

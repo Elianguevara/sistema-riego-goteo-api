@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.PrecipitationServiceTest" time="0.077" tests="2" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.sistemariegoagoteo.sistema_riego_goteo_api.controller.auth.AuthControllerTest" time="4.803" tests="4" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="20"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -63,9 +63,57 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="64.0"/>
   </properties>
-  <testcase name="getMonthlyPrecipitation_Ok" classname="PrecipitationService - Tests Unitarios" time="0.069"/>
-  <testcase name="createPrecipitation_Ok" classname="PrecipitationService - Tests Unitarios" time="0.006">
-    <system-out><![CDATA[2026-02-26T21:57:17.587-03:00  INFO 25172 --- [           main] c.s.s.s.riego.PrecipitationService       : Registrando precipitación para finca ID 1 en fecha 2026-02-26: 10.00mm total, 3.75mm efectiva
+  <testcase name="login_credencialesValidas_retorna200ConToken" classname="AuthController - Tests de Capa Web" time="0.403">
+    <system-out><![CDATA[21:57:10.408 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.sistemariegoagoteo.sistema_riego_goteo_api.controller.auth.AuthControllerTest]: AuthControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+21:57:10.662 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.sistemariegoagoteo.sistema_riego_goteo_api.SistemaRiegoGoteoApiApplication for test class com.sistemariegoagoteo.sistema_riego_goteo_api.controller.auth.AuthControllerTest
+21:57:10.765 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.4.10)
+
+2026-02-26T21:57:11.212-03:00  INFO 25172 --- [           main] c.s.s.c.auth.AuthControllerTest          : Starting AuthControllerTest using Java 20.0.2 with PID 25172 (started by elian in C:\Users\elian\OneDrive\Documentos\0-Tecnicatura Desarrollo de software\3-Tercer Año Desarrollo De Software\Practica Profesionalizante 3\software\sistema-riego-goteo-api)
+2026-02-26T21:57:11.212-03:00  INFO 25172 --- [           main] c.s.s.c.auth.AuthControllerTest          : The following 1 profile is active: "test"
+2026-02-26T21:57:14.201-03:00  INFO 25172 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-02-26T21:57:14.358-03:00 DEBUG 25172 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CsrfFilter, LogoutFilter, UsernamePasswordAuthenticationFilter, DefaultResourcesFilter, DefaultLoginPageGeneratingFilter, DefaultLogoutPageGeneratingFilter, BasicAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-02-26T21:57:14.484-03:00  INFO 25172 --- [           main] c.s.s.c.auth.AuthControllerTest          : Started AuthControllerTest in 3.731 seconds (process running for 4.977)
+2026-02-26T21:57:14.614-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Created HttpSession as SecurityContext is non-default
+2026-02-26T21:57:14.614-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Stored SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=user, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_USER]], Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]] to HttpSession [org.springframework.mock.web.MockHttpSession@2cdcfaa6]
+2026-02-26T21:57:14.652-03:00 DEBUG 25172 --- [           main] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/login
+2026-02-26T21:57:14.660-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=user, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_USER]], Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2026-02-26T21:57:14.660-03:00 DEBUG 25172 --- [           main] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/login
+]]></system-out>
+  </testcase>
+  <testcase name="login_credencialesInvalidas_retorna401" classname="AuthController - Tests de Capa Web" time="0.015">
+    <system-out><![CDATA[2026-02-26T21:57:14.906-03:00 DEBUG 25172 --- [           main] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/login
+2026-02-26T21:57:14.907-03:00 DEBUG 25172 --- [           main] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-02-26T21:57:14.910-03:00 DEBUG 25172 --- [           main] s.w.a.DelegatingAuthenticationEntryPoint : Trying to match using And [Not [RequestHeaderRequestMatcher [expectedHeaderName=X-Requested-With, expectedHeaderValue=XMLHttpRequest]], MediaTypeRequestMatcher [contentNegotiationStrategy=org.springframework.web.accept.ContentNegotiationManager@5635bcd2, matchingMediaTypes=[application/xhtml+xml, image/*, text/html, text/plain], useEquals=false, ignoredMediaTypes=[*/*]]]
+2026-02-26T21:57:14.910-03:00 DEBUG 25172 --- [           main] s.w.a.DelegatingAuthenticationEntryPoint : Trying to match using Or [RequestHeaderRequestMatcher [expectedHeaderName=X-Requested-With, expectedHeaderValue=XMLHttpRequest], And [Not [MediaTypeRequestMatcher [contentNegotiationStrategy=org.springframework.web.accept.ContentNegotiationManager@5635bcd2, matchingMediaTypes=[text/html], useEquals=false, ignoredMediaTypes=[]]], MediaTypeRequestMatcher [contentNegotiationStrategy=org.springframework.web.accept.ContentNegotiationManager@5635bcd2, matchingMediaTypes=[application/atom+xml, application/x-www-form-urlencoded, application/json, application/octet-stream, application/xml, multipart/form-data, text/xml], useEquals=false, ignoredMediaTypes=[*/*]]], MediaTypeRequestMatcher [contentNegotiationStrategy=org.springframework.web.accept.ContentNegotiationManager@5635bcd2, matchingMediaTypes=[*/*], useEquals=true, ignoredMediaTypes=[]]]
+2026-02-26T21:57:14.910-03:00 DEBUG 25172 --- [           main] s.w.a.DelegatingAuthenticationEntryPoint : Match found! Executing org.springframework.security.web.authentication.DelegatingAuthenticationEntryPoint@141b011a
+2026-02-26T21:57:14.910-03:00 DEBUG 25172 --- [           main] s.w.a.DelegatingAuthenticationEntryPoint : Trying to match using RequestHeaderRequestMatcher [expectedHeaderName=X-Requested-With, expectedHeaderValue=XMLHttpRequest]
+2026-02-26T21:57:14.910-03:00 DEBUG 25172 --- [           main] s.w.a.DelegatingAuthenticationEntryPoint : No match found. Using default entry point org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint@7b2f8152
+]]></system-out>
+  </testcase>
+  <testcase name="login_requestInvalida_retorna400" classname="AuthController - Tests de Capa Web" time="0.031">
+    <system-out><![CDATA[2026-02-26T21:57:14.918-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Created HttpSession as SecurityContext is non-default
+2026-02-26T21:57:14.918-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Stored SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=user, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_USER]], Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]] to HttpSession [org.springframework.mock.web.MockHttpSession@609ad016]
+2026-02-26T21:57:14.919-03:00 DEBUG 25172 --- [           main] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/login
+2026-02-26T21:57:14.920-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=user, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_USER]], Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2026-02-26T21:57:14.920-03:00 DEBUG 25172 --- [           main] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/login
+]]></system-out>
+  </testcase>
+  <testcase name="registerAdmin_datosValidos_retorna201" classname="AuthController - Tests de Capa Web" time="0.047">
+    <system-out><![CDATA[2026-02-26T21:57:14.959-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Created HttpSession as SecurityContext is non-default
+2026-02-26T21:57:14.960-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Stored SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=user, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_USER]], Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]] to HttpSession [org.springframework.mock.web.MockHttpSession@afb7b03]
+2026-02-26T21:57:14.960-03:00 DEBUG 25172 --- [           main] o.s.security.web.FilterChainProxy        : Securing POST /api/auth/register/admin
+2026-02-26T21:57:14.961-03:00 DEBUG 25172 --- [           main] w.c.HttpSessionSecurityContextRepository : Retrieved SecurityContextImpl [Authentication=UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=user, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_USER]], Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_USER]]]
+2026-02-26T21:57:14.961-03:00 DEBUG 25172 --- [           main] o.s.security.web.FilterChainProxy        : Secured POST /api/auth/register/admin
+2026-02-26T21:57:14.985-03:00  INFO 25172 --- [           main] c.s.s.controller.auth.AuthController     : Administrador registrado exitosamente con username: nuevo_admin
 ]]></system-out>
   </testcase>
 </testsuite>

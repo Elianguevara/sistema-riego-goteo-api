@@ -31,7 +31,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Servicio para gestionar operaciones de usuario realizadas por un Administrador.
+ * Servicio para gestionar operaciones de usuario realizadas por un
+ * Administrador.
  */
 @Service
 @RequiredArgsConstructor
@@ -50,11 +51,13 @@ public class UserService {
     public User registerUserByAdmin(RegisterRequest registerRequest) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String requestedRoleName = registerRequest.getRol().toUpperCase();
-        log.info("Admin {} intentando registrar usuario: {} con rol: {}", currentUser.getUsername(), registerRequest.getUsername(), requestedRoleName);
+        log.info("Admin {} intentando registrar usuario: {} con rol: {}", currentUser.getUsername(),
+                registerRequest.getUsername(), requestedRoleName);
 
         List<String> rolesPermitidos = List.of("ADMIN", "ANALISTA", "OPERARIO");
         if (!rolesPermitidos.contains(requestedRoleName)) {
-            throw new IllegalArgumentException("El rol especificado no es válido. Roles permitidos: ADMIN, ANALISTA, OPERARIO.");
+            throw new IllegalArgumentException(
+                    "El rol especificado no es válido. Roles permitidos: ADMIN, ANALISTA, OPERARIO.");
         }
 
         Role targetRole = roleRepository.findByRoleName(requestedRoleName)
@@ -81,16 +84,19 @@ public class UserService {
         log.info("Usuario {} registrado exitosamente por admin con ID: {}", requestedRoleName, savedUser.getId());
 
         // --- AUDITORÍA DE CREACIÓN ---
-        auditService.logChange(currentUser, "CREATE", User.class.getSimpleName(), "all", null, "Nuevo usuario ID: " + savedUser.getId());
+        auditService.logChange(currentUser, "CREATE", User.class.getSimpleName(), "all", null,
+                "Nuevo usuario ID: " + savedUser.getId());
 
         // --- NOTIFICACIÓN ---
         // Notificar al administrador que realizó la acción.
-        String messageForAdmin = String.format("Has registrado exitosamente al usuario '%s' con el rol de %s.", savedUser.getUsername(), savedUser.getRol().getRoleName());
-        notificationService.createNotification(currentUser, messageForAdmin, "/admin/users/" + savedUser.getId());
+        String messageForAdmin = String.format("Has registrado exitosamente al usuario '%s' con el rol de %s.",
+                savedUser.getUsername(), savedUser.getRol().getRoleName());
+        notificationService.createNotification(currentUser, messageForAdmin, "USER", savedUser.getId(),
+                "/admin/users/" + savedUser.getId());
 
         // Notificar al nuevo usuario.
         String messageForNewUser = "¡Bienvenido! Tu cuenta ha sido creada por un administrador.";
-        notificationService.createNotification(savedUser, messageForNewUser, "/profile");
+        notificationService.createNotification(savedUser, messageForNewUser, "GENERAL", null, "/profile");
 
         return savedUser;
     }
@@ -104,13 +110,16 @@ public class UserService {
 
         // --- AUDITORÍA DE ACTUALIZACIÓN ---
         if (!Objects.equals(user.getName(), updateRequest.getName())) {
-            auditService.logChange(currentUser, "UPDATE", User.class.getSimpleName(), "name", user.getName(), updateRequest.getName());
+            auditService.logChange(currentUser, "UPDATE", User.class.getSimpleName(), "name", user.getName(),
+                    updateRequest.getName());
         }
         if (!user.getEmail().equalsIgnoreCase(updateRequest.getEmail())) {
             if (userRepository.existsByEmail(updateRequest.getEmail())) {
-                throw new RuntimeException("El email '" + updateRequest.getEmail() + "' ya está en uso por otro usuario.");
+                throw new RuntimeException(
+                        "El email '" + updateRequest.getEmail() + "' ya está en uso por otro usuario.");
             }
-            auditService.logChange(currentUser, "UPDATE", User.class.getSimpleName(), "email", user.getEmail(), updateRequest.getEmail());
+            auditService.logChange(currentUser, "UPDATE", User.class.getSimpleName(), "email", user.getEmail(),
+                    updateRequest.getEmail());
         }
 
         user.setName(updateRequest.getName());
@@ -121,17 +130,18 @@ public class UserService {
         return updatedUser;
     }
 
-
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public User updateUserStatus(Long id, boolean status) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        log.info("Admin {} intentando cambiar estado activo a {} para usuario con ID: {}", currentUser.getUsername(), status, id);
+        log.info("Admin {} intentando cambiar estado activo a {} para usuario con ID: {}", currentUser.getUsername(),
+                status, id);
         User user = findUserById(id);
 
         // --- AUDITORÍA DE CAMBIO DE ESTADO ---
         if (user.isActive() != status) {
-            auditService.logChange(currentUser, "UPDATE", User.class.getSimpleName(), "isActive", String.valueOf(user.isActive()), String.valueOf(status));
+            auditService.logChange(currentUser, "UPDATE", User.class.getSimpleName(), "isActive",
+                    String.valueOf(user.isActive()), String.valueOf(status));
         }
 
         user.setActive(status);
@@ -139,8 +149,9 @@ public class UserService {
 
         // --- NOTIFICACIÓN ---
         String statusText = status ? "activada" : "desactivada";
-        String message = String.format("El administrador %s ha cambiado el estado de tu cuenta a: %s.", currentUser.getUsername(), statusText);
-        notificationService.createNotification(user, message, "/profile");
+        String message = String.format("El administrador %s ha cambiado el estado de tu cuenta a: %s.",
+                currentUser.getUsername(), statusText);
+        notificationService.createNotification(user, message, "GENERAL", null, "/profile");
 
         log.info("Estado activo del usuario con ID: {} cambiado a {} exitosamente por admin.", id, status);
         return updatedUser;
@@ -164,7 +175,8 @@ public class UserService {
     @PreAuthorize("hasRole('ADMIN')")
     public void updatePassword(Long userId, String rawPassword) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        log.info("Admin {} intentando actualizar contraseña para usuario con ID: {}", currentUser.getUsername(), userId);
+        log.info("Admin {} intentando actualizar contraseña para usuario con ID: {}", currentUser.getUsername(),
+                userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
@@ -176,8 +188,9 @@ public class UserService {
         userRepository.save(user);
 
         // --- NOTIFICACIÓN ---
-        String message = String.format("Un administrador (%s) ha restablecido tu contraseña.", currentUser.getUsername());
-        notificationService.createNotification(user, message, "/profile");
+        String message = String.format("Un administrador (%s) ha restablecido tu contraseña.",
+                currentUser.getUsername());
+        notificationService.createNotification(user, message, "GENERAL", null, "/profile");
 
         log.info("Contraseña del usuario con ID: {} actualizada exitosamente por admin.", userId);
     }
@@ -201,8 +214,9 @@ public class UserService {
         userRepository.save(user);
 
         // --- NOTIFICACIÓN ---
-        String message = String.format("Has sido asignado a la finca '%s' por el administrador %s.", farm.getName(), currentUser.getUsername());
-        notificationService.createNotification(user, message, "/farms/" + farmId);
+        String message = String.format("Has sido asignado a la finca '%s' por el administrador %s.", farm.getName(),
+                currentUser.getUsername());
+        notificationService.createNotification(user, message, "FARM", Long.valueOf(farmId), "/farms/" + farmId);
 
         log.info("Usuario ID {} asignado exitosamente a la finca ID {}", userId, farmId);
     }
@@ -211,7 +225,8 @@ public class UserService {
     @PreAuthorize("hasRole('ADMIN')")
     public void unassignUserFromFarm(Long userId, Integer farmId) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        log.info("Admin {} intentando desasignar usuario ID {} de la finca ID {}", currentUser.getUsername(), userId, farmId);
+        log.info("Admin {} intentando desasignar usuario ID {} de la finca ID {}", currentUser.getUsername(), userId,
+                farmId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
@@ -226,11 +241,12 @@ public class UserService {
 
             // --- NOTIFICACIÓN ---
             String message = String.format("Has sido desasignado de la finca '%s'.", farm.getName());
-            notificationService.createNotification(user, message, "/farms");
+            notificationService.createNotification(user, message, "GENERAL", null, "/farms");
 
             log.info("Usuario ID {} desasignado exitosamente de la finca ID {}", userId, farmId);
         } else {
-            log.warn("El usuario ID {} no estaba asignado a la finca ID {}, no se realizó ninguna acción.", userId, farmId);
+            log.warn("El usuario ID {} no estaba asignado a la finca ID {}, no se realizó ninguna acción.", userId,
+                    farmId);
         }
     }
 
@@ -279,7 +295,8 @@ public class UserService {
         userRepository.save(user);
 
         // --- NOTIFICACIÓN ---
-        notificationService.createNotification(user, "Tu contraseña ha sido actualizada exitosamente.", "/profile/security");
+        notificationService.createNotification(user, "Tu contraseña ha sido actualizada exitosamente.", "GENERAL", null,
+                "/profile/security");
 
         log.info("Contraseña del usuario {} actualizada exitosamente.", username);
     }
@@ -324,7 +341,7 @@ public class UserService {
         Map<String, Long> usersByRole = userRepository.countUsersByRole().stream()
                 .collect(Collectors.toMap(
                         row -> (String) row[0], // Nombre del rol
-                        row -> (Long) row[1]    // Conteo
+                        row -> (Long) row[1] // Conteo
                 ));
 
         return new UserStatsResponse(totalUsers, activeUsers, inactiveUsers, usersByRole);

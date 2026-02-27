@@ -1,6 +1,5 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.report;
 
-import com.lowagie.text.DocumentException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.report.ReportTask;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.report.ReportTaskRepository;
 import lombok.RequiredArgsConstructor;

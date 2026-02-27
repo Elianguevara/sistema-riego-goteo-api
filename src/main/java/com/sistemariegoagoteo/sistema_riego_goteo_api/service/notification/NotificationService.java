@@ -19,15 +19,18 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Transactional
-    public void createNotification(User recipient, String message, String link) {
+    public void createNotification(User recipient, String message, String entityType, Long entityId, String actionUrl) {
         Notification notification = new Notification();
         notification.setRecipient(recipient);
         notification.setMessage(message);
-        notification.setLink(link);
+        notification.setEntityType(entityType);
+        notification.setEntityId(entityId);
+        notification.setActionUrl(actionUrl);
         notification.setCreatedAt(new Date());
         notificationRepository.save(notification);
         // Aquí podrías integrar WebSockets para notificar en tiempo real al frontend
     }
+
     @Transactional(readOnly = true)
     public Page<NotificationResponse> getUserNotifications(User user, Pageable pageable) {
         return notificationRepository.findByRecipientOrderByCreatedAtDesc(user, pageable)

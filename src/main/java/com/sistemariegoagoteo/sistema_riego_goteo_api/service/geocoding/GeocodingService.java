@@ -32,7 +32,7 @@ public class GeocodingService {
         }
 
         // Construimos la URL de la API con los parámetros necesarios
-        String url = UriComponentsBuilder.fromHttpUrl(apiUrl)
+        String url = UriComponentsBuilder.fromUriString(apiUrl)
                 .queryParam("q", location)
                 .queryParam("key", apiKey)
                 .queryParam("limit", 1) // Solo queremos el resultado más relevante
@@ -49,12 +49,14 @@ public class GeocodingService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error al llamar a la API de geocodificación para la ubicación '{}': {}", location, e.getMessage());
+            log.error("Error al llamar a la API de geocodificación para la ubicación '{}': {}", location,
+                    e.getMessage());
         }
 
         return Optional.empty();
     }
 
     // Clase auxiliar (record) para devolver las coordenadas de forma limpia
-    public record Coordinates(BigDecimal latitude, BigDecimal longitude) {}
+    public record Coordinates(BigDecimal latitude, BigDecimal longitude) {
+    }
 }

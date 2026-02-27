@@ -12,9 +12,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.WaterBalanceRep
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.stream.Stream;
 
 @Service

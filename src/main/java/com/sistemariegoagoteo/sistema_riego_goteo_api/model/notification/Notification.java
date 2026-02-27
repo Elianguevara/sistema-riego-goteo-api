@@ -26,5 +26,9 @@ public class Notification {
     @Column(nullable = false)
     private Date createdAt;
 
-    private String link; // Opcional: una ruta del frontend para redirigir al usuario
+    private String actionUrl; // Opcional: una ruta del frontend para redirigir al usuario
+
+    private String entityType; // TASK | IRRIGATION | HUMEDAD | PRECIPITATION | FARM | REPORT | GENERAL
+
+    private Long entityId; // ID de la entidad relacionada
 }
