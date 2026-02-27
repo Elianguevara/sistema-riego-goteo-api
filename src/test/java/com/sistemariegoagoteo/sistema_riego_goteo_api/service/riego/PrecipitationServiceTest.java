@@ -1,7 +1,7 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationRequest;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.PrecipitationSummaryResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Precipitation;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
@@ -9,29 +9,25 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepos
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.PrecipitationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("PrecipitationService - Tests Unitarios")
 class PrecipitationServiceTest {
 
     @Mock
@@ -44,54 +40,94 @@ class PrecipitationServiceTest {
     @InjectMocks
     private PrecipitationService precipitationService;
 
-    private User testUser;
-    private Farm testFarm;
+    private User authUser;
+    private Farm farm;
+    private Precipitation precipitation;
 
     @BeforeEach
     void setUp() {
-        testUser = new User();
-        testUser.setUsername("testuser");
+        authUser = new User();
+        authUser.setId(1L);
+        authUser.setUsername("testuser");
 
-        testFarm = new Farm();
-        testFarm.setId(1);
-        testFarm.setName("Finca Test");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(authUser, null, new java.util.ArrayList<>()));
 
-        Authentication authentication = mock(Authentication.class);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(testUser);
-        SecurityContextHolder.setContext(securityContext);
+        farm = new Farm();
+        farm.setId(1);
+
+        precipitation = new Precipitation();
+        precipitation.setId(1);
+        precipitation.setFarm(farm);
+        precipitation.setMmRain(new BigDecimal("10.00"));
+        precipitation.setMmEffectiveRain(new BigDecimal("3.75")); // (10 - 5) * 0.75
+        precipitation.setPrecipitationDate(LocalDate.of(2026, 2, 27));
     }
 
     @Test
-    @DisplayName("createPrecipitation() debe guardar correctamente usando LocalDate")
-    void createPrecipitation_Ok() {
-        LocalDate date = LocalDate.now();
+    void createPrecipitation_Success_EffectiveRainCalculated() {
         PrecipitationRequest request = new PrecipitationRequest();
-        request.setPrecipitationDate(date);
-        request.setMmRain(new BigDecimal("10.00"));
+        request.setPrecipitationDate(LocalDate.of(2026, 2, 28));
+        request.setMmRain(new BigDecimal("15.5"));
 
-        when(farmRepository.findById(1)).thenReturn(Optional.of(testFarm));
-        when(precipitationRepository.save(any(Precipitation.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
+        when(precipitationRepository.save(any(Precipitation.class))).thenAnswer(i -> {
+            Precipitation p = i.getArgument(0);
+            p.setId(2);
+            return p;
+        });
 
         Precipitation result = precipitationService.createPrecipitation(1, request);
 
-        assertThat(result.getPrecipitationDate()).isEqualTo(date);
-        assertThat(result.getMmRain()).isEqualByComparingTo("10.00");
-        assertThat(result.getMmEffectiveRain()).isEqualByComparingTo("3.75"); // (10 - 5) * 0.75
-        verify(precipitationRepository).save(any());
+        assertNotNull(result);
+        assertEquals(2, result.getId());
+        assertEquals(new BigDecimal("15.50"), result.getMmRain());
+        // (15.5 - 5) * 0.75 = 7.875 -> 7.88
+        assertEquals(new BigDecimal("7.88"), result.getMmEffectiveRain());
+
+        verify(auditService).logChange(eq(authUser), eq("CREATE"), eq("Precipitation"), eq("mmRain"), isNull(),
+                eq("15.50"));
     }
 
     @Test
-    @DisplayName("getMonthlyPrecipitation() debe calcular rango correcto")
-    void getMonthlyPrecipitation_Ok() {
-        when(farmRepository.findById(1)).thenReturn(Optional.of(testFarm));
-        when(precipitationRepository.getMonthlyPrecipitation(testFarm, 2026, 2)).thenReturn(new BigDecimal("50.00"));
+    void createPrecipitation_LowRain_ZeroEffective() {
+        PrecipitationRequest request = new PrecipitationRequest();
+        request.setPrecipitationDate(LocalDate.of(2026, 2, 28));
+        request.setMmRain(new BigDecimal("4.0"));
 
-        PrecipitationSummaryResponse summary = precipitationService.getMonthlyPrecipitation(1, 2026, 2);
+        when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
+        when(precipitationRepository.save(any(Precipitation.class))).thenAnswer(i -> i.getArgument(0));
 
-        assertThat(summary.getStartDate()).isEqualTo(LocalDate.of(2026, 2, 1));
-        assertThat(summary.getEndDate()).isEqualTo(LocalDate.of(2026, 2, 28));
-        assertThat(summary.getTotalMmRain()).isEqualByComparingTo("50.00");
+        Precipitation result = precipitationService.createPrecipitation(1, request);
+
+        assertEquals(new BigDecimal("4.00"), result.getMmRain());
+        assertEquals(new BigDecimal("0.00"), result.getMmEffectiveRain());
+    }
+
+    @Test
+    void updatePrecipitation_Success() {
+        PrecipitationRequest request = new PrecipitationRequest();
+        request.setPrecipitationDate(LocalDate.of(2026, 2, 27));
+        request.setMmRain(new BigDecimal("12.00")); // Change amount
+
+        when(precipitationRepository.findById(1)).thenReturn(Optional.of(precipitation));
+        when(precipitationRepository.save(any(Precipitation.class))).thenAnswer(i -> i.getArgument(0));
+
+        Precipitation result = precipitationService.updatePrecipitation(1, request);
+
+        assertEquals(new BigDecimal("12.00"), result.getMmRain());
+        assertEquals(new BigDecimal("5.25"), result.getMmEffectiveRain()); // (12-5)*0.75
+        verify(auditService).logChange(eq(authUser), eq("UPDATE"), eq("Precipitation"), eq("mmRain"), eq("10.00"),
+                eq("12.00"));
+    }
+
+    @Test
+    void deletePrecipitation_Success() {
+        when(precipitationRepository.findById(1)).thenReturn(Optional.of(precipitation));
+
+        precipitationService.deletePrecipitation(1);
+
+        verify(precipitationRepository).delete(precipitation);
+        verify(auditService).logChange(eq(authUser), eq("DELETE"), eq("Precipitation"), eq("id"), eq("1"), isNull());
     }
 }

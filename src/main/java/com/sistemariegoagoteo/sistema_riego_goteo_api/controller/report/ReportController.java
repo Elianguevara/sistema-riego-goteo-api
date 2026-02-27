@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.format.annotation.DateTimeFormat;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.report.PdfReportService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class ReportController {
 
     private final ReportTaskService reportTaskService;
+    private final PdfReportService pdfReportService;
 
     /**
      * Inicia la generación asíncrona de reportes.
@@ -81,5 +84,38 @@ public class ReportController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .contentLength(file.length())
                 .body(resource);
+    }
+
+    @GetMapping("/download/pdf")
+    public ResponseEntity<byte[]> downloadCorporatePdf() {
+
+        // 1. Lógica ficticia para recolectar datos desde tu BD (TaskService o
+        // IrrigationService)
+        // La posición [0] siempre representará las cabeceras.
+        List<String[]> tableData = Arrays.asList(
+                new String[] { "ID Tarea", "Tipo Operación", "Sector Asignado", "Estado Actual" },
+                new String[] { "T-1001", "Riego por Goteo", "Lote Norte", "COMPLETADA" },
+                new String[] { "T-1002", "Fertilización G.", "Hectárea 5", "EN PROGRESO" },
+                new String[] { "T-1003", "Mantenimiento", "Bomba Central 1", "PENDIENTE" },
+                new String[] { "T-1004", "Riego por Goteo", "Lote Sur", "COMPLETADA" });
+
+        // Nombre de usuario auditado (se sacaría de Spring Security Context)
+        String requester = "Operador Agrícola (Juan Pérez)";
+
+        // 2. Generar el archivo Blob (Matriz de Bytes)
+        byte[] pdfBytes = pdfReportService.generateCorporateReport(tableData, requester);
+
+        // 3. Forzar parámetros directos sobre la cabecera HTTP
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+
+        // 'attachment' fuerza la descarga automática como archivo
+        headers.setContentDispositionFormData("attachment", "Reporte_Operaciones_Agricolas.pdf");
+
+        // Limpiamos la caché del navegador para prevenir que vea una versión vieja tras
+        // peticiones seguidas
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 }

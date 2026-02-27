@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.sistemariegoagoteo.sistema_riego_goteo_api.SistemaRiegoGoteoApiApplicationTests
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.226 s -- in com.sistemariegoagoteo.sistema_riego_goteo_api.SistemaRiegoGoteoApiApplicationTests
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.441 s -- in com.sistemariegoagoteo.sistema_riego_goteo_api.SistemaRiegoGoteoApiApplicationTests
