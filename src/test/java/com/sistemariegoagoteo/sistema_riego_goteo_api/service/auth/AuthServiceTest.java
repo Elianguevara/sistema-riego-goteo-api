@@ -7,6 +7,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.RoleRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,150 +37,160 @@ import static org.mockito.Mockito.*;
 @DisplayName("AuthService - Tests Unitarios")
 class AuthServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private RoleRepository roleRepository;
-    @Mock
-    private PasswordEncoder passwordEncoder;
-    @Mock
-    private JwtService jwtService;
-    @Mock
-    private AuthenticationManager authenticationManager;
+        @Mock
+        private UserRepository userRepository;
+        @Mock
+        private RoleRepository roleRepository;
+        @Mock
+        private PasswordEncoder passwordEncoder;
+        @Mock
+        private JwtService jwtService;
+        @Mock
+        private AuthenticationManager authenticationManager;
+        @Mock
+        private AuditService auditService;
 
-    @InjectMocks
-    private AuthService authService;
+        @InjectMocks
+        private AuthService authService;
 
-    private Role adminRole;
-    private User testUser;
+        private Role adminRole;
+        private User testUser;
 
-    @BeforeEach
-    void setUp() {
-        adminRole = new Role("ADMIN");
-        adminRole.setId(1);
-        testUser = new User("Admin Test", "admin_test", "encodedPass", "admin@test.com", adminRole);
-        testUser.setActive(true);
-    }
+        @BeforeEach
+        void setUp() {
+                adminRole = new Role("ADMIN");
+                adminRole.setId(1);
+                testUser = new User("Admin Test", "admin_test", "encodedPass", "admin@test.com", adminRole);
+                testUser.setActive(true);
+        }
 
-    // ===== TESTS DE authenticate() =====
+        // ===== TESTS DE authenticate() =====
 
-    @Test
-    @DisplayName("authenticate() debe retornar AuthResponse con token cuando las credenciales son válidas")
-    void authenticate_credencialesValidas_retornaAuthResponse() {
-        AuthRequest request = new AuthRequest("admin_test", "password123");
-        Authentication authMock = mock(Authentication.class);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authMock);
-        when(authMock.getPrincipal()).thenReturn(testUser);
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-        when(jwtService.generateToken(any(User.class))).thenReturn("mock.jwt.token");
+        @Test
+        @DisplayName("authenticate() debe retornar AuthResponse con token cuando las credenciales son válidas")
+        void authenticate_credencialesValidas_retornaAuthResponse() {
+                AuthRequest request = new AuthRequest("admin_test", "password123");
+                Authentication authMock = mock(Authentication.class);
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenReturn(authMock);
+                when(authMock.getPrincipal()).thenReturn(testUser);
+                when(userRepository.save(any(User.class))).thenReturn(testUser);
+                when(jwtService.generateToken(any(User.class))).thenReturn("mock.jwt.token");
 
-        AuthResponse response = authService.authenticate(request);
+                AuthResponse response = authService.authenticate(request);
 
-        assertThat(response).isNotNull();
-        assertThat(response.getToken()).isEqualTo("mock.jwt.token");
-        assertThat(response.getTokenType()).isEqualTo("Bearer");
-        verify(userRepository, times(1)).save(any(User.class));
-        verify(jwtService, times(1)).generateToken(any(User.class));
-    }
+                assertThat(response).isNotNull();
+                assertThat(response.getToken()).isEqualTo("mock.jwt.token");
+                assertThat(response.getTokenType()).isEqualTo("Bearer");
+                verify(userRepository, times(1)).save(any(User.class));
+                verify(jwtService, times(1)).generateToken(any(User.class));
+                verify(auditService, times(1)).logChange(any(), eq("LOGIN"), eq("user"), eq("username"), isNull(),
+                                anyString());
+        }
 
-    @Test
-    @DisplayName("authenticate() debe lanzar BadCredentialsException cuando las credenciales son inválidas")
-    void authenticate_credencialesInvalidas_lanzaBadCredentialsException() {
-        AuthRequest request = new AuthRequest("admin_test", "wrongPassword");
-        when(authenticationManager.authenticate(any()))
-                .thenThrow(new BadCredentialsException("Bad credentials"));
+        @Test
+        @DisplayName("authenticate() debe lanzar BadCredentialsException cuando las credenciales son inválidas")
+        void authenticate_credencialesInvalidas_lanzaBadCredentialsException() {
+                AuthRequest request = new AuthRequest("admin_test", "wrongPassword");
+                when(authenticationManager.authenticate(any()))
+                                .thenThrow(new BadCredentialsException("Bad credentials"));
 
-        assertThatThrownBy(() -> authService.authenticate(request))
-                .isInstanceOf(BadCredentialsException.class);
-        verify(jwtService, never()).generateToken(any());
-    }
+                assertThatThrownBy(() -> authService.authenticate(request))
+                                .isInstanceOf(BadCredentialsException.class);
+                verify(jwtService, never()).generateToken(any());
+        }
 
-    @Test
-    @DisplayName("authenticate() debe lanzar RuntimeException si el usuario está inactivo")
-    void authenticate_usuarioInactivo_lanzaRuntimeException() {
-        testUser.setActive(false);
-        AuthRequest request = new AuthRequest("admin_test", "password123");
-        Authentication authMock = mock(Authentication.class);
-        when(authenticationManager.authenticate(any())).thenReturn(authMock);
-        when(authMock.getPrincipal()).thenReturn(testUser);
+        @Test
+        @DisplayName("authenticate() debe lanzar RuntimeException si el usuario está inactivo")
+        void authenticate_usuarioInactivo_lanzaRuntimeException() {
+                testUser.setActive(false);
+                AuthRequest request = new AuthRequest("admin_test", "password123");
+                Authentication authMock = mock(Authentication.class);
+                when(authenticationManager.authenticate(any())).thenReturn(authMock);
+                when(authMock.getPrincipal()).thenReturn(testUser);
 
-        assertThatThrownBy(() -> authService.authenticate(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("inactiva");
-        verify(jwtService, never()).generateToken(any());
-    }
+                assertThatThrownBy(() -> authService.authenticate(request))
+                                .isInstanceOf(RuntimeException.class)
+                                .hasMessageContaining("inactiva");
+                verify(jwtService, never()).generateToken(any());
+        }
 
-    // ===== TESTS DE registerAdmin() =====
+        // ===== TESTS DE registerAdmin() =====
 
-    @Test
-    @DisplayName("registerAdmin() debe guardar y retornar el usuario cuando los datos son válidos")
-    void registerAdmin_datosValidos_retornaUsuarioCreado() {
-        RegisterRequest request = new RegisterRequest(
-                "Nuevo Admin", "nuevo_admin", "pass123", "nuevo@test.com", "ADMIN");
-        when(roleRepository.findByRoleName("ADMIN")).thenReturn(Optional.of(adminRole));
-        when(userRepository.existsByUsername("nuevo_admin")).thenReturn(false);
-        when(userRepository.existsByEmail("nuevo@test.com")).thenReturn(false);
-        when(passwordEncoder.encode("pass123")).thenReturn("encodedPass");
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        @Test
+        @DisplayName("registerAdmin() debe guardar y retornar el usuario cuando los datos son válidos")
+        void registerAdmin_datosValidos_retornaUsuarioCreado() {
+                RegisterRequest request = new RegisterRequest(
+                                "Nuevo Admin", "nuevo_admin", "pass123", "nuevo@test.com", "ADMIN");
+                when(roleRepository.findByRoleName("ADMIN")).thenReturn(Optional.of(adminRole));
+                when(userRepository.existsByUsername("nuevo_admin")).thenReturn(false);
+                when(userRepository.existsByEmail("nuevo@test.com")).thenReturn(false);
+                when(passwordEncoder.encode("pass123")).thenReturn("encodedPass");
 
-        User result = authService.registerAdmin(request);
+                User mockedSavedUser = new User("Nuevo Admin", "nuevo_admin", "encodedPass", "nuevo@test.com",
+                                adminRole);
+                mockedSavedUser.setId(10L); // Asignar un ID para evitar NPE en auditService.logChange()
+                when(userRepository.save(any(User.class))).thenReturn(mockedSavedUser);
 
-        assertThat(result).isNotNull();
-        verify(userRepository, times(1)).save(any(User.class));
-        verify(passwordEncoder, times(1)).encode("pass123");
-    }
+                User result = authService.registerAdmin(request);
 
-    @Test
-    @DisplayName("registerAdmin() debe lanzar IllegalArgumentException si el rol no es ADMIN")
-    void registerAdmin_rolNoAdmin_lanzaIllegalArgumentException() {
-        RegisterRequest request = new RegisterRequest(
-                "Operario", "operario1", "pass123", "op@test.com", "OPERARIO");
+                assertThat(result).isNotNull();
+                verify(userRepository, times(1)).save(any(User.class));
+                verify(passwordEncoder, times(1)).encode("pass123");
+                verify(auditService, times(1)).logChange(any(), eq("CREATE"), eq("User"), eq("id"), isNull(),
+                                anyString());
+        }
 
-        assertThatThrownBy(() -> authService.registerAdmin(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("ADMIN");
-        verify(userRepository, never()).save(any());
-    }
+        @Test
+        @DisplayName("registerAdmin() debe lanzar IllegalArgumentException si el rol no es ADMIN")
+        void registerAdmin_rolNoAdmin_lanzaIllegalArgumentException() {
+                RegisterRequest request = new RegisterRequest(
+                                "Operario", "operario1", "pass123", "op@test.com", "OPERARIO");
 
-    @Test
-    @DisplayName("registerAdmin() debe lanzar RuntimeException si el username ya existe")
-    void registerAdmin_usernameExistente_lanzaRuntimeException() {
-        RegisterRequest request = new RegisterRequest(
-                "Admin", "admin_test", "pass123", "otro@test.com", "ADMIN");
-        when(roleRepository.findByRoleName("ADMIN")).thenReturn(Optional.of(adminRole));
-        when(userRepository.existsByUsername("admin_test")).thenReturn(true);
+                assertThatThrownBy(() -> authService.registerAdmin(request))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessageContaining("ADMIN");
+                verify(userRepository, never()).save(any());
+        }
 
-        assertThatThrownBy(() -> authService.registerAdmin(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("usuario");
-        verify(userRepository, never()).save(any());
-    }
+        @Test
+        @DisplayName("registerAdmin() debe lanzar RuntimeException si el username ya existe")
+        void registerAdmin_usernameExistente_lanzaRuntimeException() {
+                RegisterRequest request = new RegisterRequest(
+                                "Admin", "admin_test", "pass123", "otro@test.com", "ADMIN");
+                when(roleRepository.findByRoleName("ADMIN")).thenReturn(Optional.of(adminRole));
+                when(userRepository.existsByUsername("admin_test")).thenReturn(true);
 
-    @Test
-    @DisplayName("registerAdmin() debe lanzar RuntimeException si el email ya existe")
-    void registerAdmin_emailExistente_lanzaRuntimeException() {
-        RegisterRequest request = new RegisterRequest(
-                "Admin", "nuevo_admin", "pass123", "admin@test.com", "ADMIN");
-        when(roleRepository.findByRoleName("ADMIN")).thenReturn(Optional.of(adminRole));
-        when(userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(userRepository.existsByEmail("admin@test.com")).thenReturn(true);
+                assertThatThrownBy(() -> authService.registerAdmin(request))
+                                .isInstanceOf(RuntimeException.class)
+                                .hasMessageContaining("usuario");
+                verify(userRepository, never()).save(any());
+        }
 
-        assertThatThrownBy(() -> authService.registerAdmin(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("email");
-        verify(userRepository, never()).save(any());
-    }
+        @Test
+        @DisplayName("registerAdmin() debe lanzar RuntimeException si el email ya existe")
+        void registerAdmin_emailExistente_lanzaRuntimeException() {
+                RegisterRequest request = new RegisterRequest(
+                                "Admin", "nuevo_admin", "pass123", "admin@test.com", "ADMIN");
+                when(roleRepository.findByRoleName("ADMIN")).thenReturn(Optional.of(adminRole));
+                when(userRepository.existsByUsername(anyString())).thenReturn(false);
+                when(userRepository.existsByEmail("admin@test.com")).thenReturn(true);
 
-    @Test
-    @DisplayName("registerAdmin() debe lanzar RuntimeException si el rol ADMIN no existe en BD")
-    void registerAdmin_rolAdminNoExisteEnBD_lanzaRuntimeException() {
-        RegisterRequest request = new RegisterRequest(
-                "Admin", "nuevo_admin", "pass123", "nuevo@test.com", "ADMIN");
-        when(roleRepository.findByRoleName("ADMIN")).thenReturn(Optional.empty());
+                assertThatThrownBy(() -> authService.registerAdmin(request))
+                                .isInstanceOf(RuntimeException.class)
+                                .hasMessageContaining("email");
+                verify(userRepository, never()).save(any());
+        }
 
-        assertThatThrownBy(() -> authService.registerAdmin(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("ADMIN");
-    }
+        @Test
+        @DisplayName("registerAdmin() debe lanzar RuntimeException si el rol ADMIN no existe en BD")
+        void registerAdmin_rolAdminNoExisteEnBD_lanzaRuntimeException() {
+                RegisterRequest request = new RegisterRequest(
+                                "Admin", "nuevo_admin", "pass123", "nuevo@test.com", "ADMIN");
+                when(roleRepository.findByRoleName("ADMIN")).thenReturn(Optional.empty());
+
+                assertThatThrownBy(() -> authService.registerAdmin(request))
+                                .isInstanceOf(RuntimeException.class)
+                                .hasMessageContaining("ADMIN");
+        }
 }

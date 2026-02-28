@@ -7,37 +7,88 @@
 [INFO] 
 [INFO] --- resources:3.3.1:resources (default-resources) @ sistema-riego-goteo-api ---
 [INFO] Copying 1 resource from src\main\resources to target\classes
-[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
 [INFO] 
 [INFO] --- compiler:3.13.0:compile (default-compile) @ sistema-riego-goteo-api ---
-[INFO] Recompiling the module because of changed source code.
-[INFO] Compiling 179 source files with javac [debug parameters release 17] to target\classes
-[INFO] -------------------------------------------------------------
-[ERROR] COMPILATION ERROR : 
-[INFO] -------------------------------------------------------------
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[60,6] illegal start of type
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[60,35] ';' expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[61,17] ';' expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[62,15] ';' expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[62,18] <identifier> expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[63,15] ';' expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/riego/PrecipitationService.java:[148,1] class, interface, enum, or record expected
-[INFO] 7 errors 
-[INFO] -------------------------------------------------------------
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ sistema-riego-goteo-api ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ sistema-riego-goteo-api ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ sistema-riego-goteo-api ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running AuthService - Tests Unitarios
+18:23:10.438 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intentando registrar al usuario ADMIN: admin_test
+18:23:10.450 [main] WARN com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intento de registro con username existente: admin_test
+18:23:10.515 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intentando registrar al usuario ADMIN: nuevo_admin
+18:23:10.516 [main] ERROR com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- El rol ADMIN no existe en la base de datos. Debe ser creado primero.
+18:23:10.525 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intentando registrar al usuario ADMIN: nuevo_admin
+18:23:10.526 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Usuario ADMIN registrado exitosamente con ID: null
+18:23:10.577 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intentando autenticar al usuario: admin_test
+18:23:10.582 [main] WARN com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intento de login de usuario inactivo: admin_test
+18:23:10.583 [main] ERROR com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Error durante la autenticación para admin_test: La cuenta del usuario está inactiva.
+18:23:10.595 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intentando autenticar al usuario: admin_test
+18:23:10.596 [main] WARN com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Credenciales inválidas para el usuario: admin_test
+18:23:10.601 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intentando registrar al usuario ADMIN: nuevo_admin
+18:23:10.601 [main] WARN com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intento de registro con email existente: admin@test.com
+18:23:10.610 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intentando autenticar al usuario: admin_test
+18:23:10.610 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Usuario autenticado exitosamente: admin_test
+18:23:10.625 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService -- Intentando registrar al usuario ADMIN: operario1
+[ERROR] Tests run: 8, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 1.925 s <<< FAILURE! -- in AuthService - Tests Unitarios
+[ERROR] com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthServiceTest.registerAdmin_datosValidos_retornaUsuarioCreado -- Time elapsed: 0.016 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "java.lang.Long.toString()" because the return value of "com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User.getId()" is null
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService.registerAdmin(AuthService.java:192)
+	at com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthServiceTest.registerAdmin_datosValidos_retornaUsuarioCreado(AuthServiceTest.java:131)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:578)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[INFO] Running UserService - Tests Unitarios
+18:23:10.759 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Usuario operario_test intentando actualizar su propia contraseña.
+18:23:10.765 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Usuario operario_test intentando actualizar su propia contraseña.
+18:23:10.766 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Contraseña del usuario operario_test actualizada exitosamente.
+18:23:10.771 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Usuario operario_test intentando actualizar su propia contraseña.
+18:23:10.775 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando cambiar estado activo a false para usuario con ID: 2
+18:23:10.776 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Estado activo del usuario con ID: 2 cambiado a false exitosamente por admin.
+18:23:10.782 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando asignar usuario ID 2 a finca ID 1
+18:23:10.783 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Usuario ID 2 asignado exitosamente a la finca ID 1
+18:23:10.790 [main] WARN com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando ELIMINAR PERMANENTEMENTE usuario con ID: 2
+18:23:10.790 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Usuario con ID: 2 eliminado permanentemente por admin.
+18:23:10.796 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando registrar usuario: admin con rol: OPERARIO
+18:23:10.802 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando cambiar estado activo a true para usuario con ID: 2
+18:23:10.802 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Estado activo del usuario con ID: 2 cambiado a true exitosamente por admin.
+18:23:10.807 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando asignar usuario ID 2 a finca ID 1
+18:23:10.813 [main] WARN com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando ELIMINAR PERMANENTEMENTE usuario con ID: 99
+18:23:10.820 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando registrar usuario: nuevo_operario con rol: OPERARIO
+18:23:10.820 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Usuario OPERARIO registrado exitosamente por admin con ID: 3
+18:23:10.826 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando asignar usuario ID 1 a finca ID 1
+18:23:10.831 [main] INFO com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService -- Admin admin intentando registrar usuario: null con rol: SUPERUSUARIO
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.194 s -- in UserService - Tests Unitarios
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Errors: 
+[ERROR]   AuthServiceTest.registerAdmin_datosValidos_retornaUsuarioCreado:131 » NullPointer Cannot invoke "java.lang.Long.toString()" because the return value of "com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User.getId()" is null
+[INFO] 
+[ERROR] Tests run: 21, Failures: 0, Errors: 1, Skipped: 0
+[INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  2.994 s
-[INFO] Finished at: 2026-02-22T20:22:31-03:00
+[INFO] Total time:  6.124 s
+[INFO] Finished at: 2026-02-28T18:23:10-03:00
 [INFO] ------------------------------------------------------------------------
-[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project sistema-riego-goteo-api: Compilation failure: Compilation failure: 
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[60,6] illegal start of type
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[60,35] ';' expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[61,17] ';' expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[62,15] ';' expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[62,18] <identifier> expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/controller/riego/PrecipitationController.java:[63,15] ';' expected
-[ERROR] /C:/Users/elian/OneDrive/Documentos/1-Proyectos/Reales/sistema-riego-goteo-api/src/main/java/com/sistemariegoagoteo/sistema_riego_goteo_api/service/riego/PrecipitationService.java:[148,1] class, interface, enum, or record expected
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.4:test (default-test) on project sistema-riego-goteo-api: 
+[ERROR] 
+[ERROR] See C:\Users\elian\OneDrive\Documentos\0-Tecnicatura Desarrollo de software\3-Tercer Año Desarrollo De Software\Practica Profesionalizante 3\software\sistema-riego-goteo-api\target\surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
 [ERROR] -> [Help 1]
 [ERROR] 
 [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.

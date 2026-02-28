@@ -18,6 +18,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.RoleRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 
 import java.util.Date; // Para actualizar fecha_ultimo_login
 
@@ -54,6 +55,11 @@ public class AuthService {
      * Gestor de autenticación de Spring Security.
      */
     private final AuthenticationManager authenticationManager;
+
+    /**
+     * Servicio de auditoría para registrar el inicio de sesión
+     */
+    private final AuditService auditService;
 
     /**
      * Autentica a un usuario basado en sus credenciales (username/password).
@@ -100,6 +106,9 @@ public class AuthService {
             // Generar el token JWT
             String jwtToken = jwtService.generateToken(userDetails);
             log.info("Usuario autenticado exitosamente: {}", authRequest.getUsername());
+
+            // --- AUDITORÍA DE LOGIN ---
+            auditService.logChange(user, "LOGIN", "user", "username", null, user.getUsername());
 
             // --- MODIFICACIÓN ---
             // Se retorna el AuthResponse incluyendo el estado 'active' del usuario.
@@ -177,6 +186,10 @@ public class AuthService {
         // 6. Guardar el nuevo usuario en la base de datos
         User savedUser = userRepository.save(newUser);
         log.info("Usuario ADMIN registrado exitosamente con ID: {}", savedUser.getId());
+
+        // --- AUDITORÍA DE REGISTRO ADMIN ---
+        auditService.logChange(savedUser, "CREATE", User.class.getSimpleName(), "id", null,
+                savedUser.getId().toString());
 
         return savedUser;
     }

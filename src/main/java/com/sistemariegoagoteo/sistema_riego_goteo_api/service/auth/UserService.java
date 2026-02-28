@@ -319,6 +319,9 @@ public class UserService {
                         throw new BadCredentialsException("La contraseña actual es incorrecta.");
                 }
 
+                // --- AUDITORÍA DE CAMBIO DE CONTRASEÑA (PROPIO) ---
+                auditService.logChange(user, "UPDATE", User.class.getSimpleName(), "password", "********", "********");
+
                 user.setPassword(passwordEncoder.encode(newPassword));
                 userRepository.save(user);
 
@@ -340,6 +343,16 @@ public class UserService {
                                 && userRepository.existsByEmail(request.getEmail())) {
                         throw new RuntimeException(
                                         "El email '" + request.getEmail() + "' ya está en uso por otro usuario.");
+                }
+
+                // --- AUDITORÍA DE ACTUALIZACIÓN DE PERFIL ---
+                if (!Objects.equals(user.getName(), request.getName())) {
+                        auditService.logChange(user, "UPDATE", User.class.getSimpleName(), "name", user.getName(),
+                                        request.getName());
+                }
+                if (!user.getEmail().equalsIgnoreCase(request.getEmail())) {
+                        auditService.logChange(user, "UPDATE", User.class.getSimpleName(), "email", user.getEmail(),
+                                        request.getEmail());
                 }
 
                 user.setName(request.getName());

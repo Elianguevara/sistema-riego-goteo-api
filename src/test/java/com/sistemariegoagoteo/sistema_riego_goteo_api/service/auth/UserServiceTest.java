@@ -258,6 +258,8 @@ class UserServiceTest {
         verify(userRepository).save(targetUser);
         verify(notificationService).createNotification(eq(targetUser), anyString(), eq("GENERAL"), isNull(),
                 anyString());
+        verify(auditService).logChange(any(User.class), eq("UPDATE"), eq("User"), eq("password"), eq("********"),
+                eq("********"));
     }
 
     @Test
