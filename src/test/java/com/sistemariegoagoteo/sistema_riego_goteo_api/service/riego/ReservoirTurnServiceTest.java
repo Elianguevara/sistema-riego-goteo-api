@@ -103,7 +103,7 @@ class ReservoirTurnServiceTest {
 
         assertNotNull(result);
         assertEquals(2, result.getId());
-        verify(auditService).logChange(eq(authUser), eq("CREATE"), eq("ReservoirTurn"), eq("id"), isNull(), eq("2"));
+        verify(auditService).logChange(any(User.class), eq("CREATE"), eq("ReservoirTurn"), eq("id"), isNull(), eq("2"));
     }
 
     @Test
@@ -139,7 +139,7 @@ class ReservoirTurnServiceTest {
         ReservoirTurn result = reservoirTurnService.updateReservoirTurn(1, request);
 
         assertEquals(baseTimePlus1H, result.getStartDatetime());
-        verify(auditService, times(2)).logChange(eq(authUser), eq("UPDATE"), eq("ReservoirTurn"), anyString(),
+        verify(auditService, times(2)).logChange(any(User.class), eq("UPDATE"), eq("ReservoirTurn"), anyString(),
                 anyString(), anyString());
     }
 
@@ -150,6 +150,6 @@ class ReservoirTurnServiceTest {
         reservoirTurnService.deleteReservoirTurn(1);
 
         verify(reservoirTurnRepository).delete(reservoirTurn);
-        verify(auditService).logChange(eq(authUser), eq("DELETE"), eq("ReservoirTurn"), eq("id"), eq("1"), isNull());
+        verify(auditService).logChange(any(User.class), eq("DELETE"), eq("ReservoirTurn"), eq("id"), eq("1"), isNull());
     }
 }

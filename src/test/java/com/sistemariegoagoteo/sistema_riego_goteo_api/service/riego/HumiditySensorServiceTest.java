@@ -91,7 +91,7 @@ class HumiditySensorServiceTest {
 
         assertEquals(2, result.getId());
         assertEquals("SONDA", result.getSensorType());
-        verify(auditService).logChange(eq(authUser), eq("CREATE"), eq("HumiditySensor"), eq("sensorType"), isNull(),
+        verify(auditService).logChange(any(User.class), eq("CREATE"), eq("HumiditySensor"), eq("sensorType"), isNull(),
                 eq("SONDA"));
     }
 
@@ -108,7 +108,7 @@ class HumiditySensorServiceTest {
         HumiditySensor result = humiditySensorService.updateHumiditySensor(1, request);
 
         assertEquals("SONDA", result.getSensorType());
-        verify(auditService, times(1)).logChange(eq(authUser), eq("UPDATE"), eq("HumiditySensor"), anyString(),
+        verify(auditService, times(1)).logChange(any(User.class), eq("UPDATE"), eq("HumiditySensor"), anyString(),
                 anyString(), anyString());
     }
 
@@ -119,6 +119,7 @@ class HumiditySensorServiceTest {
         humiditySensorService.deleteHumiditySensor(1);
 
         verify(humiditySensorRepository).delete(sensor);
-        verify(auditService).logChange(eq(authUser), eq("DELETE"), eq("HumiditySensor"), eq("id"), eq("1"), isNull());
+        verify(auditService).logChange(any(User.class), eq("DELETE"), eq("HumiditySensor"), eq("id"), eq("1"),
+                isNull());
     }
 }

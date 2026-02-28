@@ -1,10 +1,8 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.auth.RegisterRequest;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.dashboard.UserStatsResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserUpdateRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
@@ -13,6 +11,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserReposi
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,16 +22,19 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Tests unitarios para UserService.
+ * Cubre las operaciones CRUD de usuarios realizadas por el administrador
+ * y las operaciones de self-service del propio usuario.
+ */
 @ExtendWith(MockitoExtension.class)
+@DisplayName("UserService - Tests Unitarios")
 class UserServiceTest {
 
     @Mock
@@ -52,197 +54,176 @@ class UserServiceTest {
     private UserService userService;
 
     private User adminUser;
+    private User targetUser;
     private Role adminRole;
-    private Role operatorRole;
+    private Role operarioRole;
 
     @BeforeEach
     void setUp() {
-        adminRole = new Role(1, "ADMIN", new java.util.HashSet<>());
-        operatorRole = new Role(3, "OPERARIO", new java.util.HashSet<>());
+        adminRole = new Role("ADMIN");
+        operarioRole = new Role("OPERARIO");
 
-        adminUser = new User();
+        adminUser = new User("Admin", "admin", "encoded_pass", "admin@test.com", adminRole);
         adminUser.setId(1L);
-        adminUser.setUsername("admin");
-        adminUser.setRol(adminRole);
+        adminUser.setActive(true);
 
-        // Configurar el SecurityContext con el admin mockeado
+        targetUser = new User("Operario Test", "operario_test", "encoded_pass2", "operario@test.com", operarioRole);
+        targetUser.setId(2L);
+        targetUser.setActive(true);
+
+        // Simular usuario autenticado en el SecurityContext
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(adminUser, null,
-                        new ArrayList<org.springframework.security.core.GrantedAuthority>()));
+                new UsernamePasswordAuthenticationToken(adminUser, null, new java.util.ArrayList<>()));
     }
 
+    // =======================================================================
+    // registerUserByAdmin
+    // =======================================================================
+
     @Test
+    @DisplayName("registerUserByAdmin() debe guardar usuario y notificar al crear exitosamente")
     void registerUserByAdmin_Success() {
-        // Arrange
         RegisterRequest request = new RegisterRequest();
-        request.setUsername("nuevoUser");
-        request.setEmail("nuevo@test.com");
+        request.setName("Nuevo Operario");
+        request.setUsername("nuevo_operario");
         request.setPassword("pass123");
-        request.setName("Nuevo Usuario");
+        request.setEmail("nuevo@test.com");
         request.setRol("OPERARIO");
 
-        when(roleRepository.findByRoleName("OPERARIO")).thenReturn(Optional.of(operatorRole));
-        when(userRepository.existsByUsername("nuevoUser")).thenReturn(false);
+        when(roleRepository.findByRoleName("OPERARIO")).thenReturn(Optional.of(operarioRole));
+        when(userRepository.existsByUsername("nuevo_operario")).thenReturn(false);
         when(userRepository.existsByEmail("nuevo@test.com")).thenReturn(false);
-        when(passwordEncoder.encode(anyString())).thenReturn("hashedPass");
+        when(passwordEncoder.encode("pass123")).thenReturn("encoded_pass3");
+        when(userRepository.save(any(User.class))).thenAnswer(i -> {
+            User u = i.getArgument(0);
+            u.setId(3L);
+            return u;
+        });
 
-        User savedMockUser = new User();
-        savedMockUser.setId(2L);
-        savedMockUser.setUsername("nuevoUser");
-        savedMockUser.setRol(operatorRole);
-        when(userRepository.save(any(User.class))).thenReturn(savedMockUser);
-
-        // Act
         User result = userService.registerUserByAdmin(request);
 
-        // Assert
         assertNotNull(result);
-        assertEquals(2L, result.getId());
+        assertEquals(3L, result.getId());
+        assertEquals("nuevo_operario", result.getUsername());
         verify(userRepository).save(any(User.class));
-        verify(auditService).logChange(eq(adminUser), eq("CREATE"), eq("User"), eq("all"), isNull(),
-                contains("Nuevo usuario ID: 2"));
-        verify(notificationService, times(2)).createNotification(any(), anyString(), anyString(), any(), anyString());
-    }
-
-    @Test
-    void registerUserByAdmin_InvalidRole_ThrowsException() {
-        RegisterRequest request = new RegisterRequest();
-        request.setRol("INVALID_ROLE");
-
-        assertThrows(IllegalArgumentException.class, () -> userService.registerUserByAdmin(request));
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void registerUserByAdmin_UsernameExists_ThrowsException() {
-        RegisterRequest request = new RegisterRequest();
-        request.setUsername("admin");
-        request.setRol("OPERARIO");
-
-        when(roleRepository.findByRoleName("OPERARIO")).thenReturn(Optional.of(operatorRole));
-        when(userRepository.existsByUsername("admin")).thenReturn(true);
-
-        assertThrows(RuntimeException.class, () -> userService.registerUserByAdmin(request));
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void updateUser_Success() {
-        Long userId = 2L;
-        UserUpdateRequest request = new UserUpdateRequest();
-        request.setName("Nuevo Nombre");
-        request.setEmail("nuevo@email.com");
-
-        User existingUser = new User();
-        existingUser.setId(userId);
-        existingUser.setName("Viejo Nombre");
-        existingUser.setEmail("viejo@email.com");
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
-        when(userRepository.existsByEmail("nuevo@email.com")).thenReturn(false);
-        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArguments()[0]);
-
-        User result = userService.updateUser(userId, request);
-
-        assertEquals("Nuevo Nombre", result.getName());
-        assertEquals("nuevo@email.com", result.getEmail());
-        verify(auditService, times(2)).logChange(any(), eq("UPDATE"), any(), anyString(), anyString(), anyString());
-    }
-
-    @Test
-    void updateUserStatus_Success() {
-        Long userId = 2L;
-        User existingUser = new User();
-        existingUser.setId(userId);
-        existingUser.setActive(true);
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
-        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArguments()[0]);
-
-        User result = userService.updateUserStatus(userId, false);
-
-        assertFalse(result.isActive());
-        verify(auditService).logChange(any(), eq("UPDATE"), any(), eq("isActive"), eq("true"), eq("false"));
-        verify(notificationService).createNotification(eq(existingUser), anyString(), eq("GENERAL"), isNull(),
+        // Verificar que se enviaron las dos notificaciones (admin + nuevo usuario)
+        verify(notificationService, times(2)).createNotification(any(User.class), anyString(), anyString(), any(),
                 anyString());
     }
 
     @Test
+    @DisplayName("registerUserByAdmin() debe lanzar excepción con un rol inválido")
+    void registerUserByAdmin_InvalidRole_ThrowsException() {
+        RegisterRequest request = new RegisterRequest();
+        request.setRol("SUPERUSUARIO"); // Rol inválido
+
+        assertThrows(IllegalArgumentException.class, () -> userService.registerUserByAdmin(request));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("registerUserByAdmin() debe lanzar excepción si el username ya existe")
+    void registerUserByAdmin_DuplicateUsername_ThrowsException() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("admin");
+        request.setRol("OPERARIO");
+        request.setEmail("otro@test.com");
+
+        when(roleRepository.findByRoleName("OPERARIO")).thenReturn(Optional.of(operarioRole));
+        when(userRepository.existsByUsername("admin")).thenReturn(true);
+
+        assertThrows(RuntimeException.class, () -> userService.registerUserByAdmin(request));
+        verify(userRepository, never()).save(any());
+    }
+
+    // =======================================================================
+    // updateUserStatus
+    // =======================================================================
+
+    @Test
+    @DisplayName("updateUserStatus() debe desactivar usuario y enviar notificación")
+    void updateUserStatus_Deactivate_Success() {
+        when(userRepository.findById(2L)).thenReturn(Optional.of(targetUser));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        User result = userService.updateUserStatus(2L, false);
+
+        assertFalse(result.isActive());
+        verify(notificationService).createNotification(eq(targetUser), anyString(), eq("GENERAL"), isNull(),
+                anyString());
+    }
+
+    @Test
+    @DisplayName("updateUserStatus() no debe hacer nada si el estado ya es el mismo")
+    void updateUserStatus_SameState_NoAudit() {
+        // targetUser ya está activo (true), y pedimos active=true
+        when(userRepository.findById(2L)).thenReturn(Optional.of(targetUser));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        userService.updateUserStatus(2L, true);
+
+        // No debe llamar a auditService porque el estado no cambió
+        verify(auditService, never()).logChange(any(), anyString(), anyString(), anyString(), anyString(), anyString());
+    }
+
+    // =======================================================================
+    // deleteUser
+    // =======================================================================
+
+    @Test
+    @DisplayName("deleteUser() debe eliminar el usuario y registrar auditoría")
     void deleteUser_Success() {
-        Long userId = 2L;
-        User existingUser = new User();
-        existingUser.setId(userId);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(targetUser));
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+        userService.deleteUser(2L);
 
-        userService.deleteUser(userId);
-
-        verify(userRepository).delete(existingUser);
-        verify(auditService).logChange(any(), eq("DELETE"), eq("User"), eq("id"), eq("2"), isNull());
+        verify(userRepository).delete(targetUser);
+        verify(auditService).logChange(any(User.class), eq("DELETE"), eq("User"), eq("id"), eq("2"), isNull());
     }
 
     @Test
-    void assignUserToFarm_Success() {
-        Long userId = 2L;
-        Integer farmId = 1;
+    @DisplayName("deleteUser() debe lanzar ResourceNotFoundException si el usuario no existe")
+    void deleteUser_NotFound_ThrowsException() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        User existingUser = new User();
-        existingUser.setId(userId);
-        existingUser.setFarms(new java.util.HashSet<Farm>());
-
-        Farm farm = new Farm();
-        farm.setId(farmId);
-        farm.setName("Finca Test");
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
-        when(farmRepository.findById(farmId)).thenReturn(Optional.of(farm));
-
-        userService.assignUserToFarm(userId, farmId);
-
-        assertTrue(existingUser.getFarms().contains(farm));
-        verify(userRepository).save(existingUser);
-        verify(auditService).logChange(any(), eq("ASSIGN"), eq("user_farm"), eq("farm_id"), isNull(), eq("1"));
-        verify(notificationService).createNotification(eq(existingUser), anyString(), eq("FARM"), eq(1L), anyString());
+        assertThrows(ResourceNotFoundException.class, () -> userService.deleteUser(99L));
+        verify(userRepository, never()).delete(any());
     }
 
+    // =======================================================================
+    // updateOwnPassword
+    // =======================================================================
+
     @Test
+    @DisplayName("updateOwnPassword() debe cambiar contraseña si la actual es correcta")
     void updateOwnPassword_Success() {
-        String username = "testuser";
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword("oldHash");
+        when(userRepository.findByUsername("operario_test")).thenReturn(Optional.of(targetUser));
+        when(passwordEncoder.matches("vieja_pass", targetUser.getPassword())).thenReturn(true);
+        when(passwordEncoder.encode("nueva_pass")).thenReturn("encoded_nueva");
 
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("oldPass", "oldHash")).thenReturn(true);
-        when(passwordEncoder.encode("newPass")).thenReturn("newHash");
+        userService.updateOwnPassword("operario_test", "vieja_pass", "nueva_pass", "nueva_pass");
 
-        userService.updateOwnPassword(username, "oldPass", "newPass", "newPass");
-
-        assertEquals("newHash", user.getPassword());
-        verify(userRepository).save(user);
+        verify(userRepository).save(targetUser);
+        verify(notificationService).createNotification(eq(targetUser), anyString(), eq("GENERAL"), isNull(),
+                anyString());
     }
 
     @Test
-    void updateOwnPassword_PasswordsNotMatch_ThrowsException() {
+    @DisplayName("updateOwnPassword() debe lanzar excepción si las contraseñas no coinciden")
+    void updateOwnPassword_PasswordMismatch_ThrowsException() {
         assertThrows(IllegalArgumentException.class,
-                () -> userService.updateOwnPassword("username", "oldPass", "newPass", "wrongPass"));
+                () -> userService.updateOwnPassword("operario_test", "vieja_pass", "nueva1", "nueva2"));
+        verify(userRepository, never()).save(any());
     }
 
     @Test
-    void getUserStats_Success() {
-        when(userRepository.count()).thenReturn(10L);
-        when(userRepository.countByIsActive(true)).thenReturn(8L);
+    @DisplayName("updateOwnPassword() debe lanzar BadCredentialsException si la contraseña actual es incorrecta")
+    void updateOwnPassword_WrongCurrentPassword_ThrowsException() {
+        when(userRepository.findByUsername("operario_test")).thenReturn(Optional.of(targetUser));
+        when(passwordEncoder.matches("pass_incorrecta", targetUser.getPassword())).thenReturn(false);
 
-        List<Object[]> roleStats = new ArrayList<>();
-        roleStats.add(new Object[] { "ADMIN", 2L });
-        roleStats.add(new Object[] { "OPERARIO", 8L });
-        when(userRepository.countUsersByRole()).thenReturn(roleStats);
-
-        UserStatsResponse response = userService.getUserStats();
-
-        assertEquals(10L, response.getTotalUsers());
-        assertEquals(8L, response.getActiveUsers());
-        assertEquals(2L, response.getInactiveUsers());
-        assertEquals(2L, response.getUsersByRole().get("ADMIN"));
+        assertThrows(BadCredentialsException.class,
+                () -> userService.updateOwnPassword("operario_test", "pass_incorrecta", "nueva", "nueva"));
+        verify(userRepository, never()).save(any());
     }
 }

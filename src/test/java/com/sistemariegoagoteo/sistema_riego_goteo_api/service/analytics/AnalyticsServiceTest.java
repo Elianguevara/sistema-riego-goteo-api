@@ -124,4 +124,33 @@ class AnalyticsServiceTest {
         assertEquals("Sector A", result.getContent().get(0).getSectorName());
         assertEquals(new BigDecimal("10.0"), result.getContent().get(0).getWaterAmount());
     }
+
+    @Test
+    void getIrrigationSummary_EmptySectorIds_QueriesFromFarm() {
+        // Cuando sectorIds es null, debe buscar todos los sectores de la finca
+        when(sectorRepository.findByFarm_Id(1)).thenReturn(List.of(sector));
+        when(irrigationRepository.getSectorIrrigationTotals(eq(1), any(List.class), any(LocalDateTime.class),
+                any(LocalDateTime.class))).thenReturn(List.of());
+
+        List<IrrigationSectorSummaryDTO> result = analyticsService.getIrrigationSummary(1, startDate, endDate, null);
+
+        assertNotNull(result);
+        assertEquals(0, result.size()); // Repositorio devuelve vacío → lista vacía
+    }
+
+    @Test
+    void getIrrigationTimeseries_AllDaysEmpty_ReturnZeroForEachDay() {
+        LocalDate start = LocalDate.now().minusDays(1);
+        LocalDate end = LocalDate.now();
+
+        // Repositorio no devuelve datos → todos los días deben tener ZERO
+        when(irrigationRepository.getDailyIrrigationTotals(eq(1), any(LocalDateTime.class),
+                any(LocalDateTime.class))).thenReturn(List.of());
+
+        List<IrrigationTimeseriesDTO> result = analyticsService.getIrrigationTimeseries(1, start, end);
+
+        assertNotNull(result);
+        assertEquals(2, result.size()); // start + end = 2 días
+        result.forEach(dto -> assertEquals(BigDecimal.ZERO, dto.getWaterAmount()));
+    }
 }

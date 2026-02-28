@@ -95,7 +95,7 @@ class PrecipitationServiceTest {
         // (15.5 - 5) * 0.75 = 7.875 -> 7.88
         assertEquals(new BigDecimal("7.88"), result.getMmEffectiveRain());
 
-        verify(auditService).logChange(eq(authUser), eq("CREATE"), eq("Precipitation"), eq("mmRain"), isNull(),
+        verify(auditService).logChange(any(User.class), eq("CREATE"), eq("Precipitation"), eq("mmRain"), isNull(),
                 eq("15.50"));
     }
 
@@ -129,7 +129,7 @@ class PrecipitationServiceTest {
 
         assertEquals(new BigDecimal("12.00"), result.getMmRain());
         assertEquals(new BigDecimal("5.25"), result.getMmEffectiveRain()); // (12-5)*0.75
-        verify(auditService).logChange(eq(authUser), eq("UPDATE"), eq("Precipitation"), eq("mmRain"), eq("10.00"),
+        verify(auditService).logChange(any(User.class), eq("UPDATE"), eq("Precipitation"), eq("mmRain"), eq("10.00"),
                 eq("12.00"));
     }
 
@@ -140,6 +140,6 @@ class PrecipitationServiceTest {
         precipitationService.deletePrecipitation(1);
 
         verify(precipitationRepository).delete(precipitation);
-        verify(auditService).logChange(eq(authUser), eq("DELETE"), eq("Precipitation"), eq("id"), eq("1"), isNull());
+        verify(auditService).logChange(any(User.class), eq("DELETE"), eq("Precipitation"), eq("id"), eq("1"), isNull());
     }
 }

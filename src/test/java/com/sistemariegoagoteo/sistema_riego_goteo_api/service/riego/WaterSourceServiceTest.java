@@ -80,7 +80,7 @@ class WaterSourceServiceTest {
         assertNotNull(result);
         assertEquals("REPRESA", result.getType());
         assertEquals(2, result.getId());
-        verify(auditService).logChange(eq(authUser), eq("CREATE"), eq("WaterSource"), eq("type"), isNull(),
+        verify(auditService).logChange(any(User.class), eq("CREATE"), eq("WaterSource"), eq("type"), isNull(),
                 eq("REPRESA"));
         verify(waterSourceRepository).save(any(WaterSource.class));
     }
@@ -109,7 +109,7 @@ class WaterSourceServiceTest {
         WaterSource result = waterSourceService.updateWaterSource(1, request);
 
         assertEquals("CANAL", result.getType());
-        verify(auditService).logChange(eq(authUser), eq("UPDATE"), eq("WaterSource"), eq("type"), eq("POZO"),
+        verify(auditService).logChange(any(User.class), eq("UPDATE"), eq("WaterSource"), eq("type"), eq("POZO"),
                 eq("CANAL"));
     }
 

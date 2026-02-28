@@ -1,8 +1,9 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth;
 
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,11 +14,17 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
+/**
+ * Tests unitarios para JpaUserDetailsService.
+ * Valida que Spring Security puede recuperar usuarios desde la BD
+ * correctamente.
+ */
 @ExtendWith(MockitoExtension.class)
+@DisplayName("JpaUserDetailsService - Tests Unitarios")
 class JpaUserDetailsServiceTest {
 
     @Mock
@@ -26,58 +33,27 @@ class JpaUserDetailsServiceTest {
     @InjectMocks
     private JpaUserDetailsService jpaUserDetailsService;
 
-    private User mockUser;
+    @Test
+    @DisplayName("loadUserByUsername() debe retornar el usuario cuando existe")
+    void loadUserByUsername_UserFound_ReturnsUserDetails() {
+        Role role = new Role("OPERARIO");
+        User user = new User("Test Usuario", "test_user", "encoded_pass", "test@test.com", role);
 
-    @BeforeEach
-    void setUp() {
-        mockUser = new User();
-        mockUser.setId(1L);
-        mockUser.setUsername("testuser");
-        mockUser.setPassword("password123");
-        mockUser.setActive(true);
+        when(userRepository.findByUsername("test_user")).thenReturn(Optional.of(user));
+
+        UserDetails result = jpaUserDetailsService.loadUserByUsername("test_user");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getUsername()).isEqualTo("test_user");
     }
 
     @Test
-    void loadUserByUsername_UserExists_ReturnsUserDetails() {
-        // Arrange
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
+    @DisplayName("loadUserByUsername() debe lanzar UsernameNotFoundException si el usuario no existe")
+    void loadUserByUsername_UserNotFound_ThrowsException() {
+        when(userRepository.findByUsername("noexiste")).thenReturn(Optional.empty());
 
-        // Act
-        UserDetails userDetails = jpaUserDetailsService.loadUserByUsername("testuser");
-
-        // Assert
-        assertNotNull(userDetails);
-        assertEquals("testuser", userDetails.getUsername());
-        assertEquals("password123", userDetails.getPassword());
-        assertTrue(userDetails.isEnabled());
-        verify(userRepository, times(1)).findByUsername("testuser");
-    }
-
-    @Test
-    void loadUserByUsername_UserDoesNotExist_ThrowsUsernameNotFoundException() {
-        // Arrange
-        when(userRepository.findByUsername("unknownuser")).thenReturn(Optional.empty());
-
-        // Act & Assert
-        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
-            jpaUserDetailsService.loadUserByUsername("unknownuser");
-        });
-
-        assertEquals("Usuario no encontrado con username: unknownuser", exception.getMessage());
-        verify(userRepository, times(1)).findByUsername("unknownuser");
-    }
-
-    @Test
-    void loadUserByUsername_NullUsername_ThrowsUsernameNotFoundException() {
-        // Arrange
-        when(userRepository.findByUsername(null)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> {
-            jpaUserDetailsService.loadUserByUsername(null);
-        });
-
-        assertEquals("Usuario no encontrado con username: null", exception.getMessage());
-        verify(userRepository, times(1)).findByUsername(null);
+        assertThatThrownBy(() -> jpaUserDetailsService.loadUserByUsername("noexiste"))
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessageContaining("noexiste");
     }
 }

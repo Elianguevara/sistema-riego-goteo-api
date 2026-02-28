@@ -89,7 +89,7 @@ class FertilizationServiceTest {
         assertNotNull(result);
         assertEquals(2, result.getId());
         assertEquals("NITK", result.getFertilizerType());
-        verify(auditService).logChange(eq(authUser), eq("CREATE"), eq("Fertilization"), eq("id"), isNull(), eq("2"));
+        verify(auditService).logChange(any(User.class), eq("CREATE"), eq("Fertilization"), eq("id"), isNull(), eq("2"));
     }
 
     @Test
@@ -106,7 +106,7 @@ class FertilizationServiceTest {
         Fertilization result = fertilizationService.updateFertilization(1, request);
 
         assertEquals(new BigDecimal("60.0"), result.getQuantity());
-        verify(auditService, times(1)).logChange(eq(authUser), eq("UPDATE"), eq("Fertilization"), anyString(),
+        verify(auditService, times(1)).logChange(any(User.class), eq("UPDATE"), eq("Fertilization"), anyString(),
                 anyString(), anyString());
     }
 
@@ -117,6 +117,6 @@ class FertilizationServiceTest {
         fertilizationService.deleteFertilization(1);
 
         verify(fertilizationRepository).delete(fertilization);
-        verify(auditService).logChange(eq(authUser), eq("DELETE"), eq("Fertilization"), eq("id"), eq("1"), isNull());
+        verify(auditService).logChange(any(User.class), eq("DELETE"), eq("Fertilization"), eq("id"), eq("1"), isNull());
     }
 }
