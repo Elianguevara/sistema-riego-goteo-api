@@ -1,7 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.auth.RegisterRequest;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserUpdateRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;

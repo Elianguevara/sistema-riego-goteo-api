@@ -3,7 +3,7 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.service.report;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.OperationsLogReportDTO;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.PeriodSummaryReportDTO;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.WaterBalanceReportDTO;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.DailyIrrigationProjection;
+
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.DailyRainProjection;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.OperationLogProjection;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.SectorIrrigationProjection;

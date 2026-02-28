@@ -1,7 +1,7 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.FertilizationRequest;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Fertilization;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.UnitOfMeasure;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;

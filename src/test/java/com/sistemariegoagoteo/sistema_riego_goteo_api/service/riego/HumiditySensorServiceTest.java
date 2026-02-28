@@ -1,7 +1,7 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.HumiditySensorRequest;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.HumiditySensor;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;

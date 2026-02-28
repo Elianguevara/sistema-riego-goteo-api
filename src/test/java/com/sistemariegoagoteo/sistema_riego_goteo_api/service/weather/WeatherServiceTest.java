@@ -48,7 +48,7 @@ class WeatherServiceTest {
 
         WeatherResponse result = weatherService.getCurrentWeather(farm);
 
-        // assertNotNull(result);
+        assertNotNull(result);
         verify(restTemplate).getForObject(
                 contains("lat=-32.8895&lon=-68.8458&appid=test-api-key&units=metric&lang=es"),
                 eq(WeatherResponse.class));

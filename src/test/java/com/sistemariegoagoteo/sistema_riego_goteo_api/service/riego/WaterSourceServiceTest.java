@@ -1,7 +1,7 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.WaterSourceRequest;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.WaterSource;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
@@ -19,11 +19,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Arrays;
 import java.util.List;
+
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

@@ -1,7 +1,7 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.ReservoirTurnRequest;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.ReservoirTurn;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.WaterSource;
@@ -19,8 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Date;
-import java.util.Arrays;
-import java.util.List;
+
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,7 +47,6 @@ class ReservoirTurnServiceTest {
     private ReservoirTurn reservoirTurn;
     private Date baseTime;
     private Date baseTimePlus1H;
-    private Date baseTimePlus2H;
     private Date baseTimePlus4H;
     private Date baseTimePlus5H;
     private Date baseTimePlus24H;
@@ -73,7 +71,6 @@ class ReservoirTurnServiceTest {
         baseTime = new Date();
         long t = baseTime.getTime();
         baseTimePlus1H = new Date(t + 3600000);
-        baseTimePlus2H = new Date(t + 7200000);
         baseTimePlus4H = new Date(t + 14400000);
         baseTimePlus5H = new Date(t + 18000000);
         baseTimePlus24H = new Date(t + 86400000);

@@ -1,0 +1,5 @@
+com\sistemariegoagoteo\sistema_riego_goteo_api\config\seeder\SystemConfigSeeder.class
+com\sistemariegoagoteo\sistema_riego_goteo_api\config\SecurityConfig.class
+com\sistemariegoagoteo\sistema_riego_goteo_api\config\jwt\JwtAuthenticationFilter.class
+com\sistemariegoagoteo\sistema_riego_goteo_api\config\DataInitializer.class
+com\sistemariegoagoteo\sistema_riego_goteo_api\config\jwt\JwtConfig.class

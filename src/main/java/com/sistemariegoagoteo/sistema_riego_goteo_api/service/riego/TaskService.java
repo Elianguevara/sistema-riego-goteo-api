@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.List;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +86,11 @@ public class TaskService {
         notificationService.createNotification(task.getCreatedBy(), message, "TASK", updatedTask.getId(), link);
 
         return updatedTask;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Task> getAllTasks() {
+        return taskRepository.findAllWithAssociations();
     }
 
     @Transactional(readOnly = true)

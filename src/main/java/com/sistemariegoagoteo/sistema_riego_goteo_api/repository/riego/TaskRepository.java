@@ -6,12 +6,20 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
+
+    @Query("SELECT DISTINCT t FROM Task t " +
+           "LEFT JOIN FETCH t.createdBy cb LEFT JOIN FETCH cb.rol " +
+           "LEFT JOIN FETCH t.assignedTo at LEFT JOIN FETCH at.rol " +
+           "LEFT JOIN FETCH t.sector s LEFT JOIN FETCH s.farm")
+    List<Task> findAllWithAssociations();
 
     // Para que un operario vea sus tareas
     Page<Task> findByAssignedToOrderByCreatedAtDesc(User assignedTo, Pageable pageable);

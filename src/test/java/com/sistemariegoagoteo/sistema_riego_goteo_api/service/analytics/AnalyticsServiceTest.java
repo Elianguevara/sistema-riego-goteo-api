@@ -68,7 +68,8 @@ class AnalyticsServiceTest {
         when(proj.getWaterAmount()).thenReturn(new BigDecimal("100.5"));
         when(proj.getHours()).thenReturn(new BigDecimal("5.5"));
 
-        when(irrigationRepository.getSectorIrrigationTotals(eq(1), any(List.class), any(LocalDateTime.class),
+        when(irrigationRepository.getSectorIrrigationTotals(eq(1), org.mockito.ArgumentMatchers.<List<Integer>>any(),
+                any(LocalDateTime.class),
                 any(LocalDateTime.class)))
                 .thenReturn(Arrays.asList(proj));
 
@@ -114,7 +115,8 @@ class AnalyticsServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Irrigation> page = new PageImpl<>(Arrays.asList(irrigation));
 
-        when(irrigationRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+        when(irrigationRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Irrigation>>any(), eq(pageable)))
+                .thenReturn(page);
 
         Page<IrrigationRecordDTO> result = analyticsService.getIrrigationRecords(1, startDate, endDate,
                 Collections.singletonList(1), pageable);
@@ -129,7 +131,8 @@ class AnalyticsServiceTest {
     void getIrrigationSummary_EmptySectorIds_QueriesFromFarm() {
         // Cuando sectorIds es null, debe buscar todos los sectores de la finca
         when(sectorRepository.findByFarm_Id(1)).thenReturn(List.of(sector));
-        when(irrigationRepository.getSectorIrrigationTotals(eq(1), any(List.class), any(LocalDateTime.class),
+        when(irrigationRepository.getSectorIrrigationTotals(eq(1), org.mockito.ArgumentMatchers.<List<Integer>>any(),
+                any(LocalDateTime.class),
                 any(LocalDateTime.class))).thenReturn(List.of());
 
         List<IrrigationSectorSummaryDTO> result = analyticsService.getIrrigationSummary(1, startDate, endDate, null);
