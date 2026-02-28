@@ -1,6 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.dto.notification;
 
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.Notification;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.AppNotification;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,7 +17,7 @@ public class NotificationResponse {
     private String entityType;
     private Long entityId;
 
-    public NotificationResponse(Notification notification) {
+    public NotificationResponse(AppNotification notification) {
         this.id = notification.getId();
         this.message = notification.getMessage();
         this.actionUrl = notification.getActionUrl();

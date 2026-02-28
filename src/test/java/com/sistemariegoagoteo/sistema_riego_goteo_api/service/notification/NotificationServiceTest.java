@@ -1,8 +1,7 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification;
 
-import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.notification.NotificationResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.Notification;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.AppNotification;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.notification.NotificationRepository;
@@ -46,7 +45,7 @@ class NotificationServiceTest {
 
     private User testUser;
     private User otherUser;
-    private Notification testNotification;
+    private AppNotification testNotification;
 
     @BeforeEach
     void setUp() {
@@ -59,9 +58,9 @@ class NotificationServiceTest {
         otherUser = new User("Otro", "otro", "pass", "otro@test.com", operarioRole);
         otherUser.setId(2L);
 
-        testNotification = new Notification();
+        testNotification = new AppNotification();
         testNotification.setId(1L);
-        testNotification.setRecipient(testUser);
+        testNotification.setDestinatario(testUser);
         testNotification.setMessage("Mensaje de prueba");
         testNotification.setEntityType("TASK");
         testNotification.setEntityId(45L);
@@ -73,15 +72,15 @@ class NotificationServiceTest {
     @Test
     @DisplayName("createNotification() debe guardar la notificación y retornar")
     void createNotification_datosValidos_guardaNotificacion() {
-        when(notificationRepository.save(any(Notification.class))).thenReturn(testNotification);
+        when(notificationRepository.save(any(AppNotification.class))).thenReturn(testNotification);
 
         notificationService.createNotification(testUser, "Test message", "TASK", 100L, "/tasks/100");
 
-        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+        ArgumentCaptor<AppNotification> captor = ArgumentCaptor.forClass(AppNotification.class);
         verify(notificationRepository, times(1)).save(captor.capture());
 
-        Notification saved = captor.getValue();
-        assertThat(saved.getRecipient()).isEqualTo(testUser);
+        AppNotification saved = captor.getValue();
+        assertThat(saved.getDestinatario()).isEqualTo(testUser);
         assertThat(saved.getMessage()).isEqualTo("Test message");
         assertThat(saved.getEntityType()).isEqualTo("TASK");
         assertThat(saved.getEntityId()).isEqualTo(100L);
@@ -92,17 +91,17 @@ class NotificationServiceTest {
 
     @Test
     @DisplayName("getUserNotifications() debe retornar las notificaciones paginadas del usuario")
-    void getUserNotifications_usuarioValido_retornaPagina() {
+    void getAllNotificationsForUser_usuarioValido_retornaPagina() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Notification> mockPage = new PageImpl<>(List.of(testNotification));
-        when(notificationRepository.findByRecipientOrderByCreatedAtDesc(testUser, pageable)).thenReturn(mockPage);
+        Page<AppNotification> mockPage = new PageImpl<>(List.of(testNotification));
+        when(notificationRepository.findByDestinatarioOrderByCreatedAtDesc(testUser, pageable)).thenReturn(mockPage);
 
-        Page<NotificationResponse> result = notificationService.getUserNotifications(testUser, pageable);
+        Page<AppNotification> result = notificationService.getAllNotificationsForUser(testUser, pageable);
 
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
 
-        NotificationResponse res = result.getContent().get(0);
+        AppNotification res = result.getContent().get(0);
         assertThat(res.getId()).isEqualTo(testNotification.getId());
         assertThat(res.getMessage()).isEqualTo(testNotification.getMessage());
         assertThat(res.getEntityType()).isEqualTo(testNotification.getEntityType());
@@ -115,7 +114,7 @@ class NotificationServiceTest {
     @DisplayName("markAsRead() debe actualizar isRead a true si el usuario es el dueño")
     void markAsRead_duenoValido_actualizaNotificacion() {
         when(notificationRepository.findById(testNotification.getId())).thenReturn(Optional.of(testNotification));
-        when(notificationRepository.save(any(Notification.class))).thenReturn(testNotification);
+        when(notificationRepository.save(any(AppNotification.class))).thenReturn(testNotification);
 
         notificationService.markAsRead(testNotification.getId(), testUser);
 
@@ -132,7 +131,7 @@ class NotificationServiceTest {
                 .isInstanceOf(SecurityException.class)
                 .hasMessageContaining("No tienes permiso");
 
-        verify(notificationRepository, never()).save(any(Notification.class));
+        verify(notificationRepository, never()).save(any(AppNotification.class));
     }
 
     @Test
@@ -146,12 +145,12 @@ class NotificationServiceTest {
 
     @Test
     @DisplayName("getUnreadNotificationsCount() debe retornar el conteo para el usuario")
-    void getUnreadNotificationsCount_usuarioValido_retornaConteo() {
-        when(notificationRepository.countByRecipientAndIsReadFalse(testUser)).thenReturn(5L);
+    void getUnreadCountForUser_usuarioValido_retornaConteo() {
+        when(notificationRepository.countByDestinatarioAndIsReadFalse(testUser)).thenReturn(5L);
 
-        long count = notificationService.getUnreadNotificationsCount(testUser);
+        long count = notificationService.getUnreadCountForUser(testUser);
 
         assertThat(count).isEqualTo(5L);
-        verify(notificationRepository, times(1)).countByRecipientAndIsReadFalse(testUser);
+        verify(notificationRepository, times(1)).countByDestinatarioAndIsReadFalse(testUser);
     }
 }

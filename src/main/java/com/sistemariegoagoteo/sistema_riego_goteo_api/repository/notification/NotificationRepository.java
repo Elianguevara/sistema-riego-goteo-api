@@ -1,26 +1,28 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.repository.notification;
 
-
-import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.Notification;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.AppNotification;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    // Para buscar notificaciones no leídas de un usuario
-    Page<Notification> findByRecipientAndIsReadFalseOrderByCreatedAtDesc(User recipient, Pageable pageable);
+public interface NotificationRepository extends JpaRepository<AppNotification, Long> {
 
-    // Para buscar todas las notificaciones de un usuario
-    Page<Notification> findByRecipientOrderByCreatedAtDesc(User recipient, Pageable pageable);
+    List<AppNotification> findByDestinatarioOrderByCreatedAtDesc(User destinatario);
 
-    // --- NUEVO MÉTODO AÑADIDO ---
-    /**
-     * Cuenta eficientemente las notificaciones no leídas de un usuario específico.
-     * @param recipient El usuario para el cual contar las notificaciones.
-     * @return El número total de notificaciones no leídas.
-     */
-    long countByRecipientAndIsReadFalse(User recipient);
+    Page<AppNotification> findByDestinatarioOrderByCreatedAtDesc(User destinatario, Pageable pageable);
+
+    List<AppNotification> findByDestinatarioAndIsReadFalseOrderByCreatedAtDesc(User destinatario);
+
+    long countByDestinatarioAndIsReadFalse(User destinatario);
+
+    @Modifying
+    @Query("UPDATE AppNotification n SET n.isRead = true WHERE n.destinatario = :user AND n.isRead = false")
+    void markAllAsReadForUser(User user);
 }

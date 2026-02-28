@@ -46,12 +46,18 @@ public class Task {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = new Date();
-        status = TaskStatus.PENDIENTE; // Estado inicial por defecto
+        if (createdAt == null) {
+            createdAt = new Date();
+        }
+        if (status == null) {
+            status = TaskStatus.PENDIENTE; // Estado inicial por defecto
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = new Date();
+        if (updatedAt == null) {
+            updatedAt = new Date();
+        }
     }
 }

@@ -9,7 +9,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository; // <-- NUEVO: Importar SectorRepository
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.TaskRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
-import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
+import org.springframework.context.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,7 +26,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final SectorRepository sectorRepository; // <-- NUEVO: Inyectar el repositorio de Sector
 
     @Transactional
@@ -55,11 +55,11 @@ public class TaskService {
         log.info("Analista {} ha creado la tarea {} para el operario {}", creator.getUsername(), savedTask.getId(),
                 assignee.getUsername());
 
-        // --- NOTIFICACIÓN AL OPERARIO ---
-        String message = String.format("Nueva tarea asignada por %s: \"%s\"", creator.getName(),
-                savedTask.getDescription());
-        String link = "/tasks/assigned-to-me/" + savedTask.getId();
-        notificationService.createNotification(assignee, message, "TASK", savedTask.getId(), link);
+        // --- EVENTO DE ASIGNACIÓN DE TAREA ---
+        eventPublisher.publishEvent(new com.sistemariegoagoteo.sistema_riego_goteo_api.event.TaskAssignedEvent(
+                savedTask.getId(),
+                assignee.getId(),
+                savedTask.getDescription()));
 
         return savedTask;
     }
@@ -79,11 +79,12 @@ public class TaskService {
         log.info("Operario {} ha actualizado el estado de la tarea {} a {}", currentUser.getUsername(), taskId,
                 request.getStatus());
 
-        // --- NOTIFICACIÓN AL ANALISTA ---
-        String message = String.format("El operario %s ha actualizado el estado de tu tarea a: %s",
-                currentUser.getName(), updatedTask.getStatus());
-        String link = "/tasks/created-by-me/" + updatedTask.getId();
-        notificationService.createNotification(task.getCreatedBy(), message, "TASK", updatedTask.getId(), link);
+        // --- EVENTO DE ACTUALIZACIÓN DE ESTADO ---
+        eventPublisher.publishEvent(new com.sistemariegoagoteo.sistema_riego_goteo_api.event.TaskStatusUpdatedEvent(
+                updatedTask.getId(),
+                task.getCreatedBy().getId(),
+                updatedTask.getStatus().name(),
+                currentUser.getName()));
 
         return updatedTask;
     }

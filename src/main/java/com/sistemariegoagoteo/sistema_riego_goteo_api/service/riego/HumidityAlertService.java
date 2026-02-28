@@ -8,6 +8,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // <-- IM
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.HumidityAlertRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.HumiditySensorRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import org.springframework.context.ApplicationEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,15 +28,18 @@ public class HumidityAlertService {
     private final HumidityAlertRepository humidityAlertRepository;
     private final HumiditySensorRepository humiditySensorRepository;
     private final AuditService auditService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public HumidityAlert createHumidityAlert(Integer farmId, Integer sectorId, Integer sensorId, HumidityAlertRequest request) {
+    public HumidityAlert createHumidityAlert(Integer farmId, Integer sectorId, Integer sensorId,
+            HumidityAlertRequest request) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         HumiditySensor sensor = humiditySensorRepository.findById(sensorId)
                 .orElseThrow(() -> new ResourceNotFoundException("HumiditySensor", "id", sensorId));
 
         if (!sensor.getSector().getId().equals(sectorId) || !sensor.getSector().getFarm().getId().equals(farmId)) {
-            throw new ResourceNotFoundException("HumiditySensor", "id", sensorId + " para el sector ID " + sectorId + " y finca ID " + farmId);
+            throw new ResourceNotFoundException("HumiditySensor", "id",
+                    sensorId + " para el sector ID " + sectorId + " y finca ID " + farmId);
         }
 
         HumidityAlert alert = new HumidityAlert();
@@ -48,7 +52,15 @@ public class HumidityAlertService {
         HumidityAlert savedAlert = humidityAlertRepository.save(alert);
 
         // --- AUDITORÍA DE CREACIÓN ---
-        auditService.logChange(currentUser, "CREATE", HumidityAlert.class.getSimpleName(), "id", null, savedAlert.getId().toString());
+        auditService.logChange(currentUser, "CREATE", HumidityAlert.class.getSimpleName(), "id", null,
+                savedAlert.getId().toString());
+
+        // --- EVENTO DE NOTIFICACIÓN ---
+        eventPublisher.publishEvent(new com.sistemariegoagoteo.sistema_riego_goteo_api.event.HumidityAlertCreatedEvent(
+                savedAlert.getId(),
+                farmId,
+                "Sensor " + sensor.getId(),
+                savedAlert.getHumidityLevel().toString()));
 
         log.info("Creando alerta de humedad para sensor ID {} ({}%)", sensorId, alert.getHumidityLevel());
         return savedAlert;
@@ -62,11 +74,12 @@ public class HumidityAlertService {
         // --- AUDITORÍA DE ACTUALIZACIÓN ---
         // Generalmente, solo el mensaje de una alerta debería ser editable.
         if (!Objects.equals(alert.getAlertMessage(), request.getAlertMessage())) {
-            auditService.logChange(currentUser, "UPDATE", HumidityAlert.class.getSimpleName(), "alertMessage", alert.getAlertMessage(), request.getAlertMessage());
+            auditService.logChange(currentUser, "UPDATE", HumidityAlert.class.getSimpleName(), "alertMessage",
+                    alert.getAlertMessage(), request.getAlertMessage());
         }
 
         alert.setAlertMessage(request.getAlertMessage());
-        
+
         log.info("Actualizando alerta de humedad ID {}", alertId);
         return humidityAlertRepository.save(alert);
     }
@@ -77,7 +90,8 @@ public class HumidityAlertService {
         HumidityAlert alert = getAlertById(alertId);
 
         // --- AUDITORÍA DE BORRADO ---
-        auditService.logChange(currentUser, "DELETE", HumidityAlert.class.getSimpleName(), "id", alert.getId().toString(), null);
+        auditService.logChange(currentUser, "DELETE", HumidityAlert.class.getSimpleName(), "id",
+                alert.getId().toString(), null);
 
         log.warn("Eliminando alerta de humedad ID {}", alertId);
         humidityAlertRepository.delete(alert);
@@ -91,7 +105,8 @@ public class HumidityAlertService {
                 .orElseThrow(() -> new ResourceNotFoundException("HumiditySensor", "id", sensorId));
 
         if (!sensor.getSector().getId().equals(sectorId) || !sensor.getSector().getFarm().getId().equals(farmId)) {
-             throw new ResourceNotFoundException("HumiditySensor", "id", sensorId + " para el sector ID " + sectorId + " y finca ID " + farmId);
+            throw new ResourceNotFoundException("HumiditySensor", "id",
+                    sensorId + " para el sector ID " + sectorId + " y finca ID " + farmId);
         }
         return humidityAlertRepository.findByHumiditySensorOrderByAlertDatetimeDesc(sensor);
     }
