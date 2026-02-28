@@ -180,6 +180,12 @@ public class FarmService {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Farm farm = getFarmById(farmId);
 
+        // Desvincular a todos los usuarios asignados a esta finca antes de eliminarla
+        // para evitar errores de Foreign Key constraint en la tabla user_farm
+        for (User user : farm.getUsers()) {
+            user.getFarms().remove(farm);
+        }
+
         auditService.logChange(currentUser, "DELETE", Farm.class.getSimpleName(), "id", farm.getId().toString(), null);
 
         farmRepository.delete(farm);

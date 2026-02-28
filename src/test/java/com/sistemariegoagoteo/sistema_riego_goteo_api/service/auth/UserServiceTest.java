@@ -137,6 +137,59 @@ class UserServiceTest {
     }
 
     // =======================================================================
+    // assignUserToFarm
+    // =======================================================================
+
+    @Test
+    @DisplayName("assignUserToFarm() debe asignar exitosamente si es OPERARIO y no tiene fincas")
+    void assignUserToFarm_Success() {
+        com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm farm = new com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm();
+        farm.setId(1);
+        farm.setName("Finca Test");
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(targetUser));
+        when(farmRepository.findById(1)).thenReturn(Optional.of(farm));
+
+        userService.assignUserToFarm(2L, 1);
+
+        assertTrue(targetUser.getFarms().contains(farm));
+        verify(userRepository).save(targetUser);
+        verify(auditService).logChange(any(User.class), eq("ASSIGN"), eq("user_farm"), eq("farm_id"), isNull(),
+                eq("1"));
+        verify(notificationService).createNotification(eq(targetUser), anyString(), eq("FARM"), eq(1L), anyString());
+    }
+
+    @Test
+    @DisplayName("assignUserToFarm() debe lanzar excepción si el usuario NO es OPERARIO")
+    void assignUserToFarm_NotOperario_ThrowsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(adminUser)); // adminUser tiene rol ADMIN
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.assignUserToFarm(1L, 1));
+
+        assertEquals("Solo los usuarios con rol OPERARIO pueden ser asignados a una finca.", exception.getMessage());
+        verify(farmRepository, never()).findById(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("assignUserToFarm() debe lanzar excepción si el OPERARIO ya está en otra finca")
+    void assignUserToFarm_AlreadyAssigned_ThrowsException() {
+        com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm existingFarm = new com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm();
+        existingFarm.setId(2);
+        targetUser.getFarms().add(existingFarm);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(targetUser));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.assignUserToFarm(2L, 1));
+
+        assertEquals("El operario ya está asignado a otra finca. Debe desasignarlo primero.", exception.getMessage());
+        verify(farmRepository, never()).findById(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    // =======================================================================
     // updateUserStatus
     // =======================================================================
 
