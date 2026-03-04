@@ -30,6 +30,7 @@ public class IrrigationResponse {
 
     private BigDecimal waterAmount;
     private BigDecimal irrigationHours;
+    private String message;
 
     public IrrigationResponse(Irrigation irrigation) {
         this.id = irrigation.getId();
@@ -49,5 +50,6 @@ public class IrrigationResponse {
         this.endDatetime = irrigation.getEndDatetime();
         this.waterAmount = irrigation.getWaterAmount();
         this.irrigationHours = irrigation.getIrrigationHours();
+        this.message = "Riego registrado exitosamente. ID: " + irrigation.getId();
     }
 }

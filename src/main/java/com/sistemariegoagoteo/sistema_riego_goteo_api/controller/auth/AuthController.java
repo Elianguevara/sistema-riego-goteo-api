@@ -3,6 +3,7 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.auth;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.auth.AuthRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.auth.AuthResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.auth.RegisterRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.auth.RegisterResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.AuthService;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService;
@@ -63,11 +64,18 @@ public class AuthController {
      * @return Mensaje de éxito tras el registro.
      */
     @PostMapping("/register/admin")
-    public ResponseEntity<String> registerAdmin(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<RegisterResponse> registerAdmin(@Valid @RequestBody RegisterRequest registerRequest) {
         User adminUser = authService.registerAdmin(registerRequest);
-        String successMessage = "Administrador registrado exitosamente con username: " + adminUser.getUsername();
-        log.info(successMessage);
-        return ResponseEntity.status(HttpStatus.CREATED).body(successMessage);
+        RegisterResponse response = new RegisterResponse(
+                adminUser.getId(),
+                adminUser.getUsername(),
+                adminUser.getName(),
+                adminUser.getEmail(),
+                adminUser.getRol().getRoleName(),
+                adminUser.isActive(),
+                "Administrador registrado exitosamente con username: " + adminUser.getUsername());
+        log.info(response.getMessage());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
@@ -82,11 +90,18 @@ public class AuthController {
      */
     @PostMapping("/register")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> registerUserByAdmin(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<RegisterResponse> registerUserByAdmin(@Valid @RequestBody RegisterRequest registerRequest) {
         User newUser = userService.registerUserByAdmin(registerRequest);
-        String successMessage = "Usuario '" + newUser.getUsername() + "' registrado exitosamente con rol: "
-                + newUser.getRol().getRoleName();
-        log.info(successMessage);
-        return ResponseEntity.status(HttpStatus.CREATED).body(successMessage);
+        RegisterResponse response = new RegisterResponse(
+                newUser.getId(),
+                newUser.getUsername(),
+                newUser.getName(),
+                newUser.getEmail(),
+                newUser.getRol().getRoleName(),
+                newUser.isActive(),
+                "Usuario '" + newUser.getUsername() + "' registrado exitosamente con rol: "
+                        + newUser.getRol().getRoleName());
+        log.info(response.getMessage());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

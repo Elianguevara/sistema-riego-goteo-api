@@ -373,6 +373,15 @@ public class UserService {
 
         // --- MÉTODO PARA EL DASHBOARD ---
 
+        @Transactional
+        public void saveFcmToken(String username, String fcmToken) {
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+                user.setFcmToken(fcmToken);
+                userRepository.save(user);
+                log.info("FCM token actualizado para el usuario: {}", username);
+        }
+
         @Transactional(readOnly = true)
         @PreAuthorize("hasRole('ADMIN')")
         public UserStatsResponse getUserStats() {

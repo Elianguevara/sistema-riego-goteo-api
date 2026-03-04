@@ -23,6 +23,7 @@ public class MaintenanceResponse {
     private Date date;
     private String description;
     private BigDecimal workHours;
+    private String message;
 
     public MaintenanceResponse(Maintenance maintenance) {
         this.id = maintenance.getId();
@@ -37,5 +38,6 @@ public class MaintenanceResponse {
         this.date = maintenance.getDate();
         this.description = maintenance.getDescription();
         this.workHours = maintenance.getWorkHours();
+        this.message = "Mantenimiento registrado exitosamente. ID: " + maintenance.getId();
     }
 }

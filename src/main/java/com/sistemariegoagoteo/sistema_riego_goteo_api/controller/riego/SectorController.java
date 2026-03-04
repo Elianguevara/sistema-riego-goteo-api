@@ -1,5 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
 
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.SectorHistoryEntryDTO;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.SectorRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.SectorResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
@@ -83,5 +84,17 @@ public class SectorController {
         log.info("Solicitud DELETE para eliminar sector ID {} de la finca ID: {}", sectorId, farmId);
         sectorService.deleteSector(farmId, sectorId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Retorna el historial unificado de actividades de un sector:
+     * riegos, fertilizaciones y mantenimientos, ordenados del más reciente al más antiguo.
+     */
+    @GetMapping("/{sectorId}/history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO')")
+    public ResponseEntity<List<SectorHistoryEntryDTO>> getSectorHistory(
+            @PathVariable Integer farmId, @PathVariable Integer sectorId) {
+        log.info("Solicitud GET historial del sector ID {} en finca ID {}", sectorId, farmId);
+        return ResponseEntity.ok(sectorService.getSectorHistory(farmId, sectorId));
     }
 }

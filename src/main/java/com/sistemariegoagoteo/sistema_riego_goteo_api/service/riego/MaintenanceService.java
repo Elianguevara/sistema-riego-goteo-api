@@ -7,7 +7,9 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Maintenance;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // <-- IMPORTAR
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.MaintenanceRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
 import org.springframework.context.ApplicationEventPublisher;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,8 @@ public class MaintenanceService {
     private final IrrigationEquipmentRepository equipmentRepository;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Transactional
     public Maintenance createMaintenance(Integer farmId, Integer equipmentId, MaintenanceRequest request) {
@@ -54,6 +58,20 @@ public class MaintenanceService {
                 farmId,
                 equipment.getName(),
                 savedMaintenance.getDescription()));
+
+        // --- NOTIFICACIÓN AL OPERARIO (confirmación) ---
+        String msgOperario = String.format(
+                "Mantenimiento registrado exitosamente en equipo '%s'. ID: %d | %s",
+                equipment.getName(), savedMaintenance.getId(), savedMaintenance.getDescription());
+        notificationService.createNotification(currentUser, msgOperario, "MAINTENANCE",
+                Long.valueOf(savedMaintenance.getId()), "/maintenances/" + savedMaintenance.getId());
+
+        // --- NOTIFICACIÓN A ADMINS ---
+        String msgAdmin = String.format("El operario '%s' registró un mantenimiento en equipo '%s' (Finca ID: %d). ID: %d.",
+                currentUser.getUsername(), equipment.getName(), farmId, savedMaintenance.getId());
+        userRepository.findByRol_RoleName("ADMIN").forEach(admin ->
+                notificationService.createNotification(admin, msgAdmin, "MAINTENANCE",
+                        Long.valueOf(savedMaintenance.getId()), "/maintenances/" + savedMaintenance.getId()));
 
         log.info("Registrando mantenimiento para equipo ID {} en fecha {}", equipmentId, request.getDate());
         return savedMaintenance;

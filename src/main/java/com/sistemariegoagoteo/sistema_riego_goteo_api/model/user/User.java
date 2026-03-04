@@ -104,6 +104,13 @@ public class User implements UserDetails {
     @EqualsAndHashCode.Exclude // Evitar recursión en equals/hashCode con Lombok
     private Set<Farm> farms = new HashSet<>();
 
+    /**
+     * Token de Firebase Cloud Messaging para push notifications en Android.
+     * Se actualiza cuando la app Android inicia sesión o abre la aplicación.
+     */
+    @Column(name = "fcm_token", length = 500)
+    private String fcmToken;
+
     // Constructor conveniente actualizado
     public User(String name, String username, String password, String email, Role rol) {
         this.name = name;

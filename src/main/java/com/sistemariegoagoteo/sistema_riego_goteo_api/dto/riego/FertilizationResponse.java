@@ -25,6 +25,7 @@ public class FertilizationResponse {
     // --- CAMPOS MODIFICADOS ---
     private BigDecimal quantity; // Reemplaza a litersApplied
     private UnitOfMeasure quantityUnit; // Campo nuevo para la unidad
+    private String message;
 
     public FertilizationResponse(Fertilization fertilization) {
         this.id = fertilization.getId();
@@ -42,5 +43,6 @@ public class FertilizationResponse {
         // --- LÓGICA DE MAPEO ACTUALIZADA ---
         this.quantity = fertilization.getQuantity();
         this.quantityUnit = fertilization.getQuantityUnit();
+        this.message = "Fertilización registrada exitosamente. ID: " + fertilization.getId();
     }
 }
