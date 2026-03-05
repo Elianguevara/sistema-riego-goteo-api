@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceNotFoundException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions</a> &gt; <span class="el_source">ResourceNotFoundException.java</span></div><h1>ResourceNotFoundException.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+/**
+ * Excepción personalizada para indicar que un recurso específico no fue encontrado.
+ * La anotación @ResponseStatus hace que Spring devuelva automáticamente un código 404 Not Found
+ * cuando esta excepción no es capturada explícitamente por un @ExceptionHandler.
+ */
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
+public class ResourceNotFoundException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L; // Buena práctica para excepciones serializables
+
+    /**
+     * Constructor que genera un mensaje estándar &quot;Recurso no encontrado con campo : 'valor'&quot;.
+     * @param resourceName Nombre del recurso (ej. &quot;User&quot;, &quot;Role&quot;, &quot;Farm&quot;).
+     * @param fieldName Nombre del campo por el que se buscó (ej. &quot;id&quot;, &quot;username&quot;).
+     * @param fieldValue Valor del campo que se buscó.
+     */
+    public ResourceNotFoundException(String resourceName, String fieldName, Object fieldValue) {
+<span class="fc" id="L23">        super(String.format(&quot;%s no encontrado con %s : '%s'&quot;, resourceName, fieldName, fieldValue));</span>
+        // Puedes añadir campos adicionales a la excepción si necesitas más contexto
+        // private String resourceName;
+        // private String fieldName;
+        // private Object fieldValue;
+<span class="fc" id="L28">    }</span>
+
+    // Puedes añadir otros constructores si necesitas mensajes diferentes
+    public ResourceNotFoundException(String message) {
+<span class="nc" id="L32">        super(message);</span>
+<span class="nc" id="L33">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

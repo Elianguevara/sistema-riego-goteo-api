@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AnalystDashboardController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.controller.dashboard</a> &gt; <span class="el_source">AnalystDashboardController.java</span></div><h1>AnalystDashboardController.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.dashboard;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.dashboard.analyst.FarmStatusDTO;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.dashboard.analyst.TaskSummaryDTO;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.dashboard.analyst.WaterBalanceDTO;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.dashboard.AnalystDashboardService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/dashboard/analyst&quot;)
+<span class="fc" id="L20">@RequiredArgsConstructor</span>
+@PreAuthorize(&quot;hasRole('ANALISTA')&quot;)
+public class AnalystDashboardController {
+
+    private final AnalystDashboardService analystDashboardService;
+
+    /**
+     * Endpoint para la vista de mapa.
+     * Devuelve una lista de fincas con su estado actual (riego activo, alertas, etc.).
+     *
+     * @return Lista de estados de fincas.
+     */
+    @GetMapping(&quot;/farm-statuses&quot;)
+    public ResponseEntity&lt;List&lt;FarmStatusDTO&gt;&gt; getFarmStatuses() {
+<span class="nc" id="L34">        return ResponseEntity.ok(analystDashboardService.getFarmsStatus());</span>
+    }
+
+    /**
+     * Endpoint para obtener el balance hídrico de una finca en un rango de fechas.
+     * Útil para gráficos de evolución.
+     *
+     * @param farmId ID de la finca.
+     * @param startDate Fecha de inicio.
+     * @param endDate Fecha de fin.
+     * @return Lista de datos de balance hídrico.
+     */
+    @GetMapping(&quot;/water-balance/{farmId}&quot;)
+    public ResponseEntity&lt;List&lt;WaterBalanceDTO&gt;&gt; getWaterBalance(
+            @PathVariable Integer farmId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate) {
+<span class="nc" id="L51">        return ResponseEntity.ok(analystDashboardService.getWaterBalance(farmId, startDate, endDate));</span>
+    }
+
+    /**
+     * Endpoint para el resumen de tareas creadas por el analista actual.
+     *
+     * @return Resumen de tareas (pendientes, completadas, etc.).
+     */
+    @GetMapping(&quot;/task-summary&quot;)
+    public ResponseEntity&lt;TaskSummaryDTO&gt; getTaskSummary() {
+<span class="nc" id="L61">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L62">        return ResponseEntity.ok(analystDashboardService.getTaskSummary(currentUser));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

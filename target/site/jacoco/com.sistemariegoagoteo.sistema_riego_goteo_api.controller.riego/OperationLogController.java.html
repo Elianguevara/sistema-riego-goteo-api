@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OperationLogController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego</a> &gt; <span class="el_source">OperationLogController.java</span></div><h1>OperationLogController.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.OperationLogRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.OperationLogResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.OperationLog;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.OperationLogService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping()
+<span class="fc" id="L20">@RequiredArgsConstructor</span>
+<span class="fc" id="L21">@Slf4j</span>
+public class OperationLogController {
+
+    private final OperationLogService operationLogService;
+
+    /**
+     * Crea una nueva entrada en la bitácora de operaciones para una finca.
+     * * @param farmId ID de la finca.
+     * @param request Datos de la operación a registrar.
+     * @return La entrada creada con estado 201 Created.
+     */
+    @PostMapping(&quot;/api/farms/{farmId}/operationlogs&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('REGISTRAR_OPERACION')&quot;)
+    public ResponseEntity&lt;OperationLogResponse&gt; createOperationLog(@PathVariable Integer farmId,
+                                                                   @Valid @RequestBody OperationLogRequest request) {
+<span class="nc" id="L36">        log.info(&quot;Solicitud POST para crear entrada en bitácora para finca ID {}&quot;, farmId);</span>
+<span class="nc" id="L37">        OperationLog newLog = operationLogService.createOperationLog(farmId, request);</span>
+<span class="nc" id="L38">        return ResponseEntity.status(HttpStatus.CREATED).body(new OperationLogResponse(newLog));</span>
+    }
+
+    /**
+     * Obtiene todas las entradas de la bitácora para una finca, con filtro opcional por tipo de operación.
+     * * @param farmId ID de la finca.
+     * @param type (Opcional) Tipo de operación para filtrar (ej. &quot;Mantenimiento&quot;, &quot;Cosecha&quot;).
+     * @return Lista de entradas de bitácora.
+     */
+    @GetMapping(&quot;/api/farms/{farmId}/operationlogs&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_BITACORA_OPERACIONES')&quot;)
+    public ResponseEntity&lt;List&lt;OperationLogResponse&gt;&gt; getOperationLogsByFarm(
+            @PathVariable Integer farmId,
+            @RequestParam(required = false) String type) {
+<span class="nc" id="L52">        log.info(&quot;Solicitud GET para obtener bitácora de la finca ID {}&quot;, farmId);</span>
+        
+<span class="nc" id="L54">        List&lt;OperationLogResponse&gt; responses = operationLogService.getOperationLogsByFarm(farmId)</span>
+<span class="nc" id="L55">                .stream()</span>
+                // Lógica de filtrado en memoria (idealmente mover al repositorio si crece mucho la data)
+<span class="nc bnc" id="L57" title="All 4 branches missed.">                .filter(log -&gt; type == null || log.getOperationType().equalsIgnoreCase(type))</span>
+<span class="nc" id="L58">                .map(OperationLogResponse::new)</span>
+<span class="nc" id="L59">                .collect(Collectors.toList());</span>
+        
+<span class="nc" id="L61">        return ResponseEntity.ok(responses);</span>
+    }
+
+    /**
+     * Obtiene una entrada específica de la bitácora por su ID.
+     * * @param logId ID de la entrada de bitácora.
+     * @return Detalle de la entrada.
+     */
+    @GetMapping(&quot;/api/operationlogs/{logId}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_BITACORA_OPERACIONES')&quot;)
+    public ResponseEntity&lt;OperationLogResponse&gt; getOperationLogById(@PathVariable Integer logId) {
+<span class="nc" id="L72">        log.info(&quot;Solicitud GET para obtener entrada de bitácora ID: {}&quot;, logId);</span>
+<span class="nc" id="L73">        OperationLog operationLog = operationLogService.getOperationLogById(logId);</span>
+<span class="nc" id="L74">        return ResponseEntity.ok(new OperationLogResponse(operationLog));</span>
+    }
+
+    /**
+     * Actualiza una entrada existente en la bitácora.
+     * * @param logId ID de la entrada a actualizar.
+     * @param request Nuevos datos de la operación.
+     * @return La entrada actualizada.
+     */
+    @PutMapping(&quot;/api/operationlogs/{logId}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'OPERARIO') or hasAuthority('MODIFICAR_OPERACION')&quot;)
+    public ResponseEntity&lt;OperationLogResponse&gt; updateOperationLog(@PathVariable Integer logId,
+                                                                   @Valid @RequestBody OperationLogRequest request) {
+<span class="nc" id="L87">        log.info(&quot;Solicitud PUT para actualizar entrada de bitácora ID {}&quot;, logId);</span>
+<span class="nc" id="L88">        OperationLog updatedLog = operationLogService.updateOperationLog(logId, request);</span>
+<span class="nc" id="L89">        return ResponseEntity.ok(new OperationLogResponse(updatedLog));</span>
+    }
+
+    /**
+     * Elimina una entrada de la bitácora.
+     * * @param logId ID de la entrada a eliminar.
+     * @return 204 No Content si se elimina correctamente.
+     */
+    @DeleteMapping(&quot;/api/operationlogs/{logId}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasAuthority('ELIMINAR_OPERACION')&quot;)
+    public ResponseEntity&lt;Void&gt; deleteOperationLog(@PathVariable Integer logId) {
+<span class="nc" id="L100">        log.info(&quot;Solicitud DELETE para eliminar entrada de bitácora ID: {}&quot;, logId);</span>
+<span class="nc" id="L101">        operationLogService.deleteOperationLog(logId);</span>
+<span class="nc" id="L102">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

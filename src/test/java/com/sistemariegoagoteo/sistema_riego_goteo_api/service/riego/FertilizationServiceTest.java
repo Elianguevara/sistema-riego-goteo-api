@@ -2,13 +2,16 @@ package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.FertilizationRequest;
 
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Fertilization;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.UnitOfMeasure;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FertilizationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +40,10 @@ class FertilizationServiceTest {
     private SectorRepository sectorRepository;
     @Mock
     private AuditService auditService;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private FertilizationService fertilizationService;
@@ -55,9 +62,14 @@ class FertilizationServiceTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(authUser, null, new java.util.ArrayList<>()));
 
+        Farm farm = new Farm();
+        farm.setId(1);
+        farm.setName("Finca Test");
+
         sector = new Sector();
         sector.setId(1);
         sector.setName("Sector 1");
+        sector.setFarm(farm);
 
         baseDate = new Date();
 

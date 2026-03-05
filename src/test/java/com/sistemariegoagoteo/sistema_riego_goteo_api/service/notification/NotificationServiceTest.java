@@ -5,6 +5,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.AppNoti
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.notification.NotificationRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.FcmService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class NotificationServiceTest {
 
     @Mock
     private NotificationRepository notificationRepository;
+
+    @Mock
+    private FcmService fcmService;
 
     @InjectMocks
     private NotificationService notificationService;

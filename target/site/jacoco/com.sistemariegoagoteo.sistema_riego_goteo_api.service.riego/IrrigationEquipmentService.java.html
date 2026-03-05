@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IrrigationEquipmentService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego</a> &gt; <span class="el_source">IrrigationEquipmentService.java</span></div><h1>IrrigationEquipmentService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.IrrigationEquipmentRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEquipment;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
+
+@Service
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+<span class="fc" id="L24">@Slf4j</span>
+public class IrrigationEquipmentService {
+
+    private final IrrigationEquipmentRepository equipmentRepository;
+    private final FarmRepository farmRepository;
+    private final SectorRepository sectorRepository;
+    private final AuditService auditService;
+
+    @Transactional
+    public IrrigationEquipment createEquipment(Integer farmId, IrrigationEquipmentRequest request) {
+<span class="nc" id="L34">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L35">        Farm farm = farmRepository.findById(farmId)</span>
+<span class="nc" id="L36">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+        
+        // ... (validación de nombre existente)
+
+<span class="nc" id="L40">        IrrigationEquipment equipment = new IrrigationEquipment();</span>
+<span class="nc" id="L41">        equipment.setName(request.getName());</span>
+<span class="nc" id="L42">        equipment.setMeasuredFlow(request.getMeasuredFlow());</span>
+<span class="nc" id="L43">        equipment.setHasFlowMeter(request.getHasFlowMeter());</span>
+<span class="nc" id="L44">        equipment.setEquipmentType(request.getEquipmentType());</span>
+<span class="nc" id="L45">        equipment.setEquipmentStatus(request.getEquipmentStatus());</span>
+<span class="nc" id="L46">        equipment.setFarm(farm);</span>
+
+<span class="nc" id="L48">        IrrigationEquipment savedEquipment = equipmentRepository.save(equipment);</span>
+        
+        // --- AUDITORÍA DE CREACIÓN ---
+<span class="nc" id="L51">        auditService.logChange(currentUser, &quot;CREATE&quot;, IrrigationEquipment.class.getSimpleName(), &quot;name&quot;, null, savedEquipment.getName());</span>
+        // ... auditar otros campos si es necesario ...
+
+<span class="nc" id="L54">        log.info(&quot;Creando equipo '{}' para la finca ID {}&quot;, equipment.getName(), farmId);</span>
+<span class="nc" id="L55">        return savedEquipment;</span>
+    }
+
+    @Transactional
+    public IrrigationEquipment updateEquipment(Integer farmId, Integer equipmentId, IrrigationEquipmentRequest request) {
+<span class="nc" id="L60">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L61">        farmRepository.findById(farmId)</span>
+<span class="nc" id="L62">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+<span class="nc" id="L64">        IrrigationEquipment equipment = equipmentRepository.findByIdAndFarm_Id(equipmentId, farmId)</span>
+<span class="nc" id="L65">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;IrrigationEquipment&quot;, &quot;id&quot;, equipmentId + &quot; para la finca &quot; + farmId));</span>
+
+        // --- AUDITORÍA DE ACTUALIZACIÓN ---
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (!Objects.equals(equipment.getName(), request.getName())) {</span>
+<span class="nc" id="L69">             auditService.logChange(currentUser, &quot;UPDATE&quot;, IrrigationEquipment.class.getSimpleName(), &quot;name&quot;, equipment.getName(), request.getName());</span>
+        }
+        // ... (comparar y auditar otros campos: measuredFlow, hasFlowMeter, etc.)
+
+<span class="nc" id="L73">        equipment.setName(request.getName());</span>
+<span class="nc" id="L74">        equipment.setMeasuredFlow(request.getMeasuredFlow());</span>
+<span class="nc" id="L75">        equipment.setHasFlowMeter(request.getHasFlowMeter());</span>
+<span class="nc" id="L76">        equipment.setEquipmentType(request.getEquipmentType());</span>
+<span class="nc" id="L77">        equipment.setEquipmentStatus(request.getEquipmentStatus());</span>
+
+<span class="nc" id="L79">        log.info(&quot;Actualizando equipo ID {} para la finca ID {}&quot;, equipmentId, farmId);</span>
+<span class="nc" id="L80">        return equipmentRepository.save(equipment);</span>
+    }
+
+    @Transactional
+    public void deleteEquipment(Integer farmId, Integer equipmentId) {
+<span class="nc" id="L85">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L86">        farmRepository.findById(farmId)</span>
+<span class="nc" id="L87">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+<span class="nc" id="L89">        IrrigationEquipment equipment = equipmentRepository.findByIdAndFarm_Id(equipmentId, farmId)</span>
+<span class="nc" id="L90">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;IrrigationEquipment&quot;, &quot;id&quot;, equipmentId + &quot; para la finca &quot; + farmId));</span>
+
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (sectorRepository.existsByEquipment_Id(equipmentId)) {</span>
+<span class="nc" id="L93">            throw new IllegalStateException(&quot;No se puede eliminar el equipo ID &quot; + equipmentId +</span>
+                    &quot; porque está asignado a uno o más sectores. Desasígnelo primero.&quot;);
+        }
+        
+        // --- AUDITORÍA DE BORRADO ---
+<span class="nc" id="L98">        auditService.logChange(currentUser, &quot;DELETE&quot;, IrrigationEquipment.class.getSimpleName(), &quot;id&quot;, equipment.getId().toString(), null);</span>
+
+<span class="nc" id="L100">        log.warn(&quot;Eliminando equipo ID {} de la finca ID {}&quot;, equipmentId, farmId);</span>
+<span class="nc" id="L101">        equipmentRepository.delete(equipment);</span>
+<span class="nc" id="L102">    }</span>
+    
+    // ... (los métodos GET no necesitan auditoría de cambios)
+    @Transactional(readOnly = true)
+    public List&lt;IrrigationEquipment&gt; getEquipmentByFarmId(Integer farmId) {
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (!farmRepository.existsById(farmId)) {</span>
+<span class="nc" id="L108">            throw new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId);</span>
+        }
+<span class="nc" id="L110">        return equipmentRepository.findByFarm_Id(farmId);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public IrrigationEquipment getEquipmentByIdAndFarmId(Integer farmId, Integer equipmentId) {
+<span class="nc" id="L115">        return equipmentRepository.findByIdAndFarm_Id(equipmentId, farmId)</span>
+<span class="nc" id="L116">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;IrrigationEquipment&quot;, &quot;id&quot;, equipmentId + &quot; para la finca &quot; + farmId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

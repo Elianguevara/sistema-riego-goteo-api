@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TaskService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego</a> &gt; <span class="el_source">TaskService.java</span></div><h1>TaskService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.TaskRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.TaskStatusUpdateRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector; // &lt;-- NUEVO: Importar Sector
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Task;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository; // &lt;-- NUEVO: Importar SectorRepository
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.TaskRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import java.util.List;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+<span class="fc" id="L24">@Slf4j</span>
+public class TaskService {
+
+    private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final SectorRepository sectorRepository; // &lt;-- NUEVO: Inyectar el repositorio de Sector
+
+    @Transactional
+    public Task createTask(TaskRequest request) {
+<span class="nc" id="L34">        User creator = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+
+<span class="nc" id="L36">        User assignee = userRepository.findById(request.getAssignedToUserId())</span>
+<span class="nc" id="L37">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;id&quot;, request.getAssignedToUserId()));</span>
+
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if (!&quot;OPERARIO&quot;.equals(assignee.getRol().getRoleName())) {</span>
+<span class="nc" id="L40">            throw new IllegalArgumentException(&quot;Las tareas solo pueden ser asignadas a usuarios con rol OPERARIO.&quot;);</span>
+        }
+
+        // --- LÓGICA CORREGIDA ---
+        // 1. Buscar el Sector usando el ID que viene en el request
+<span class="nc" id="L45">        Sector sector = sectorRepository.findById(request.getSectorId())</span>
+<span class="nc" id="L46">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Sector&quot;, &quot;id&quot;, request.getSectorId()));</span>
+
+<span class="nc" id="L48">        Task task = new Task();</span>
+<span class="nc" id="L49">        task.setDescription(request.getDescription());</span>
+<span class="nc" id="L50">        task.setCreatedBy(creator);</span>
+<span class="nc" id="L51">        task.setAssignedTo(assignee);</span>
+<span class="nc" id="L52">        task.setSector(sector); // 2. Asignar el objeto Sector encontrado a la tarea</span>
+
+<span class="nc" id="L54">        Task savedTask = taskRepository.save(task);</span>
+<span class="nc" id="L55">        log.info(&quot;Analista {} ha creado la tarea {} para el operario {}&quot;, creator.getUsername(), savedTask.getId(),</span>
+<span class="nc" id="L56">                assignee.getUsername());</span>
+
+        // --- EVENTO DE ASIGNACIÓN DE TAREA ---
+<span class="nc" id="L59">        eventPublisher.publishEvent(new com.sistemariegoagoteo.sistema_riego_goteo_api.event.TaskAssignedEvent(</span>
+<span class="nc" id="L60">                savedTask.getId(),</span>
+<span class="nc" id="L61">                assignee.getId(),</span>
+<span class="nc" id="L62">                savedTask.getDescription()));</span>
+
+<span class="nc" id="L64">        return savedTask;</span>
+    }
+
+    @Transactional
+    public Task updateTaskStatus(Long taskId, TaskStatusUpdateRequest request) {
+<span class="nc" id="L69">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L70">        Task task = taskRepository.findById(taskId)</span>
+<span class="nc" id="L71">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Task&quot;, &quot;id&quot;, taskId));</span>
+
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        if (!task.getAssignedTo().getId().equals(currentUser.getId())) {</span>
+<span class="nc" id="L74">            throw new SecurityException(&quot;No tienes permiso para actualizar el estado de esta tarea.&quot;);</span>
+        }
+
+<span class="nc" id="L77">        task.setStatus(request.getStatus());</span>
+<span class="nc" id="L78">        Task updatedTask = taskRepository.save(task);</span>
+<span class="nc" id="L79">        log.info(&quot;Operario {} ha actualizado el estado de la tarea {} a {}&quot;, currentUser.getUsername(), taskId,</span>
+<span class="nc" id="L80">                request.getStatus());</span>
+
+        // --- EVENTO DE ACTUALIZACIÓN DE ESTADO ---
+<span class="nc" id="L83">        eventPublisher.publishEvent(new com.sistemariegoagoteo.sistema_riego_goteo_api.event.TaskStatusUpdatedEvent(</span>
+<span class="nc" id="L84">                updatedTask.getId(),</span>
+<span class="nc" id="L85">                task.getCreatedBy().getId(),</span>
+<span class="nc" id="L86">                updatedTask.getStatus().name(),</span>
+<span class="nc" id="L87">                currentUser.getName()));</span>
+
+<span class="nc" id="L89">        return updatedTask;</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;Task&gt; getAllTasks() {
+<span class="nc" id="L94">        return taskRepository.findAllWithAssociations();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Page&lt;Task&gt; getTasksAssignedTo(User user, Pageable pageable) {
+<span class="nc" id="L99">        return taskRepository.findByAssignedToOrderByCreatedAtDesc(user, pageable);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Page&lt;Task&gt; getTasksCreatedBy(User user, Pageable pageable) {
+<span class="nc" id="L104">        return taskRepository.findByCreatedByOrderByCreatedAtDesc(user, pageable);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

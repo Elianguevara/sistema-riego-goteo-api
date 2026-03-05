@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JpaUserDetailsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth</a> &gt; <span class="el_source">JpaUserDetailsService.java</span></div><h1>JpaUserDetailsService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth;
+
+
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Importante para operaciones de lectura
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+
+/**
+ * Implementación personalizada de UserDetailsService.
+ * Carga los detalles del usuario desde la base de datos usando UserRepository.
+ * Spring Security utiliza este servicio durante el proceso de autenticación.
+ */
+@Service
+<span class="fc" id="L20">@RequiredArgsConstructor // Lombok: genera un constructor con los campos final requeridos (userRepository)</span>
+public class JpaUserDetailsService implements UserDetailsService {
+
+    // Inyección de dependencia del UserRepository (final para asegurar inicialización)
+    private final UserRepository userRepository;
+
+    /**
+     * Carga un usuario por su nombre de usuario.
+     * Este método es invocado por Spring Security al autenticar.
+     *
+     * @param username El nombre de usuario (username) proporcionado durante el login.
+     * @return Un objeto UserDetails que contiene la información del usuario (incluyendo contraseña y roles).
+     * @throws UsernameNotFoundException Si no se encuentra ningún usuario con ese username.
+     */
+    @Override
+    @Transactional(readOnly = true) // Optimiza la transacción para lectura
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Busca el usuario en la base de datos a través del repositorio
+<span class="fc" id="L38">        return userRepository.findByUsername(username)</span>
+                // Si no se encuentra, lanza la excepción estándar de Spring Security
+<span class="fc" id="L40">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;Usuario no encontrado con username: &quot; + username));</span>
+
+        // Nota: La entidad User ya implementa UserDetails, por lo que podemos devolverla directamente.
+        // Spring Security utilizará los métodos de UserDetails (getPassword, getAuthorities, etc.)
+        // implementados en la entidad User.
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

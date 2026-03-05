@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth;
+
+// Imports necesarios
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.auth.RegisterRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.dashboard.UserStatsResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserUpdateRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.Role;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.RoleRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService; // &lt;-- IMPORTACIÓN CLAVE
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+/**
+ * Servicio para gestionar operaciones de usuario realizadas por un
+ * Administrador.
+ */
+@Service
+<span class="fc" id="L38">@RequiredArgsConstructor</span>
+<span class="fc" id="L39">@Slf4j</span>
+public class UserService {
+
+        private final UserRepository userRepository;
+        private final RoleRepository roleRepository;
+        private final PasswordEncoder passwordEncoder;
+        private final FarmRepository farmRepository;
+        private final AuditService auditService;
+        private final NotificationService notificationService; // &lt;-- DEPENDENCIA INYECTADA
+
+        @Transactional
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public User registerUserByAdmin(RegisterRequest registerRequest) {
+<span class="fc" id="L52">                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L53">                String requestedRoleName = registerRequest.getRol().toUpperCase();</span>
+<span class="fc" id="L54">                log.info(&quot;Admin {} intentando registrar usuario: {} con rol: {}&quot;, currentUser.getUsername(),</span>
+<span class="fc" id="L55">                                registerRequest.getUsername(), requestedRoleName);</span>
+
+<span class="fc" id="L57">                List&lt;String&gt; rolesPermitidos = List.of(&quot;ADMIN&quot;, &quot;ANALISTA&quot;, &quot;OPERARIO&quot;);</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">                if (!rolesPermitidos.contains(requestedRoleName)) {</span>
+<span class="fc" id="L59">                        throw new IllegalArgumentException(</span>
+                                        &quot;El rol especificado no es válido. Roles permitidos: ADMIN, ANALISTA, OPERARIO.&quot;);
+                }
+
+<span class="fc" id="L63">                Role targetRole = roleRepository.findByRoleName(requestedRoleName)</span>
+<span class="pc" id="L64">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Role&quot;, &quot;nombreRol&quot;,</span>
+                                                requestedRoleName));
+
+<span class="fc bfc" id="L67" title="All 2 branches covered.">                if (userRepository.existsByUsername(registerRequest.getUsername())) {</span>
+<span class="fc" id="L68">                        throw new RuntimeException(</span>
+<span class="fc" id="L69">                                        &quot;El nombre de usuario '&quot; + registerRequest.getUsername() + &quot;' ya está en uso.&quot;);</span>
+                }
+<span class="pc bpc" id="L71" title="1 of 2 branches missed.">                if (userRepository.existsByEmail(registerRequest.getEmail())) {</span>
+<span class="nc" id="L72">                        throw new RuntimeException(&quot;El email '&quot; + registerRequest.getEmail() + &quot;' ya está en uso.&quot;);</span>
+                }
+
+<span class="fc" id="L75">                User newUser = new User();</span>
+<span class="fc" id="L76">                newUser.setName(registerRequest.getName());</span>
+<span class="fc" id="L77">                newUser.setUsername(registerRequest.getUsername());</span>
+<span class="fc" id="L78">                newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));</span>
+<span class="fc" id="L79">                newUser.setEmail(registerRequest.getEmail());</span>
+<span class="fc" id="L80">                newUser.setRol(targetRole);</span>
+<span class="fc" id="L81">                newUser.setActive(true);</span>
+<span class="fc" id="L82">                newUser.setFailedAttempts(0);</span>
+<span class="fc" id="L83">                newUser.setLastLogin(null);</span>
+
+<span class="fc" id="L85">                User savedUser = userRepository.save(newUser);</span>
+<span class="fc" id="L86">                log.info(&quot;Usuario {} registrado exitosamente por admin con ID: {}&quot;, requestedRoleName,</span>
+<span class="fc" id="L87">                                savedUser.getId());</span>
+
+                // --- AUDITORÍA DE CREACIÓN ---
+<span class="fc" id="L90">                auditService.logChange(currentUser, &quot;CREATE&quot;, User.class.getSimpleName(), &quot;all&quot;, null,</span>
+<span class="fc" id="L91">                                &quot;Nuevo usuario ID: &quot; + savedUser.getId());</span>
+
+                // --- NOTIFICACIÓN ---
+                // Notificar al administrador que realizó la acción.
+<span class="fc" id="L95">                String messageForAdmin = String.format(&quot;Has registrado exitosamente al usuario '%s' con el rol de %s.&quot;,</span>
+<span class="fc" id="L96">                                savedUser.getUsername(), savedUser.getRol().getRoleName());</span>
+<span class="fc" id="L97">                notificationService.createNotification(currentUser, messageForAdmin, &quot;USER&quot;, savedUser.getId(),</span>
+<span class="fc" id="L98">                                &quot;/admin/users/&quot; + savedUser.getId());</span>
+
+                // Notificar al nuevo usuario.
+<span class="fc" id="L101">                String messageForNewUser = &quot;¡Bienvenido! Tu cuenta ha sido creada por un administrador.&quot;;</span>
+<span class="fc" id="L102">                notificationService.createNotification(savedUser, messageForNewUser, &quot;GENERAL&quot;, null, &quot;/profile&quot;);</span>
+
+<span class="fc" id="L104">                return savedUser;</span>
+        }
+
+        @Transactional
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public User updateUser(Long id, UserUpdateRequest updateRequest) {
+<span class="nc" id="L110">                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L111">                log.info(&quot;Admin {} intentando actualizar usuario con ID: {}&quot;, currentUser.getUsername(), id);</span>
+<span class="nc" id="L112">                User user = findUserById(id);</span>
+
+                // --- AUDITORÍA DE ACTUALIZACIÓN ---
+<span class="nc bnc" id="L115" title="All 2 branches missed.">                if (!Objects.equals(user.getName(), updateRequest.getName())) {</span>
+<span class="nc" id="L116">                        auditService.logChange(currentUser, &quot;UPDATE&quot;, User.class.getSimpleName(), &quot;name&quot;,</span>
+<span class="nc" id="L117">                                        user.getName(),</span>
+<span class="nc" id="L118">                                        updateRequest.getName());</span>
+                }
+<span class="nc bnc" id="L120" title="All 2 branches missed.">                if (!user.getEmail().equalsIgnoreCase(updateRequest.getEmail())) {</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">                        if (userRepository.existsByEmail(updateRequest.getEmail())) {</span>
+<span class="nc" id="L122">                                throw new RuntimeException(</span>
+<span class="nc" id="L123">                                                &quot;El email '&quot; + updateRequest.getEmail()</span>
+                                                                + &quot;' ya está en uso por otro usuario.&quot;);
+                        }
+<span class="nc" id="L126">                        auditService.logChange(currentUser, &quot;UPDATE&quot;, User.class.getSimpleName(), &quot;email&quot;,</span>
+<span class="nc" id="L127">                                        user.getEmail(),</span>
+<span class="nc" id="L128">                                        updateRequest.getEmail());</span>
+                }
+
+<span class="nc" id="L131">                user.setName(updateRequest.getName());</span>
+<span class="nc" id="L132">                user.setEmail(updateRequest.getEmail());</span>
+
+<span class="nc" id="L134">                User updatedUser = userRepository.save(user);</span>
+<span class="nc" id="L135">                log.info(&quot;Usuario con ID: {} actualizado exitosamente por admin.&quot;, id);</span>
+<span class="nc" id="L136">                return updatedUser;</span>
+        }
+
+        @Transactional
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public User updateUserStatus(Long id, boolean status) {
+<span class="fc" id="L142">                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L143">                log.info(&quot;Admin {} intentando cambiar estado activo a {} para usuario con ID: {}&quot;,</span>
+<span class="fc" id="L144">                                currentUser.getUsername(),</span>
+<span class="fc" id="L145">                                status, id);</span>
+<span class="fc" id="L146">                User user = findUserById(id);</span>
+
+                // --- AUDITORÍA DE CAMBIO DE ESTADO ---
+<span class="fc bfc" id="L149" title="All 2 branches covered.">                if (user.isActive() != status) {</span>
+<span class="fc" id="L150">                        auditService.logChange(currentUser, &quot;UPDATE&quot;, User.class.getSimpleName(), &quot;isActive&quot;,</span>
+<span class="fc" id="L151">                                        String.valueOf(user.isActive()), String.valueOf(status));</span>
+                }
+
+<span class="fc" id="L154">                user.setActive(status);</span>
+<span class="fc" id="L155">                User updatedUser = userRepository.save(user);</span>
+
+                // --- NOTIFICACIÓN ---
+<span class="fc bfc" id="L158" title="All 2 branches covered.">                String statusText = status ? &quot;activada&quot; : &quot;desactivada&quot;;</span>
+<span class="fc" id="L159">                String message = String.format(&quot;El administrador %s ha cambiado el estado de tu cuenta a: %s.&quot;,</span>
+<span class="fc" id="L160">                                currentUser.getUsername(), statusText);</span>
+<span class="fc" id="L161">                notificationService.createNotification(user, message, &quot;GENERAL&quot;, null, &quot;/profile&quot;);</span>
+
+<span class="fc" id="L163">                log.info(&quot;Estado activo del usuario con ID: {} cambiado a {} exitosamente por admin.&quot;, id, status);</span>
+<span class="fc" id="L164">                return updatedUser;</span>
+        }
+
+        @Transactional
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public void deleteUser(Long id) {
+<span class="fc" id="L170">                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L171">                log.warn(&quot;Admin {} intentando ELIMINAR PERMANENTEMENTE usuario con ID: {}&quot;, currentUser.getUsername(),</span>
+                                id);
+<span class="fc" id="L173">                User user = findUserById(id);</span>
+
+                // --- AUDITORÍA DE BORRADO ---
+<span class="fc" id="L176">                auditService.logChange(currentUser, &quot;DELETE&quot;, User.class.getSimpleName(), &quot;id&quot;, user.getId().toString(),</span>
+                                null);
+
+<span class="fc" id="L179">                userRepository.delete(user);</span>
+<span class="fc" id="L180">                log.info(&quot;Usuario con ID: {} eliminado permanentemente por admin.&quot;, id);</span>
+<span class="fc" id="L181">        }</span>
+
+        @Transactional
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public void updatePassword(Long userId, String rawPassword) {
+<span class="nc" id="L186">                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L187">                log.info(&quot;Admin {} intentando actualizar contraseña para usuario con ID: {}&quot;, currentUser.getUsername(),</span>
+                                userId);
+<span class="nc" id="L189">                User user = userRepository.findById(userId)</span>
+<span class="nc" id="L190">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;id&quot;, userId));</span>
+
+                // --- AUDITORÍA DE CAMBIO DE CONTRASEÑA (ADMIN) ---
+<span class="nc" id="L193">                auditService.logChange(currentUser, &quot;UPDATE&quot;, User.class.getSimpleName(), &quot;password&quot;, &quot;********&quot;,</span>
+                                &quot;********&quot;);
+
+<span class="nc" id="L196">                user.setPassword(passwordEncoder.encode(rawPassword));</span>
+<span class="nc" id="L197">                user.setFailedAttempts(0);</span>
+<span class="nc" id="L198">                userRepository.save(user);</span>
+
+                // --- NOTIFICACIÓN ---
+<span class="nc" id="L201">                String message = String.format(&quot;Un administrador (%s) ha restablecido tu contraseña.&quot;,</span>
+<span class="nc" id="L202">                                currentUser.getUsername());</span>
+<span class="nc" id="L203">                notificationService.createNotification(user, message, &quot;GENERAL&quot;, null, &quot;/profile&quot;);</span>
+
+<span class="nc" id="L205">                log.info(&quot;Contraseña del usuario con ID: {} actualizada exitosamente por admin.&quot;, userId);</span>
+<span class="nc" id="L206">        }</span>
+
+        @Transactional
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public void assignUserToFarm(Long userId, Integer farmId) {
+<span class="fc" id="L211">                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L212">                log.info(&quot;Admin {} intentando asignar usuario ID {} a finca ID {}&quot;, currentUser.getUsername(), userId,</span>
+                                farmId);
+
+<span class="fc" id="L215">                User user = userRepository.findById(userId)</span>
+<span class="pc" id="L216">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;id&quot;, userId));</span>
+
+                // Reglas de negocio para asignación a fincas:
+                // 1. Solo los OPERARIOs pueden ser asignados.
+<span class="fc bfc" id="L220" title="All 2 branches covered.">                if (!&quot;OPERARIO&quot;.equalsIgnoreCase(user.getRol().getRoleName())) {</span>
+<span class="fc" id="L221">                        throw new IllegalArgumentException(</span>
+                                        &quot;Solo los usuarios con rol OPERARIO pueden ser asignados a una finca.&quot;);
+                }
+                // 2. Un OPERARIO solo puede estar en una sola finca a la vez.
+<span class="fc bfc" id="L225" title="All 2 branches covered.">                if (!user.getFarms().isEmpty()) {</span>
+<span class="fc" id="L226">                        throw new IllegalArgumentException(</span>
+                                        &quot;El operario ya está asignado a otra finca. Debe desasignarlo primero.&quot;);
+                }
+
+<span class="fc" id="L230">                Farm farm = farmRepository.findById(farmId)</span>
+<span class="pc" id="L231">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+                // --- AUDITORÍA DE ASIGNACIÓN ---
+<span class="fc" id="L234">                auditService.logChange(currentUser, &quot;ASSIGN&quot;, &quot;user_farm&quot;, &quot;farm_id&quot;, null, farmId.toString());</span>
+
+<span class="fc" id="L236">                user.getFarms().add(farm);</span>
+<span class="fc" id="L237">                userRepository.save(user);</span>
+
+                // --- NOTIFICACIÓN ---
+<span class="fc" id="L240">                String message = String.format(&quot;Has sido asignado a la finca '%s' por el administrador %s.&quot;,</span>
+<span class="fc" id="L241">                                farm.getName(),</span>
+<span class="fc" id="L242">                                currentUser.getUsername());</span>
+<span class="fc" id="L243">                notificationService.createNotification(user, message, &quot;FARM&quot;, Long.valueOf(farmId), &quot;/farms/&quot; + farmId);</span>
+
+<span class="fc" id="L245">                log.info(&quot;Usuario ID {} asignado exitosamente a la finca ID {}&quot;, userId, farmId);</span>
+<span class="fc" id="L246">        }</span>
+
+        @Transactional
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public void unassignUserFromFarm(Long userId, Integer farmId) {
+<span class="nc" id="L251">                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L252">                log.info(&quot;Admin {} intentando desasignar usuario ID {} de la finca ID {}&quot;, currentUser.getUsername(),</span>
+                                userId,
+                                farmId);
+
+<span class="nc" id="L256">                User user = userRepository.findById(userId)</span>
+<span class="nc" id="L257">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;id&quot;, userId));</span>
+
+<span class="nc" id="L259">                Farm farm = farmRepository.findById(farmId)</span>
+<span class="nc" id="L260">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+<span class="nc bnc" id="L262" title="All 2 branches missed.">                if (user.getFarms().remove(farm)) {</span>
+                        // --- AUDITORÍA DE DESASIGNACIÓN ---
+<span class="nc" id="L264">                        auditService.logChange(currentUser, &quot;UNASSIGN&quot;, &quot;user_farm&quot;, &quot;farm_id&quot;, farmId.toString(),</span>
+                                        null);
+<span class="nc" id="L266">                        userRepository.save(user);</span>
+
+                        // --- NOTIFICACIÓN ---
+<span class="nc" id="L269">                        String message = String.format(&quot;Has sido desasignado de la finca '%s'.&quot;, farm.getName());</span>
+<span class="nc" id="L270">                        notificationService.createNotification(user, message, &quot;GENERAL&quot;, null, &quot;/farms&quot;);</span>
+
+<span class="nc" id="L272">                        log.info(&quot;Usuario ID {} desasignado exitosamente de la finca ID {}&quot;, userId, farmId);</span>
+<span class="nc" id="L273">                } else {</span>
+<span class="nc" id="L274">                        log.warn(&quot;El usuario ID {} no estaba asignado a la finca ID {}, no se realizó ninguna acción.&quot;,</span>
+                                        userId,
+                                        farmId);
+                }
+<span class="nc" id="L278">        }</span>
+
+        // --- MÉTODOS DE CONSULTA Y GESTIÓN PROPIA (SIN CAMBIOS) ---
+
+        @Transactional(readOnly = true)
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public Page&lt;User&gt; findAllUsers(Pageable pageable) {
+<span class="nc" id="L285">                log.debug(&quot;Admin solicitando lista de todos los usuarios&quot;);</span>
+<span class="nc" id="L286">                return userRepository.findAll(pageable);</span>
+        }
+
+        @Transactional(readOnly = true)
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public User findUserById(Long id) {
+<span class="fc" id="L292">                log.debug(&quot;Admin buscando usuario con ID: {}&quot;, id);</span>
+<span class="fc" id="L293">                return userRepository.findById(id)</span>
+<span class="fc" id="L294">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;id&quot;, id));</span>
+        }
+
+        @Transactional(readOnly = true)
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public List&lt;User&gt; findUsersByRole(String roleName) {
+<span class="nc" id="L300">                log.debug(&quot;Admin buscando usuarios con rol: {}&quot;, roleName);</span>
+<span class="nc" id="L301">                Role role = roleRepository.findByRoleName(roleName.toUpperCase())</span>
+<span class="nc" id="L302">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Role&quot;, &quot;nombreRol&quot;, roleName));</span>
+<span class="nc" id="L303">                return userRepository.findByRol(role);</span>
+        }
+
+        @Transactional
+        public void updateOwnPassword(String username, String currentPassword, String newPassword,
+                        String confirmPassword) {
+<span class="fc" id="L309">                log.info(&quot;Usuario {} intentando actualizar su propia contraseña.&quot;, username);</span>
+
+<span class="fc bfc" id="L311" title="All 2 branches covered.">                if (!newPassword.equals(confirmPassword)) {</span>
+<span class="fc" id="L312">                        throw new IllegalArgumentException(&quot;La nueva contraseña y su confirmación no coinciden.&quot;);</span>
+                }
+
+<span class="fc" id="L315">                User user = userRepository.findByUsername(username)</span>
+<span class="pc" id="L316">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;username&quot;, username));</span>
+
+<span class="fc bfc" id="L318" title="All 2 branches covered.">                if (!passwordEncoder.matches(currentPassword, user.getPassword())) {</span>
+<span class="fc" id="L319">                        throw new BadCredentialsException(&quot;La contraseña actual es incorrecta.&quot;);</span>
+                }
+
+                // --- AUDITORÍA DE CAMBIO DE CONTRASEÑA (PROPIO) ---
+<span class="fc" id="L323">                auditService.logChange(user, &quot;UPDATE&quot;, User.class.getSimpleName(), &quot;password&quot;, &quot;********&quot;, &quot;********&quot;);</span>
+
+<span class="fc" id="L325">                user.setPassword(passwordEncoder.encode(newPassword));</span>
+<span class="fc" id="L326">                userRepository.save(user);</span>
+
+                // --- NOTIFICACIÓN ---
+<span class="fc" id="L329">                notificationService.createNotification(user, &quot;Tu contraseña ha sido actualizada exitosamente.&quot;,</span>
+                                &quot;GENERAL&quot;, null,
+                                &quot;/profile/security&quot;);
+
+<span class="fc" id="L333">                log.info(&quot;Contraseña del usuario {} actualizada exitosamente.&quot;, username);</span>
+<span class="fc" id="L334">        }</span>
+
+        @Transactional
+        public User updateOwnProfile(String username, UserUpdateRequest request) {
+<span class="nc" id="L338">                log.info(&quot;Usuario {} intentando actualizar su perfil.&quot;, username);</span>
+<span class="nc" id="L339">                User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L340">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;username&quot;, username));</span>
+
+<span class="nc bnc" id="L342" title="All 2 branches missed.">                if (!user.getEmail().equalsIgnoreCase(request.getEmail())</span>
+<span class="nc bnc" id="L343" title="All 2 branches missed.">                                &amp;&amp; userRepository.existsByEmail(request.getEmail())) {</span>
+<span class="nc" id="L344">                        throw new RuntimeException(</span>
+<span class="nc" id="L345">                                        &quot;El email '&quot; + request.getEmail() + &quot;' ya está en uso por otro usuario.&quot;);</span>
+                }
+
+                // --- AUDITORÍA DE ACTUALIZACIÓN DE PERFIL ---
+<span class="nc bnc" id="L349" title="All 2 branches missed.">                if (!Objects.equals(user.getName(), request.getName())) {</span>
+<span class="nc" id="L350">                        auditService.logChange(user, &quot;UPDATE&quot;, User.class.getSimpleName(), &quot;name&quot;, user.getName(),</span>
+<span class="nc" id="L351">                                        request.getName());</span>
+                }
+<span class="nc bnc" id="L353" title="All 2 branches missed.">                if (!user.getEmail().equalsIgnoreCase(request.getEmail())) {</span>
+<span class="nc" id="L354">                        auditService.logChange(user, &quot;UPDATE&quot;, User.class.getSimpleName(), &quot;email&quot;, user.getEmail(),</span>
+<span class="nc" id="L355">                                        request.getEmail());</span>
+                }
+
+<span class="nc" id="L358">                user.setName(request.getName());</span>
+<span class="nc" id="L359">                user.setEmail(request.getEmail());</span>
+
+<span class="nc" id="L361">                return userRepository.save(user);</span>
+        }
+
+        @Transactional(readOnly = true)
+        @PreAuthorize(&quot;hasAnyRole('ADMIN', 'ANALISTA')&quot;)
+        public List&lt;User&gt; findUsersByFarm(Integer farmId) {
+<span class="nc" id="L367">                log.debug(&quot;Admin buscando usuarios para la finca ID: {}&quot;, farmId);</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">                if (!farmRepository.existsById(farmId)) {</span>
+<span class="nc" id="L369">                        throw new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId);</span>
+                }
+<span class="nc" id="L371">                return userRepository.findByFarms_Id(farmId);</span>
+        }
+
+        // --- MÉTODO PARA EL DASHBOARD ---
+
+        @Transactional
+        public void saveFcmToken(String username, String fcmToken) {
+<span class="nc" id="L378">                User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L379">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;username&quot;, username));</span>
+<span class="nc" id="L380">                user.setFcmToken(fcmToken);</span>
+<span class="nc" id="L381">                userRepository.save(user);</span>
+<span class="nc" id="L382">                log.info(&quot;FCM token actualizado para el usuario: {}&quot;, username);</span>
+<span class="nc" id="L383">        }</span>
+
+        @Transactional(readOnly = true)
+        @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+        public UserStatsResponse getUserStats() {
+<span class="nc" id="L388">                log.info(&quot;Generando estadísticas de usuarios para el dashboard de administrador.&quot;);</span>
+
+<span class="nc" id="L390">                long totalUsers = userRepository.count();</span>
+<span class="nc" id="L391">                long activeUsers = userRepository.countByIsActive(true);</span>
+<span class="nc" id="L392">                long inactiveUsers = totalUsers - activeUsers;</span>
+
+<span class="nc" id="L394">                Map&lt;String, Long&gt; usersByRole = userRepository.countUsersByRole().stream()</span>
+<span class="nc" id="L395">                                .collect(Collectors.toMap(</span>
+<span class="nc" id="L396">                                                row -&gt; (String) row[0], // Nombre del rol</span>
+<span class="nc" id="L397">                                                row -&gt; (Long) row[1] // Conteo</span>
+                                ));
+
+<span class="nc" id="L400">                return new UserStatsResponse(totalUsers, activeUsers, inactiveUsers, usersByRole);</span>
+        }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

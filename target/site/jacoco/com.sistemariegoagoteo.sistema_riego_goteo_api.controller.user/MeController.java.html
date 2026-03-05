@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MeController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.controller.user</a> &gt; <span class="el_source">MeController.java</span></div><h1>MeController.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.user;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.FarmResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.SelfPasswordUpdateRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserUpdateRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.FarmService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping(&quot;/api/me&quot;)
+<span class="fc" id="L24">@RequiredArgsConstructor</span>
+<span class="fc" id="L25">@Slf4j</span>
+@PreAuthorize(&quot;isAuthenticated()&quot;)
+public class MeController {
+
+    private final UserService userService;
+    private final FarmService farmService;
+
+    /**
+     * Obtiene el perfil del usuario autenticado.
+     *
+     * @return Datos del usuario.
+     */
+    @GetMapping
+    public ResponseEntity&lt;UserResponse&gt; getCurrentUserProfile() {
+<span class="nc" id="L39">        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc" id="L40">        User currentUser = (User) authentication.getPrincipal();</span>
+<span class="nc" id="L41">        return ResponseEntity.ok(new UserResponse(currentUser));</span>
+    }
+
+    /**
+     * Actualiza la contraseña del usuario autenticado.
+     * Requiere la contraseña actual para validación.
+     *
+     * @param request Datos de cambio de contraseña.
+     * @return Mensaje de éxito.
+     */
+    @PutMapping(&quot;/password&quot;)
+    public ResponseEntity&lt;String&gt; updateCurrentUserPassword(@Valid @RequestBody SelfPasswordUpdateRequest request) {
+<span class="nc" id="L53">        String username = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+        // Las excepciones (BadCredentialsException, IllegalArgumentException) se manejan globalmente
+<span class="nc" id="L55">        userService.updateOwnPassword(</span>
+                username,
+<span class="nc" id="L57">                request.getCurrentPassword(),</span>
+<span class="nc" id="L58">                request.getNewPassword(),</span>
+<span class="nc" id="L59">                request.getConfirmPassword()</span>
+        );
+<span class="nc" id="L61">        return ResponseEntity.ok(&quot;Contraseña actualizada exitosamente.&quot;);</span>
+    }
+
+    /**
+     * Obtiene la lista de fincas asignadas al usuario autenticado.
+     *
+     * @return Lista de fincas.
+     */
+    @GetMapping(&quot;/farms&quot;)
+    public ResponseEntity&lt;List&lt;FarmResponse&gt;&gt; getCurrentUserFarms() {
+<span class="nc" id="L71">        String username = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="nc" id="L72">        List&lt;FarmResponse&gt; farmResponses = farmService.findFarmsByUsername(username).stream()</span>
+<span class="nc" id="L73">                .map(FarmResponse::new)</span>
+<span class="nc" id="L74">                .collect(Collectors.toList());</span>
+<span class="nc" id="L75">        return ResponseEntity.ok(farmResponses);</span>
+    }
+
+    /**
+     * Actualiza el perfil (nombre, email, etc.) del usuario autenticado.
+     *
+     * @param request Datos a actualizar.
+     * @return Usuario actualizado.
+     */
+    @PutMapping(&quot;/profile&quot;)
+    public ResponseEntity&lt;UserResponse&gt; updateCurrentUserProfile(@Valid @RequestBody UserUpdateRequest request) {
+<span class="nc" id="L86">        String username = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="nc" id="L87">        User updatedUser = userService.updateOwnProfile(username, request);</span>
+<span class="nc" id="L88">        return ResponseEntity.ok(new UserResponse(updatedUser));</span>
+    }
+
+    /**
+     * Registra o actualiza el token FCM del dispositivo Android del usuario.
+     * La app Android debe llamar a este endpoint al iniciar sesión o al obtener un nuevo token.
+     *
+     * @param token Token FCM del dispositivo.
+     * @return Confirmación.
+     */
+    @PutMapping(&quot;/fcm-token&quot;)
+    public ResponseEntity&lt;String&gt; updateFcmToken(@RequestBody String token) {
+<span class="nc" id="L100">        String username = SecurityContextHolder.getContext().getAuthentication().getName();</span>
+<span class="nc" id="L101">        userService.saveFcmToken(username, token);</span>
+<span class="nc" id="L102">        return ResponseEntity.ok(&quot;Token FCM registrado exitosamente.&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

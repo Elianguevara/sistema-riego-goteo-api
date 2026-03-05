@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SectorHistoryEntryDTO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego</a> &gt; <span class="el_source">SectorHistoryEntryDTO.java</span></div><h1>SectorHistoryEntryDTO.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+/**
+ * Entrada unificada del historial de actividades de un sector.
+ * Puede representar un riego, una fertilización o un mantenimiento.
+ */
+<span class="nc bnc" id="L15" title="All 46 branches missed.">@Data</span>
+<span class="nc" id="L16">@NoArgsConstructor</span>
+<span class="nc" id="L17">@AllArgsConstructor</span>
+public class SectorHistoryEntryDTO {
+
+    /** Tipo de actividad: RIEGO, FERTILIZACION o MANTENIMIENTO */
+<span class="nc" id="L21">    private String type;</span>
+
+    /** ID del registro original */
+<span class="nc" id="L24">    private Integer id;</span>
+
+    /** Fecha y hora de la actividad */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd'T'HH:mm:ss&quot;)
+<span class="nc" id="L28">    private LocalDateTime date;</span>
+
+    /** Descripción resumida de la actividad */
+<span class="nc" id="L31">    private String description;</span>
+
+    /** Datos específicos del tipo de actividad */
+<span class="nc" id="L34">    private Map&lt;String, Object&gt; details;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

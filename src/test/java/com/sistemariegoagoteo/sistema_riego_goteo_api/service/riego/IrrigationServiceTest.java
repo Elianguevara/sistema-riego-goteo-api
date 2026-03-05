@@ -11,8 +11,11 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.PrecipitationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,6 +58,12 @@ class IrrigationServiceTest {
     private AuditService auditService;
     @Mock
     private FarmRepository farmRepository;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private PrecipitationRepository precipitationRepository;
 
     @InjectMocks
     private IrrigationService irrigationService;

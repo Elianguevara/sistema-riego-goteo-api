@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WaterSourceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego</a> &gt; <span class="el_source">WaterSourceService.java</span></div><h1>WaterSourceService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.WaterSourceRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.WaterSource;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // &lt;-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.WaterSourceRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder; // &lt;-- IMPORTAR
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects; // &lt;-- IMPORTAR
+
+@Service
+<span class="fc" id="L22">@RequiredArgsConstructor</span>
+<span class="fc" id="L23">@Slf4j</span>
+public class WaterSourceService {
+
+    private final WaterSourceRepository waterSourceRepository;
+    private final FarmRepository farmRepository;
+    private final AuditService auditService;
+
+    @Transactional
+    public WaterSource createWaterSource(Integer farmId, WaterSourceRequest request) {
+<span class="fc" id="L32">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L33">        Farm farm = farmRepository.findById(farmId)</span>
+<span class="pc" id="L34">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+<span class="fc" id="L36">        waterSourceRepository.findByTypeAndFarm(request.getType(), farm).ifPresent(ws -&gt; {</span>
+<span class="fc" id="L37">            throw new IllegalArgumentException(&quot;Ya existe una fuente de agua de tipo '&quot; + request.getType() + &quot;' en la finca '&quot; + farm.getName() + &quot;'.&quot;);</span>
+        });
+
+<span class="fc" id="L40">        WaterSource waterSource = new WaterSource();</span>
+<span class="fc" id="L41">        waterSource.setFarm(farm);</span>
+<span class="fc" id="L42">        waterSource.setType(request.getType());</span>
+
+<span class="fc" id="L44">        WaterSource savedWaterSource = waterSourceRepository.save(waterSource);</span>
+        
+        // --- AUDITORÍA DE CREACIÓN ---
+<span class="fc" id="L47">        auditService.logChange(currentUser, &quot;CREATE&quot;, WaterSource.class.getSimpleName(), &quot;type&quot;, null, savedWaterSource.getType());</span>
+
+<span class="fc" id="L49">        log.info(&quot;Creando fuente de agua tipo '{}' para finca ID {}&quot;, request.getType(), farmId);</span>
+<span class="fc" id="L50">        return savedWaterSource;</span>
+    }
+
+    @Transactional
+    public WaterSource updateWaterSource(Integer waterSourceId, WaterSourceRequest request) {
+<span class="fc" id="L55">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L56">        WaterSource waterSource = getWaterSourceById(waterSourceId);</span>
+
+        // --- AUDITORÍA DE ACTUALIZACIÓN ---
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">        if (!Objects.equals(waterSource.getType(), request.getType())) {</span>
+<span class="fc" id="L60">            auditService.logChange(currentUser, &quot;UPDATE&quot;, WaterSource.class.getSimpleName(), &quot;type&quot;, waterSource.getType(), request.getType());</span>
+        }
+
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (!waterSource.getType().equalsIgnoreCase(request.getType())) {</span>
+<span class="fc" id="L64">            waterSourceRepository.findByTypeAndFarm(request.getType(), waterSource.getFarm()).ifPresent(ws -&gt; {</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                if (!ws.getId().equals(waterSourceId)) {</span>
+<span class="nc" id="L66">                    throw new IllegalArgumentException(&quot;Ya existe otra fuente de agua de tipo '&quot; + request.getType() +</span>
+<span class="nc" id="L67">                            &quot;' en la finca '&quot; + waterSource.getFarm().getName() + &quot;'.&quot;);</span>
+                }
+<span class="nc" id="L69">            });</span>
+        }
+<span class="fc" id="L71">        waterSource.setType(request.getType());</span>
+
+<span class="fc" id="L73">        log.info(&quot;Actualizando fuente de agua ID {}&quot;, waterSourceId);</span>
+<span class="fc" id="L74">        return waterSourceRepository.save(waterSource);</span>
+    }
+
+    @Transactional
+    public void deleteWaterSource(Integer waterSourceId) {
+<span class="fc" id="L79">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L80">        WaterSource waterSource = getWaterSourceById(waterSourceId);</span>
+        
+        // --- AUDITORÍA DE BORRADO ---
+<span class="fc" id="L83">        auditService.logChange(currentUser, &quot;DELETE&quot;, WaterSource.class.getSimpleName(), &quot;id&quot;, waterSource.getId().toString(), null);</span>
+
+<span class="fc" id="L85">        log.warn(&quot;Eliminando fuente de agua ID {}&quot;, waterSourceId);</span>
+<span class="fc" id="L86">        waterSourceRepository.delete(waterSource);</span>
+<span class="fc" id="L87">    }</span>
+
+    // --- MÉTODOS GET (SIN CAMBIOS) ---
+    
+    @Transactional(readOnly = true)
+    public List&lt;WaterSource&gt; getWaterSourcesByFarm(Integer farmId) {
+<span class="fc" id="L93">        Farm farm = farmRepository.findById(farmId)</span>
+<span class="pc" id="L94">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+<span class="fc" id="L95">        return waterSourceRepository.findByFarmOrderByTypeAsc(farm);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public WaterSource getWaterSourceById(Integer waterSourceId) {
+<span class="fc" id="L100">        return waterSourceRepository.findById(waterSourceId)</span>
+<span class="pc" id="L101">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;WaterSource&quot;, &quot;id&quot;, waterSourceId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
