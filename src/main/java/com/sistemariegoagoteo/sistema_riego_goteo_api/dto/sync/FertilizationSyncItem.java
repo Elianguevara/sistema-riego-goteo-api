@@ -34,7 +34,7 @@ public class FertilizationSyncItem {
     @PositiveOrZero(message = "La cantidad debe ser un valor positivo o cero.")
     private BigDecimal quantity;
 
-    /** "KG" o "LITERS" — valores del enum UnitOfMeasure */
+    /** "KG" o "CUBIC_METER" — valores del enum UnitOfMeasure */
     @NotNull(message = "La unidad de medida es requerida.")
     private String quantityUnit;
 }

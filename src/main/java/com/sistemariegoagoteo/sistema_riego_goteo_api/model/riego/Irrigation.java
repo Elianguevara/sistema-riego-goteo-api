@@ -43,6 +43,13 @@ public class Irrigation {
     @Column(name = "irrigation_hours", precision = 5, scale = 2)
     private BigDecimal irrigationHours;
 
+    /**
+     * true  → el operario sobrescribió el volumen con la lectura del caudalímetro.
+     * false → el volumen fue auto-calculado por el sistema (caudal × tiempo).
+     */
+    @Column(name = "is_manual_water_volume", nullable = false)
+    private Boolean isManualWaterVolume = false;
+
     // Método para generar un localMobileId si no se proporciona (aunque el móvil
     // debería enviarlo)
     @PrePersist

@@ -42,8 +42,6 @@ public class MobileSyncService {
     private final IrrigationEquipmentRepository equipmentRepository;
     private final AuditService auditService;
 
-    private static final BigDecimal METERS_CUBIC_TO_HECTOLITERS = new BigDecimal("10");
-
     // ═══════════════════════════════════════════════════════════════════════════
     // RIEGO (existente, sin cambios)
     // ═══════════════════════════════════════════════════════════════════════════
@@ -458,7 +456,8 @@ public class MobileSyncService {
         if (flowRate == null || hours == null || flowRate.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
-        return flowRate.multiply(hours).multiply(METERS_CUBIC_TO_HECTOLITERS).setScale(2, RoundingMode.HALF_UP);
+        // Fórmula: caudal(m³/h) × duración(h) = volumen(m³)
+        return flowRate.multiply(hours).setScale(2, RoundingMode.HALF_UP);
     }
 
     private Date toDate(LocalDate localDate) {

@@ -30,6 +30,6 @@ public class FertilizationRequest {
     @Positive(message = "La cantidad debe ser un valor positivo.")
     private BigDecimal quantity; // Reemplaza a litersApplied
 
-    @NotNull(message = "La unidad de medida es requerida (KG o LITERS).")
-    private UnitOfMeasure quantityUnit; // Campo nuevo para la unidad
+    @NotNull(message = "La unidad de medida es requerida (KG o CUBIC_METER).")
+    private UnitOfMeasure quantityUnit;
 }

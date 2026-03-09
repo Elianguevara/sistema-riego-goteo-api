@@ -185,7 +185,8 @@ public class DataInitializer implements CommandLineRunner {
                 eq.setName("Bomba " + faker.address().cityName() + " " + s);
                 eq.setEquipmentType("Goteo");
                 eq.setEquipmentStatus("Activo");
-                eq.setMeasuredFlow(BigDecimal.valueOf(faker.number().randomDouble(2, 5, 20)));
+                // Caudal en m³/h, rango realista para sistemas de riego por goteo
+                eq.setMeasuredFlow(BigDecimal.valueOf(faker.number().randomDouble(2, 50, 200)));
                 eq.setHasFlowMeter(faker.bool().bool());
                 eq = equipmentRepository.save(eq);
 
@@ -209,7 +210,8 @@ public class DataInitializer implements CommandLineRunner {
                         iri.setStartDatetime(start);
                         iri.setEndDatetime(end);
                         iri.setIrrigationHours(BigDecimal.valueOf(hours));
-                        iri.setWaterAmount(BigDecimal.valueOf(hours * faker.number().randomDouble(2, 10, 25)));
+                        // waterAmount (m³) = caudal(m³/h) × horas
+                        iri.setWaterAmount(eq.getMeasuredFlow().multiply(BigDecimal.valueOf(hours)).setScale(2, java.math.RoundingMode.HALF_UP));
                         irrigationRepository.save(iri); // El PrePersist asigna el UUID localMobileId
                         riegoCount++;
                     }

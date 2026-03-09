@@ -30,6 +30,8 @@ public class IrrigationResponse {
 
     private BigDecimal waterAmount;
     private BigDecimal irrigationHours;
+    /** true = el operario sobrescribió el valor con la lectura del caudalímetro. */
+    private Boolean isManualWaterVolume;
     private String message;
 
     public IrrigationResponse(Irrigation irrigation) {
@@ -50,6 +52,7 @@ public class IrrigationResponse {
         this.endDateTime = irrigation.getEndDatetime();
         this.waterAmount = irrigation.getWaterAmount();
         this.irrigationHours = irrigation.getIrrigationHours();
+        this.isManualWaterVolume = irrigation.getIsManualWaterVolume();
         this.message = "Riego registrado exitosamente. ID: " + irrigation.getId();
     }
 }

@@ -197,7 +197,7 @@ public class SectorService {
             entry.setType("RIEGO");
             entry.setId(i.getId());
             entry.setDate(i.getStartDatetime());
-            entry.setDescription(String.format("Riego de %.2f hL durante %.2f hs.", i.getWaterAmount(), i.getIrrigationHours()));
+            entry.setDescription(String.format("Riego de %.2f m³ durante %.2f hs.", i.getWaterAmount(), i.getIrrigationHours()));
             entry.setDetails(Map.of(
                     "startDatetime", i.getStartDatetime().toString(),
                     "endDatetime", i.getEndDatetime() != null ? i.getEndDatetime().toString() : "",

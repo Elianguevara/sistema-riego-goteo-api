@@ -74,10 +74,6 @@ public class IrrigationService {
      */
     private final PrecipitationRepository precipitationRepository;
 
-    /**
-     * Factor de conversión de Metros Cúbicos a Hectolitros (1 m³ = 10 hL).
-     */
-    private static final BigDecimal METERS_CUBIC_TO_HECTOLITERS = new BigDecimal("10");
 
     /**
      * Crea un nuevo registro de riego calculando automáticamente la duración y el
@@ -101,8 +97,13 @@ public class IrrigationService {
         // 1. Calcular duración precisa
         BigDecimal irrigationHours = calculateIrrigationHours(request.getStartDateTime(), request.getEndDateTime());
 
-        // 2. Calcular volumen de agua (en Hectolitros) basado en el flujo del equipo
-        BigDecimal waterAmount = calculateWaterAmount(equipment.getMeasuredFlow(), irrigationHours);
+        // 2. Determinar el volumen de agua:
+        //    - Si el operario envió un valor → lectura manual del caudalímetro.
+        //    - Si no → auto-calcular: caudal(m³/h) × horas = volumen(m³).
+        boolean isManual = request.getWaterAmount() != null;
+        BigDecimal waterAmount = isManual
+                ? request.getWaterAmount()
+                : calculateWaterAmount(equipment.getMeasuredFlow(), irrigationHours);
 
         Irrigation irrigation = new Irrigation();
         irrigation.setSector(sector);
@@ -111,6 +112,7 @@ public class IrrigationService {
         irrigation.setEndDatetime(request.getEndDateTime());
         irrigation.setIrrigationHours(irrigationHours);
         irrigation.setWaterAmount(waterAmount);
+        irrigation.setIsManualWaterVolume(isManual);
 
         Irrigation savedIrrigation = irrigationRepository.save(irrigation);
 
@@ -118,10 +120,12 @@ public class IrrigationService {
                 savedIrrigation.getId().toString());
 
         // --- NOTIFICACIÓN AL OPERARIO (confirmación) ---
+        String origenAgua = Boolean.TRUE.equals(savedIrrigation.getIsManualWaterVolume())
+                ? "lectura caudalímetro" : "cálculo teórico";
         String msgOperario = String.format(
-                "Riego registrado exitosamente en sector '%s'. ID: %d | Agua: %.2f hL | Duración: %.2f hs.",
+                "Riego registrado en sector '%s'. ID: %d | Agua: %.2f m³ (%s) | Duración: %.2f hs.",
                 sector.getName(), savedIrrigation.getId(),
-                savedIrrigation.getWaterAmount(), savedIrrigation.getIrrigationHours());
+                savedIrrigation.getWaterAmount(), origenAgua, savedIrrigation.getIrrigationHours());
         notificationService.createNotification(currentUser, msgOperario, "IRRIGATION",
                 Long.valueOf(savedIrrigation.getId()), "/irrigations/" + savedIrrigation.getId());
 
@@ -154,9 +158,14 @@ public class IrrigationService {
                 .orElseThrow(
                         () -> new ResourceNotFoundException("IrrigationEquipment", "id", request.getEquipmentId()));
 
-        // Recálculo de valores
+        // Recálculo de duración
         BigDecimal newIrrigationHours = calculateIrrigationHours(request.getStartDateTime(), request.getEndDateTime());
-        BigDecimal newWaterAmount = calculateWaterAmount(newEquipment.getMeasuredFlow(), newIrrigationHours);
+
+        // Determinar volumen: manual si viene en el request, auto-calculado si no
+        boolean isManual = request.getWaterAmount() != null;
+        BigDecimal newWaterAmount = isManual
+                ? request.getWaterAmount()
+                : calculateWaterAmount(newEquipment.getMeasuredFlow(), newIrrigationHours);
 
         // Registro de auditoría para campos críticos
         logAndAuditChanges(currentUser, irrigation, request, newEquipment, newIrrigationHours, newWaterAmount);
@@ -167,6 +176,7 @@ public class IrrigationService {
         irrigation.setEndDatetime(request.getEndDateTime());
         irrigation.setIrrigationHours(newIrrigationHours);
         irrigation.setWaterAmount(newWaterAmount);
+        irrigation.setIsManualWaterVolume(isManual);
 
         log.info("Actualizando registro de riego ID {}", irrigationId);
         return irrigationRepository.save(irrigation);
@@ -230,13 +240,12 @@ public class IrrigationService {
     }
 
     /**
-     * Calcula la cantidad de agua consumida.
-     * Asume que el caudal (flowRate) está en m³/h y convierte el resultado a
-     * Hectolitros.
+     * Calcula la cantidad de agua consumida en metros cúbicos.
+     * Fórmula: caudal(m³/h) × duración(h) = volumen(m³).
      *
-     * @param flowRateCubicMetersPerHour Caudal del equipo.
+     * @param flowRateCubicMetersPerHour Caudal del equipo en m³/h.
      * @param hours                      Horas de funcionamiento.
-     * @return Volumen en Hectolitros (hL).
+     * @return Volumen en metros cúbicos (m³), con 2 decimales.
      */
     private BigDecimal calculateWaterAmount(BigDecimal flowRateCubicMetersPerHour, BigDecimal hours) {
         if (flowRateCubicMetersPerHour == null || hours == null
@@ -244,12 +253,7 @@ public class IrrigationService {
                 || hours.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
-
-        // 1. Calcular volumen en Metros Cúbicos
-        BigDecimal volumeInCubicMeters = flowRateCubicMetersPerHour.multiply(hours);
-
-        // 2. Convertir m³ a Hectolitros y redondear
-        return volumeInCubicMeters.multiply(METERS_CUBIC_TO_HECTOLITERS).setScale(2, RoundingMode.HALF_UP);
+        return flowRateCubicMetersPerHour.multiply(hours).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
