@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IrrigationEquipment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego</a> &gt; <span class="el_source">IrrigationEquipment.java</span></div><h1>IrrigationEquipment.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
+
+<span class="pc bnc" id="L14" title="All 62 branches missed.">@Data</span>
+<span class="fc" id="L15">@NoArgsConstructor</span>
+<span class="nc" id="L16">@AllArgsConstructor</span>
+@Entity
+@Table(name = &quot;irrigation_equipment&quot;)
+public class IrrigationEquipment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;equipment_id&quot;)
+<span class="fc" id="L24">    private Integer id;</span>
+
+    @Column(name = &quot;name&quot;, nullable = false, length = 100)
+<span class="fc" id="L27">    private String name;</span>
+
+    @Column(name = &quot;measured_flow&quot;, precision = 10, scale = 2)
+<span class="fc" id="L30">    private BigDecimal measuredFlow;</span>
+
+    @Column(name = &quot;has_flow_meter&quot;)
+<span class="nc" id="L33">    private Boolean hasFlowMeter;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;farm_id&quot;, nullable = false)
+<span class="fc" id="L37">    private Farm farm;</span>
+
+    @Column(name = &quot;equipment_type&quot;, length = 50)
+<span class="nc" id="L40">    private String equipmentType;</span>
+
+    @Column(name = &quot;equipment_status&quot;, length = 50) // Ajustado de VARCHAR(2...)
+<span class="nc" id="L43">    private String equipmentStatus;</span>
+
+<span class="pc" id="L45">    @OneToMany(mappedBy = &quot;irrigationEquipment&quot;, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY) // mappedBy actualizado</span>
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+<span class="nc" id="L48">    private Set&lt;Maintenance&gt; maintenances = new HashSet&lt;&gt;();</span>
+
+<span class="pc" id="L50">    @OneToMany(mappedBy = &quot;equipment&quot;, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)</span>
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+<span class="nc" id="L53">    private Set&lt;Irrigation&gt; irrigations = new HashSet&lt;&gt;();</span>
+
+    // La relación con Sector se maneja desde Sector (Sector N -&gt; 1 IrrigationEquipment)
+    // Si un equipo pudiera estar en muchos sectores, la relación sería diferente.
+    // Basado en que sector.equipment_id es una FK simple, Sector tiene el ManyToOne.
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

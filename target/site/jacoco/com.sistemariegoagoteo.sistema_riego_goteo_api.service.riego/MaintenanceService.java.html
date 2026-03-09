@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MaintenanceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego</a> &gt; <span class="el_source">MaintenanceService.java</span></div><h1>MaintenanceService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.MaintenanceRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEquipment;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Maintenance;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // &lt;-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.MaintenanceRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
+import org.springframework.context.ApplicationEventPublisher;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder; // &lt;-- IMPORTAR
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects; // &lt;-- IMPORTAR
+
+@Service
+<span class="fc" id="L25">@RequiredArgsConstructor</span>
+<span class="fc" id="L26">@Slf4j</span>
+public class MaintenanceService {
+
+    private final MaintenanceRepository maintenanceRepository;
+    private final IrrigationEquipmentRepository equipmentRepository;
+    private final AuditService auditService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
+
+    @Transactional
+    public Maintenance createMaintenance(Integer farmId, Integer equipmentId, MaintenanceRequest request) {
+<span class="nc" id="L38">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L39">        IrrigationEquipment equipment = equipmentRepository.findByIdAndFarm_Id(equipmentId, farmId)</span>
+<span class="nc" id="L40">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;IrrigationEquipment&quot;, &quot;id&quot;,</span>
+                        equipmentId + &quot; para la finca ID &quot; + farmId));
+
+<span class="nc" id="L43">        Maintenance maintenance = new Maintenance();</span>
+<span class="nc" id="L44">        maintenance.setIrrigationEquipment(equipment);</span>
+<span class="nc" id="L45">        maintenance.setDate(request.getDate());</span>
+<span class="nc" id="L46">        maintenance.setDescription(request.getDescription());</span>
+<span class="nc" id="L47">        maintenance.setWorkHours(request.getWorkHours());</span>
+
+<span class="nc" id="L49">        Maintenance savedMaintenance = maintenanceRepository.save(maintenance);</span>
+
+        // --- AUDITORÍA DE CREACIÓN ---
+<span class="nc" id="L52">        auditService.logChange(currentUser, &quot;CREATE&quot;, Maintenance.class.getSimpleName(), &quot;description&quot;, null,</span>
+<span class="nc" id="L53">                savedMaintenance.getDescription());</span>
+
+        // --- EVENTO DE NOTIFICACIÓN ---
+<span class="nc" id="L56">        eventPublisher.publishEvent(new com.sistemariegoagoteo.sistema_riego_goteo_api.event.MaintenanceCreatedEvent(</span>
+<span class="nc" id="L57">                savedMaintenance.getId(),</span>
+                farmId,
+<span class="nc" id="L59">                equipment.getName(),</span>
+<span class="nc" id="L60">                savedMaintenance.getDescription()));</span>
+
+        // --- NOTIFICACIÓN AL OPERARIO (confirmación) ---
+<span class="nc" id="L63">        String msgOperario = String.format(</span>
+                &quot;Mantenimiento registrado exitosamente en equipo '%s'. ID: %d | %s&quot;,
+<span class="nc" id="L65">                equipment.getName(), savedMaintenance.getId(), savedMaintenance.getDescription());</span>
+<span class="nc" id="L66">        notificationService.createNotification(currentUser, msgOperario, &quot;MAINTENANCE&quot;,</span>
+<span class="nc" id="L67">                Long.valueOf(savedMaintenance.getId()), &quot;/maintenances/&quot; + savedMaintenance.getId());</span>
+
+        // --- NOTIFICACIÓN A ADMINS ---
+<span class="nc" id="L70">        String msgAdmin = String.format(&quot;El operario '%s' registró un mantenimiento en equipo '%s' (Finca ID: %d). ID: %d.&quot;,</span>
+<span class="nc" id="L71">                currentUser.getUsername(), equipment.getName(), farmId, savedMaintenance.getId());</span>
+<span class="nc" id="L72">        userRepository.findByRol_RoleName(&quot;ADMIN&quot;).forEach(admin -&gt;</span>
+<span class="nc" id="L73">                notificationService.createNotification(admin, msgAdmin, &quot;MAINTENANCE&quot;,</span>
+<span class="nc" id="L74">                        Long.valueOf(savedMaintenance.getId()), &quot;/maintenances/&quot; + savedMaintenance.getId()));</span>
+
+<span class="nc" id="L76">        log.info(&quot;Registrando mantenimiento para equipo ID {} en fecha {}&quot;, equipmentId, request.getDate());</span>
+<span class="nc" id="L77">        return savedMaintenance;</span>
+    }
+
+    @Transactional
+    public Maintenance updateMaintenance(Integer maintenanceId, MaintenanceRequest request) {
+<span class="nc" id="L82">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L83">        Maintenance maintenance = getMaintenanceById(maintenanceId);</span>
+
+        // --- AUDITORÍA DE ACTUALIZACIÓN ---
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (!Objects.equals(maintenance.getDate(), request.getDate())) {</span>
+<span class="nc" id="L87">            auditService.logChange(currentUser, &quot;UPDATE&quot;, Maintenance.class.getSimpleName(), &quot;date&quot;,</span>
+<span class="nc" id="L88">                    Objects.toString(maintenance.getDate(), null), Objects.toString(request.getDate(), null));</span>
+        }
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (!Objects.equals(maintenance.getDescription(), request.getDescription())) {</span>
+<span class="nc" id="L91">            auditService.logChange(currentUser, &quot;UPDATE&quot;, Maintenance.class.getSimpleName(), &quot;description&quot;,</span>
+<span class="nc" id="L92">                    maintenance.getDescription(), request.getDescription());</span>
+        }
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (!Objects.equals(maintenance.getWorkHours(), request.getWorkHours())) {</span>
+<span class="nc" id="L95">            auditService.logChange(currentUser, &quot;UPDATE&quot;, Maintenance.class.getSimpleName(), &quot;workHours&quot;,</span>
+<span class="nc" id="L96">                    Objects.toString(maintenance.getWorkHours(), null), Objects.toString(request.getWorkHours(), null));</span>
+        }
+
+<span class="nc" id="L99">        maintenance.setDate(request.getDate());</span>
+<span class="nc" id="L100">        maintenance.setDescription(request.getDescription());</span>
+<span class="nc" id="L101">        maintenance.setWorkHours(request.getWorkHours());</span>
+
+<span class="nc" id="L103">        log.info(&quot;Actualizando mantenimiento ID {}&quot;, maintenanceId);</span>
+<span class="nc" id="L104">        return maintenanceRepository.save(maintenance);</span>
+    }
+
+    @Transactional
+    public void deleteMaintenance(Integer maintenanceId) {
+<span class="nc" id="L109">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L110">        Maintenance maintenance = getMaintenanceById(maintenanceId);</span>
+
+        // --- AUDITORÍA DE BORRADO ---
+<span class="nc" id="L113">        auditService.logChange(currentUser, &quot;DELETE&quot;, Maintenance.class.getSimpleName(), &quot;id&quot;,</span>
+<span class="nc" id="L114">                maintenance.getId().toString(), null);</span>
+
+<span class="nc" id="L116">        log.warn(&quot;Eliminando mantenimiento ID {}&quot;, maintenanceId);</span>
+<span class="nc" id="L117">        maintenanceRepository.delete(maintenance);</span>
+<span class="nc" id="L118">    }</span>
+
+    // --- MÉTODOS GET (SIN CAMBIOS) ---
+
+    @Transactional(readOnly = true)
+    public List&lt;Maintenance&gt; getMaintenancesByEquipment(Integer farmId, Integer equipmentId) {
+<span class="nc" id="L124">        IrrigationEquipment equipment = equipmentRepository.findByIdAndFarm_Id(equipmentId, farmId)</span>
+<span class="nc" id="L125">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;IrrigationEquipment&quot;, &quot;id&quot;,</span>
+                        equipmentId + &quot; para la finca ID &quot; + farmId));
+<span class="nc" id="L127">        return maintenanceRepository.findByIrrigationEquipmentOrderByDateDesc(equipment);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Maintenance getMaintenanceById(Integer maintenanceId) {
+<span class="nc" id="L132">        return maintenanceRepository.findById(maintenanceId)</span>
+<span class="nc" id="L133">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Maintenance&quot;, &quot;id&quot;, maintenanceId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

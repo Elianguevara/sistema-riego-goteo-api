@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HumidityAlertResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego</a> &gt; <span class="el_source">HumidityAlertResponse.java</span></div><h1>HumidityAlertResponse.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.HumidityAlert;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+<span class="nc bnc" id="L11" title="All 94 branches missed.">@Data</span>
+<span class="nc" id="L12">@NoArgsConstructor</span>
+public class HumidityAlertResponse {
+<span class="nc" id="L14">    private Integer id;</span>
+
+<span class="nc" id="L16">    private Integer sensorId;</span>
+<span class="nc" id="L17">    private String sensorType; // Tipo del sensor que generó la alerta</span>
+
+<span class="nc" id="L19">    private Integer sectorId; // Derivado del sensor</span>
+<span class="nc" id="L20">    private String sectorName; // Derivado del sensor</span>
+
+<span class="nc" id="L22">    private Integer farmId; // Derivado del sensor</span>
+<span class="nc" id="L23">    private String farmName; // Derivado del sensor</span>
+
+<span class="nc" id="L25">    private BigDecimal humidityLevel; // Nivel de humedad que disparó la alerta</span>
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd'T'HH:mm:ssXXX&quot;, timezone = &quot;UTC&quot;)
+<span class="nc" id="L27">    private Date alertDatetime;</span>
+<span class="nc" id="L28">    private String alertMessage;</span>
+<span class="nc" id="L29">    private BigDecimal humidityThreshold; // Umbral que se cruzó</span>
+
+<span class="nc" id="L31">    public HumidityAlertResponse(HumidityAlert alert) {</span>
+<span class="nc" id="L32">        this.id = alert.getId();</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (alert.getHumiditySensor() != null) {</span>
+<span class="nc" id="L34">            this.sensorId = alert.getHumiditySensor().getId();</span>
+<span class="nc" id="L35">            this.sensorType = alert.getHumiditySensor().getSensorType();</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">            if (alert.getHumiditySensor().getSector() != null) {</span>
+<span class="nc" id="L37">                this.sectorId = alert.getHumiditySensor().getSector().getId();</span>
+<span class="nc" id="L38">                this.sectorName = alert.getHumiditySensor().getSector().getName();</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">                if (alert.getHumiditySensor().getSector().getFarm() != null) {</span>
+<span class="nc" id="L40">                    this.farmId = alert.getHumiditySensor().getSector().getFarm().getId();</span>
+<span class="nc" id="L41">                    this.farmName = alert.getHumiditySensor().getSector().getFarm().getName();</span>
+                }
+            }
+        }
+<span class="nc" id="L45">        this.humidityLevel = alert.getHumidityLevel();</span>
+<span class="nc" id="L46">        this.alertDatetime = alert.getAlertDatetime();</span>
+<span class="nc" id="L47">        this.alertMessage = alert.getAlertMessage();</span>
+<span class="nc" id="L48">        this.humidityThreshold = alert.getHumidityThreshold();</span>
+<span class="nc" id="L49">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

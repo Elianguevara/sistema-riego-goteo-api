@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.controller.report</a> &gt; <span class="el_source">ReportController.java</span></div><h1>ReportController.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.report;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.TaskResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.report.ReportTask;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.report.ExcelReportService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.report.PdfReportService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.report.ReportTaskService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.TaskService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import org.springframework.security.access.AccessDeniedException;
+import java.security.Principal;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+/**
+ * Controlador REST para generación y descarga de reportes corporativos.
+ *
+ * Endpoints existentes (flujo asíncrono):
+ * GET /api/reports/generate → inicia generación de reporte
+ * GET /api/reports/status/{taskId} → consulta estado de la tarea
+ * GET /api/reports/download/{taskId} → descarga el archivo generado
+ *
+ * Nuevos endpoints (descarga directa sincrónica):
+ * GET /api/reports/tasks/pdf → PDF de todas las tareas
+ * GET /api/reports/tasks/excel → Excel de todas las tareas
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * PREREQUISITO: Añadir el siguiente método a TaskService para que compile:
+ *
+ * {@code @Transactional(readOnly = true)}
+ * {@code public List&lt;Task&gt; getAllTasks() { return taskRepository.findAll(); }}
+ *
+ * TaskService no expone actualmente una consulta sin filtros; ese método es el
+ * mínimo necesario para que los reportes de ADMIN accedan a todas las tareas.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+<span class="fc" id="L50">@Slf4j</span>
+@RestController
+@RequestMapping(&quot;/api/reports&quot;)
+<span class="fc" id="L53">@RequiredArgsConstructor</span>
+@PreAuthorize(&quot;hasAnyRole('ADMIN', 'ANALISTA')&quot;)
+public class ReportController {
+
+    private final ReportTaskService reportTaskService;
+    private final PdfReportService pdfReportService;
+    private final ExcelReportService excelReportService;
+    private final TaskService taskService;
+
+    // Formato de fecha para los nombres de archivo (ej: &quot;20240315&quot;)
+<span class="fc" id="L63">    private static final DateTimeFormatter FILE_DATE_FMT = DateTimeFormatter.ofPattern(&quot;yyyyMMdd&quot;);</span>
+
+    // Formato de fecha legible para las celdas del reporte (detectado por
+    // ExcelReportService)
+<span class="fc" id="L67">    private static final SimpleDateFormat CELL_DATE_FMT = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;);</span>
+
+    // MIME type oficial de Excel OOXML (.xlsx)
+    private static final String XLSX_MIME = &quot;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&quot;;
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ENDPOINTS EXISTENTES — sin modificaciones
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Inicia la generación asíncrona de un reporte.
+     * Devuelve HTTP 202 Accepted con el ID de la tarea de seguimiento.
+     */
+    @GetMapping(&quot;/generate&quot;)
+    public ResponseEntity&lt;ReportTask&gt; generateReport(
+            @RequestParam String reportType,
+            @RequestParam Integer farmId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate,
+            @RequestParam(defaultValue = &quot;PDF&quot;) String format,
+            @RequestParam(required = false) List&lt;Integer&gt; sectorIds,
+            @RequestParam(required = false) String operationType,
+            @RequestParam(required = false) Long userId) {
+
+<span class="nc" id="L91">        ReportTask task = reportTaskService.createAndStartTask(</span>
+                reportType, farmId, startDate, endDate, format, sectorIds, operationType, userId);
+
+<span class="nc" id="L94">        return ResponseEntity.status(HttpStatus.ACCEPTED).body(task);</span>
+    }
+
+    /**
+     * Consulta el estado actual de una tarea de generación de reporte.
+     */
+    @GetMapping(&quot;/status/{taskId}&quot;)
+    public ResponseEntity&lt;ReportTask&gt; getReportStatus(@PathVariable UUID taskId) {
+<span class="nc" id="L102">        return ResponseEntity.ok(reportTaskService.getTaskStatus(taskId));</span>
+    }
+
+    /**
+     * Descarga el archivo generado una vez que la tarea está en estado COMPLETED.
+     */
+    @GetMapping(&quot;/download/{taskId}&quot;)
+    public ResponseEntity&lt;Resource&gt; downloadReport(@PathVariable UUID taskId) throws IOException {
+<span class="nc" id="L110">        ReportTask task = reportTaskService.getTaskStatus(taskId);</span>
+
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (task.getStatus() != ReportTask.ReportStatus.COMPLETED) {</span>
+<span class="nc" id="L113">            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();</span>
+        }
+
+<span class="nc" id="L116">        File file = new File(task.getFilePath());</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (!file.exists()) {</span>
+<span class="nc" id="L118">            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();</span>
+        }
+
+<span class="nc" id="L121">        FileSystemResource resource = new FileSystemResource(file);</span>
+<span class="nc" id="L122">        String fmt = task.getFormat().toUpperCase();</span>
+<span class="nc bnc" id="L123" title="All 3 branches missed.">        String contentType = switch (fmt) {</span>
+<span class="nc" id="L124">            case &quot;CSV&quot; -&gt; &quot;text/csv&quot;;</span>
+<span class="nc" id="L125">            case &quot;XLSX&quot; -&gt; XLSX_MIME;</span>
+<span class="nc" id="L126">            default -&gt; MediaType.APPLICATION_PDF_VALUE;</span>
+        };
+
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        String dateStr = task.getCompletedAt() != null</span>
+<span class="nc" id="L130">                ? task.getCompletedAt().format(FILE_DATE_FMT)</span>
+<span class="nc" id="L131">                : LocalDate.now().format(FILE_DATE_FMT);</span>
+<span class="nc" id="L132">        String baseName = resolveReportBaseName(task.getReportType());</span>
+<span class="nc" id="L133">        String filename = baseName + &quot;-&quot; + dateStr + &quot;.&quot; + task.getFormat().toLowerCase();</span>
+
+<span class="nc" id="L135">        return ResponseEntity.ok()</span>
+<span class="nc" id="L136">                .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;&quot; + filename + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L137">                .contentType(MediaType.parseMediaType(contentType))</span>
+<span class="nc" id="L138">                .contentLength(file.length())</span>
+<span class="nc" id="L139">                .body(resource);</span>
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // NUEVOS ENDPOINTS — descarga directa de tareas
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Genera y descarga un reporte PDF con todas las tareas del sistema.
+     *
+     * El nombre del archivo incluye la fecha actual:
+     * {@code tasks-report-YYYYMMDD.pdf}
+     *
+     * @param principal Inyectado por Spring Security; provee el nombre del usuario
+     *                  solicitante
+     */
+    @GetMapping(&quot;/tasks/pdf&quot;)
+    public ResponseEntity&lt;byte[]&gt; downloadTasksPdf(Principal principal) {
+<span class="fc" id="L157">        String requester = resolveRequesterName(principal);</span>
+<span class="fc" id="L158">        log.info(&quot;[ReportController] PDF de tareas solicitado por '{}'&quot;, requester);</span>
+
+        try {
+            // 1. Obtener todas las tareas y convertirlas al formato de tabla
+<span class="fc" id="L162">            List&lt;String[]&gt; tableData = buildTaskTableData(taskService.getAllTasks());</span>
+
+            // 2. Generar el PDF con membrete corporativo, footer y tabla estilizada
+<span class="fc" id="L165">            byte[] bytes = pdfReportService.generateCorporateReport(</span>
+                    tableData, &quot;Reporte de Tareas&quot;, requester);
+
+<span class="fc" id="L168">            String filename = &quot;tasks-report-&quot; + LocalDate.now().format(FILE_DATE_FMT) + &quot;.pdf&quot;;</span>
+
+<span class="fc" id="L170">            return ResponseEntity.ok()</span>
+<span class="fc" id="L171">                    .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;&quot; + filename + &quot;\&quot;&quot;)</span>
+<span class="fc" id="L172">                    .contentType(MediaType.APPLICATION_PDF)</span>
+<span class="fc" id="L173">                    .contentLength(bytes.length)</span>
+<span class="fc" id="L174">                    .body(bytes);</span>
+
+<span class="fc" id="L176">        } catch (AccessDeniedException e) {</span>
+<span class="fc" id="L177">            throw e;</span>
+<span class="fc" id="L178">        } catch (Exception e) {</span>
+<span class="fc" id="L179">            log.error(&quot;[ReportController] Error al generar PDF de tareas: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L180">            return buildErrorResponse(&quot;Error al generar el reporte PDF: &quot; + e.getMessage());</span>
+        }
+    }
+
+    /**
+     * Genera y descarga un reporte Excel (.xlsx) con todas las tareas del sistema.
+     *
+     * El nombre del archivo incluye la fecha actual:
+     * {@code tasks-report-YYYYMMDD.xlsx}
+     * Las columnas con fechas en formato dd/MM/yyyy son convertidas automáticamente
+     * a celdas de fecha nativa por {@link ExcelReportService}.
+     *
+     * @param principal Inyectado por Spring Security; se usa solo para el log de
+     *                  auditoría
+     */
+    @GetMapping(&quot;/tasks/excel&quot;)
+    public ResponseEntity&lt;byte[]&gt; downloadTasksExcel(Principal principal) {
+<span class="fc" id="L197">        String requester = resolveRequesterName(principal);</span>
+<span class="fc" id="L198">        log.info(&quot;[ReportController] Excel de tareas solicitado por '{}'&quot;, requester);</span>
+
+        try {
+            // 1. Obtener todas las tareas y convertirlas al formato de tabla
+<span class="fc" id="L202">            List&lt;String[]&gt; tableData = buildTaskTableData(taskService.getAllTasks());</span>
+
+            // 2. Generar el libro Excel con membrete, logo y tabla estilizada
+<span class="fc" id="L205">            byte[] bytes = excelReportService.generateReport(tableData, &quot;Reporte de Tareas&quot;);</span>
+
+<span class="fc" id="L207">            String filename = &quot;tasks-report-&quot; + LocalDate.now().format(FILE_DATE_FMT) + &quot;.xlsx&quot;;</span>
+
+<span class="fc" id="L209">            return ResponseEntity.ok()</span>
+<span class="fc" id="L210">                    .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;&quot; + filename + &quot;\&quot;&quot;)</span>
+<span class="fc" id="L211">                    .contentType(MediaType.parseMediaType(XLSX_MIME))</span>
+<span class="fc" id="L212">                    .contentLength(bytes.length)</span>
+<span class="fc" id="L213">                    .body(bytes);</span>
+
+<span class="fc" id="L215">        } catch (AccessDeniedException e) {</span>
+<span class="fc" id="L216">            throw e;</span>
+<span class="fc" id="L217">        } catch (Exception e) {</span>
+<span class="fc" id="L218">            log.error(&quot;[ReportController] Error al generar Excel de tareas: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L219">            return buildErrorResponse(&quot;Error al generar el reporte Excel: &quot; + e.getMessage());</span>
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // UTILIDADES PRIVADAS
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Convierte la lista de entidades
+     * {@link com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Task}
+     * al formato de tabla {@code List&lt;String[]&gt;} requerido por los servicios de
+     * reporte.
+     *
+     * Estructura del resultado:
+     * 
+     * &lt;pre&gt;
+     *   [0]    → { &quot;ID&quot;, &quot;Descripción&quot;, &quot;Sector&quot;, &quot;Finca&quot;, &quot;Estado&quot;, &quot;Creado por&quot;, &quot;Asignado a&quot;, &quot;Fecha&quot; }
+     *   [1..n] → valores de cada tarea
+     * &lt;/pre&gt;
+     *
+     * Las fechas se formatean como &quot;dd/MM/yyyy&quot; para que {@link ExcelReportService}
+     * las detecte automáticamente y las convierta a celdas de fecha nativa en
+     * Excel.
+     */
+    private List&lt;String[]&gt; buildTaskTableData(
+            List&lt;com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Task&gt; tasks) {
+
+<span class="fc" id="L247">        List&lt;String[]&gt; data = new ArrayList&lt;&gt;();</span>
+
+        // Fila 0: encabezados de columna
+<span class="fc" id="L250">        data.add(new String[] {</span>
+                &quot;ID&quot;, &quot;Descripción&quot;, &quot;Sector&quot;, &quot;Finca&quot;,
+                &quot;Estado&quot;, &quot;Creado por&quot;, &quot;Asignado a&quot;, &quot;Fecha Creación&quot;
+        });
+
+        // Filas 1..n: una fila por tarea
+<span class="fc bfc" id="L256" title="All 2 branches covered.">        for (var task : tasks) {</span>
+            // Construir el DTO para aprovechar la lógica de mapeo ya existente
+<span class="fc" id="L258">            TaskResponse dto = new TaskResponse(task);</span>
+
+<span class="fc" id="L260">            data.add(new String[] {</span>
+<span class="fc" id="L261">                    String.valueOf(dto.getId()),</span>
+<span class="fc" id="L262">                    nullSafe(dto.getDescription()),</span>
+<span class="fc" id="L263">                    nullSafe(dto.getSectorName()),</span>
+<span class="fc" id="L264">                    nullSafe(dto.getFarmName()),</span>
+<span class="pc bpc" id="L265" title="1 of 2 branches missed.">                    dto.getStatus() != null ? dto.getStatus().name() : null,</span>
+<span class="fc" id="L266">                    nullSafe(dto.getCreatedByUsername()),</span>
+<span class="fc" id="L267">                    nullSafe(dto.getAssignedToUsername()),</span>
+                    // Formato dd/MM/yyyy → detectado como fecha por ExcelReportService
+<span class="pc bpc" id="L269" title="1 of 2 branches missed.">                    dto.getCreatedAt() != null ? CELL_DATE_FMT.format(dto.getCreatedAt()) : null</span>
+            });
+<span class="fc" id="L271">        }</span>
+
+<span class="fc" id="L273">        return data;</span>
+    }
+
+    /**
+     * Devuelve el nombre del usuario autenticado, o &quot;Sistema&quot; si no hay principal.
+     * Evita NullPointerException en entornos de test donde Principal puede ser
+     * null.
+     */
+    private String resolveRequesterName(Principal principal) {
+<span class="pc bpc" id="L282" title="2 of 4 branches missed.">        return (principal != null &amp;&amp; principal.getName() != null)</span>
+<span class="fc" id="L283">                ? principal.getName()</span>
+<span class="nc" id="L284">                : &quot;Sistema&quot;;</span>
+    }
+
+    /**
+     * Retorna el valor o {@code null} si es nulo o en blanco.
+     * Los servicios de reporte reemplazan null por &quot;—&quot; (guión largo).
+     */
+    private String nullSafe(String value) {
+<span class="pc bpc" id="L292" title="2 of 4 branches missed.">        return (value != null &amp;&amp; !value.isBlank()) ? value : null;</span>
+    }
+
+    /**
+     * Convierte el tipo de reporte interno a un nombre de archivo legible.
+     * Ej: &quot;WATER_BALANCE&quot; → &quot;balance-hidrico&quot;
+     */
+    private String resolveReportBaseName(String reportType) {
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        if (reportType == null)</span>
+<span class="nc" id="L301">            return &quot;reporte&quot;;</span>
+<span class="nc bnc" id="L302" title="All 4 branches missed.">        return switch (reportType.toUpperCase()) {</span>
+<span class="nc" id="L303">            case &quot;WATER_BALANCE&quot; -&gt; &quot;balance-hidrico&quot;;</span>
+<span class="nc" id="L304">            case &quot;OPERATIONS_LOG&quot; -&gt; &quot;bitacora-operaciones&quot;;</span>
+<span class="nc" id="L305">            case &quot;PERIOD_SUMMARY&quot; -&gt; &quot;resumen-periodo&quot;;</span>
+<span class="nc" id="L306">            default -&gt; reportType.toLowerCase().replace('_', '-');</span>
+        };
+    }
+
+    /**
+     * Construye una respuesta de error 500 con el mensaje en texto plano.
+     * Se usa como cuerpo de {@code ResponseEntity&lt;byte[]&gt;} para que el cliente
+     * reciba un mensaje legible en lugar de un body vacío.
+     */
+    private ResponseEntity&lt;byte[]&gt; buildErrorResponse(String message) {
+<span class="fc" id="L316">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="fc" id="L317">                .contentType(MediaType.TEXT_PLAIN)</span>
+<span class="fc" id="L318">                .body(message.getBytes(StandardCharsets.UTF_8));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

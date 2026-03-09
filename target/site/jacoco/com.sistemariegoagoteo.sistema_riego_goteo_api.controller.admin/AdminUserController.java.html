@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminUserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.controller.admin</a> &gt; <span class="el_source">AdminUserController.java</span></div><h1>AdminUserController.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.admin;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.AdminPasswordUpdateRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserStatusUpdateRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.user.UserUpdateRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Controlador REST para que los Administradores gestionen usuarios.
+ * Todos los endpoints requieren autenticación y rol ADMIN.
+ */
+@RestController
+@RequestMapping(&quot;/api/admin/users&quot;)
+<span class="fc" id="L27">@RequiredArgsConstructor</span>
+<span class="fc" id="L28">@Slf4j</span>
+public class AdminUserController {
+
+    private final UserService userService;
+
+    /**
+     * Obtiene un listado paginado de todos los usuarios del sistema.
+     *
+     * @param pageable Configuración de paginación.
+     * @return Página de usuarios.
+     */
+    @GetMapping
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;Page&lt;UserResponse&gt;&gt; getAllUsers(Pageable pageable) {
+<span class="nc" id="L42">        log.debug(&quot;GET /api/admin/users&quot;);</span>
+<span class="nc" id="L43">        Page&lt;UserResponse&gt; usersResponse = userService.findAllUsers(pageable).map(UserResponse::new);</span>
+<span class="nc" id="L44">        return ResponseEntity.ok(usersResponse);</span>
+    }
+
+    /**
+     * Obtiene los detalles de un usuario específico por su ID.
+     *
+     * @param id ID del usuario.
+     * @return Detalles del usuario.
+     */
+    @GetMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;UserResponse&gt; getUserById(@PathVariable Long id) {
+<span class="nc" id="L56">        log.debug(&quot;GET /api/admin/users/{}&quot;, id);</span>
+<span class="nc" id="L57">        User user = userService.findUserById(id);</span>
+<span class="nc" id="L58">        return ResponseEntity.ok(new UserResponse(user));</span>
+    }
+
+    /**
+     * Obtiene una lista de usuarios filtrados por su rol.
+     *
+     * @param roleName Nombre del rol (ej. 'ADMIN', 'OPERARIO').
+     * @return Lista de usuarios con ese rol.
+     */
+    @GetMapping(&quot;/role/{roleName}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;List&lt;UserResponse&gt;&gt; getUsersByRole(@PathVariable String roleName) {
+<span class="nc" id="L70">        log.debug(&quot;GET /api/admin/users/role/{}&quot;, roleName);</span>
+<span class="nc" id="L71">        List&lt;UserResponse&gt; users = userService.findUsersByRole(roleName).stream()</span>
+<span class="nc" id="L72">                .map(UserResponse::new)</span>
+<span class="nc" id="L73">                .collect(Collectors.toList());</span>
+<span class="nc" id="L74">        return ResponseEntity.ok(users);</span>
+    }
+
+    /**
+     * Actualiza la información general de un usuario.
+     *
+     * @param id ID del usuario a actualizar.
+     * @param updateRequest Datos nuevos (nombre, apellido, email, rol).
+     * @return Usuario actualizado.
+     */
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;UserResponse&gt; updateUser(@PathVariable Long id,
+                                                   @Valid @RequestBody UserUpdateRequest updateRequest) {
+<span class="nc" id="L88">        log.debug(&quot;PUT /api/admin/users/{}&quot;, id);</span>
+<span class="nc" id="L89">        User updated = userService.updateUser(id, updateRequest);</span>
+<span class="nc" id="L90">        return ResponseEntity.ok(new UserResponse(updated));</span>
+    }
+
+    /**
+     * Actualiza el estado (Activo/Inactivo) de un usuario.
+     *
+     * @param id ID del usuario.
+     * @param statusRequest Objeto que contiene el nuevo estado booleano.
+     * @return Usuario con el estado actualizado.
+     */
+    @PutMapping(&quot;/{id}/status&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;UserResponse&gt; updateUserStatus(@PathVariable Long id,
+                                                         @Valid @RequestBody UserStatusUpdateRequest statusRequest) {
+<span class="nc" id="L104">        log.debug(&quot;PUT /api/admin/users/{}/status&quot;, id);</span>
+<span class="nc" id="L105">        User updated = userService.updateUserStatus(id, statusRequest.getActive());</span>
+<span class="nc" id="L106">        return ResponseEntity.ok(new UserResponse(updated));</span>
+    }
+
+    /**
+     * Permite a un administrador cambiar la contraseña de cualquier usuario sin conocer la anterior.
+     *
+     * @param id ID del usuario.
+     * @param req DTO con la nueva contraseña.
+     * @return Mensaje de confirmación.
+     */
+    @PutMapping(&quot;/{id}/password&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;String&gt; updatePassword(@PathVariable Long id,
+                                                 @Valid @RequestBody AdminPasswordUpdateRequest req) {
+<span class="nc" id="L120">        log.debug(&quot;PUT /api/admin/users/{}/password&quot;, id);</span>
+<span class="nc" id="L121">        userService.updatePassword(id, req.getNewPassword());</span>
+<span class="nc" id="L122">        return ResponseEntity.ok(&quot;Contraseña actualizada exitosamente.&quot;);</span>
+    }
+
+    /**
+     * Elimina un usuario del sistema.
+     *
+     * @param id ID del usuario a eliminar.
+     * @return 204 No Content.
+     */
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;Void&gt; deleteUser(@PathVariable Long id) {
+<span class="nc" id="L134">        log.debug(&quot;DELETE /api/admin/users/{}&quot;, id);</span>
+<span class="nc" id="L135">        userService.deleteUser(id);</span>
+<span class="nc" id="L136">        return ResponseEntity.noContent().build();</span>
+    }
+
+    /**
+     * Asigna un usuario específico a una finca específica.
+     *
+     * @param userId ID del usuario.
+     * @param farmId ID de la finca.
+     * @return Mensaje de confirmación.
+     */
+    @PostMapping(&quot;/{userId}/farms/{farmId}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;String&gt; assignUserToFarm(@PathVariable Long userId, @PathVariable Integer farmId) {
+<span class="nc" id="L149">        log.info(&quot;Solicitud POST para asignar usuario ID {} a finca ID {}&quot;, userId, farmId);</span>
+<span class="nc" id="L150">        userService.assignUserToFarm(userId, farmId);</span>
+<span class="nc" id="L151">        return ResponseEntity.ok(String.format(&quot;Usuario con ID %d asignado exitosamente a la finca con ID %d.&quot;, userId, farmId));</span>
+    }
+
+    /**
+     * Desasigna un usuario específico de una finca específica.
+     *
+     * @param userId ID del usuario.
+     * @param farmId ID de la finca.
+     * @return 204 No Content.
+     */
+    @DeleteMapping(&quot;/{userId}/farms/{farmId}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    public ResponseEntity&lt;Void&gt; unassignUserFromFarm(@PathVariable Long userId, @PathVariable Integer farmId) {
+<span class="nc" id="L164">        log.info(&quot;Solicitud DELETE para desasignar usuario ID {} de la finca ID {}&quot;, userId, farmId);</span>
+<span class="nc" id="L165">        userService.unassignUserFromFarm(userId, farmId);</span>
+<span class="nc" id="L166">        return ResponseEntity.noContent().build();</span>
+    }
+
+    /**
+     * Obtiene una lista de todos los usuarios asignados a una finca específica.
+     *
+     * @param farmId ID de la finca.
+     * @return Lista de usuarios.
+     */
+    @GetMapping(&quot;/farms/{farmId}/users&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'ANALISTA')&quot;)
+    public ResponseEntity&lt;List&lt;UserResponse&gt;&gt; getUsersAssignedToFarm(@PathVariable Integer farmId) {
+<span class="nc" id="L178">        log.info(&quot;Solicitud GET para obtener usuarios de la finca ID {}&quot;, farmId);</span>
+<span class="nc" id="L179">        List&lt;UserResponse&gt; users = userService.findUsersByFarm(farmId).stream()</span>
+<span class="nc" id="L180">                .map(UserResponse::new)</span>
+<span class="nc" id="L181">                .collect(Collectors.toList());</span>
+<span class="nc" id="L182">        return ResponseEntity.ok(users);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

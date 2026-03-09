@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Irrigation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego</a> &gt; <span class="el_source">Irrigation.java</span></div><h1>Irrigation.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID; // Importar UUID
+
+<span class="pc bnc" id="L11" title="All 70 branches missed.">@Data</span>
+<span class="fc" id="L12">@NoArgsConstructor</span>
+<span class="nc" id="L13">@AllArgsConstructor</span>
+@Entity
+@Table(name = &quot;irrigation&quot;, uniqueConstraints = { // Asegurar unicidad del localMobileId si es global
+        @UniqueConstraint(columnNames = { &quot;local_mobile_id&quot; })
+})
+public class Irrigation {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;irrigation_id&quot;)
+<span class="fc" id="L23">    private Integer id; // ID del servidor</span>
+
+    @Column(name = &quot;local_mobile_id&quot;, nullable = false, unique = true, length = 36) // Nuevo campo
+<span class="fc" id="L26">    private String localMobileId; // Ej. un UUID generado por el móvil</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;sector_id&quot;, nullable = false)
+<span class="fc" id="L30">    private Sector sector;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;equipment_id&quot;, nullable = false)
+<span class="fc" id="L34">    private IrrigationEquipment equipment;</span>
+
+<span class="fc" id="L36">    private LocalDateTime startDatetime;</span>
+
+<span class="fc" id="L38">    private LocalDateTime endDatetime;</span>
+
+    @Column(name = &quot;water_amount&quot;, precision = 10, scale = 2)
+<span class="fc" id="L41">    private BigDecimal waterAmount;</span>
+
+    @Column(name = &quot;irrigation_hours&quot;, precision = 5, scale = 2)
+<span class="fc" id="L44">    private BigDecimal irrigationHours;</span>
+
+    // Método para generar un localMobileId si no se proporciona (aunque el móvil
+    // debería enviarlo)
+    @PrePersist
+    public void autofill() {
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (this.localMobileId == null) {</span>
+<span class="fc" id="L51">            this.localMobileId = UUID.randomUUID().toString();</span>
+        }
+<span class="fc" id="L53">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

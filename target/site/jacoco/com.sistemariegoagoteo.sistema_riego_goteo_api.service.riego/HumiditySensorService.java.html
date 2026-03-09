@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HumiditySensorService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego</a> &gt; <span class="el_source">HumiditySensorService.java</span></div><h1>HumiditySensorService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.HumiditySensorRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.HumiditySensor;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // &lt;-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.HumiditySensorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder; // &lt;-- IMPORTAR
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects; // &lt;-- IMPORTAR
+
+@Service
+<span class="fc" id="L22">@RequiredArgsConstructor</span>
+<span class="fc" id="L23">@Slf4j</span>
+public class HumiditySensorService {
+
+    private final HumiditySensorRepository humiditySensorRepository;
+    private final SectorRepository sectorRepository;
+    private final AuditService auditService;
+
+    @Transactional
+    public HumiditySensor createHumiditySensor(Integer farmId, Integer sectorId, HumiditySensorRequest request) {
+<span class="fc" id="L32">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L33">        Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)</span>
+<span class="pc" id="L34">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Sector&quot;, &quot;id&quot;, sectorId + &quot; para la finca ID &quot; + farmId));</span>
+
+<span class="fc" id="L36">        HumiditySensor sensor = new HumiditySensor();</span>
+<span class="fc" id="L37">        sensor.setSector(sector);</span>
+<span class="fc" id="L38">        sensor.setSensorType(request.getSensorType());</span>
+<span class="fc" id="L39">        sensor.setHumidityLevel(request.getHumidityLevel());</span>
+<span class="fc" id="L40">        sensor.setMeasurementDatetime(request.getMeasurementDatetime());</span>
+
+<span class="fc" id="L42">        HumiditySensor savedSensor = humiditySensorRepository.save(sensor);</span>
+
+        // --- AUDITORÍA DE CREACIÓN ---
+<span class="fc" id="L45">        auditService.logChange(currentUser, &quot;CREATE&quot;, HumiditySensor.class.getSimpleName(), &quot;sensorType&quot;, null, savedSensor.getSensorType());</span>
+
+<span class="fc" id="L47">        log.info(&quot;Creando sensor de humedad tipo '{}' para sector ID {}&quot;, request.getSensorType(), sectorId);</span>
+<span class="fc" id="L48">        return savedSensor;</span>
+    }
+
+    @Transactional
+    public HumiditySensor updateHumiditySensor(Integer sensorId, HumiditySensorRequest request) {
+<span class="fc" id="L53">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L54">        HumiditySensor sensor = getHumiditySensorById(sensorId);</span>
+
+        // --- AUDITORÍA DE ACTUALIZACIÓN ---
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        if (!Objects.equals(sensor.getSensorType(), request.getSensorType())) {</span>
+<span class="fc" id="L58">            auditService.logChange(currentUser, &quot;UPDATE&quot;, HumiditySensor.class.getSimpleName(), &quot;sensorType&quot;, sensor.getSensorType(), request.getSensorType());</span>
+        }
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">        if (!Objects.equals(sensor.getHumidityLevel(), request.getHumidityLevel())) {</span>
+<span class="nc" id="L61">             auditService.logChange(currentUser, &quot;UPDATE&quot;, HumiditySensor.class.getSimpleName(), &quot;humidityLevel&quot;, Objects.toString(sensor.getHumidityLevel(), null), Objects.toString(request.getHumidityLevel(), null));</span>
+        }
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (!Objects.equals(sensor.getMeasurementDatetime(), request.getMeasurementDatetime())) {</span>
+<span class="nc" id="L64">             auditService.logChange(currentUser, &quot;UPDATE&quot;, HumiditySensor.class.getSimpleName(), &quot;measurementDatetime&quot;, Objects.toString(sensor.getMeasurementDatetime(), null), Objects.toString(request.getMeasurementDatetime(), null));</span>
+        }
+
+<span class="fc" id="L67">        sensor.setSensorType(request.getSensorType());</span>
+<span class="fc" id="L68">        sensor.setHumidityLevel(request.getHumidityLevel());</span>
+<span class="fc" id="L69">        sensor.setMeasurementDatetime(request.getMeasurementDatetime());</span>
+
+<span class="fc" id="L71">        log.info(&quot;Actualizando sensor de humedad ID {}&quot;, sensorId);</span>
+<span class="fc" id="L72">        return humiditySensorRepository.save(sensor);</span>
+    }
+
+    @Transactional
+    public void deleteHumiditySensor(Integer sensorId) {
+<span class="fc" id="L77">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="fc" id="L78">        HumiditySensor sensor = getHumiditySensorById(sensorId);</span>
+
+        // --- AUDITORÍA DE BORRADO ---
+<span class="fc" id="L81">        auditService.logChange(currentUser, &quot;DELETE&quot;, HumiditySensor.class.getSimpleName(), &quot;id&quot;, sensor.getId().toString(), null);</span>
+
+<span class="fc" id="L83">        log.warn(&quot;Eliminando sensor de humedad ID {}&quot;, sensorId);</span>
+<span class="fc" id="L84">        humiditySensorRepository.delete(sensor);</span>
+<span class="fc" id="L85">    }</span>
+    
+    // --- MÉTODOS GET (SIN CAMBIOS) ---
+
+    @Transactional(readOnly = true)
+    public List&lt;HumiditySensor&gt; getHumiditySensorsBySector(Integer farmId, Integer sectorId) {
+<span class="nc" id="L91">        Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)</span>
+<span class="nc" id="L92">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Sector&quot;, &quot;id&quot;, sectorId + &quot; para la finca ID &quot; + farmId));</span>
+<span class="nc" id="L93">        return humiditySensorRepository.findBySectorOrderBySensorTypeAsc(sector);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public HumiditySensor getHumiditySensorById(Integer sensorId) {
+<span class="fc" id="L98">        return humiditySensorRepository.findById(sensorId)</span>
+<span class="pc" id="L99">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;HumiditySensor&quot;, &quot;id&quot;, sensorId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

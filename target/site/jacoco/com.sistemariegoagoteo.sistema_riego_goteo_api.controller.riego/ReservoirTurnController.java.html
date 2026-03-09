@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReservoirTurnController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego</a> &gt; <span class="el_source">ReservoirTurnController.java</span></div><h1>ReservoirTurnController.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.ReservoirTurnRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.ReservoirTurnResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.ReservoirTurn;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.ReservoirTurnService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping()
+<span class="fc" id="L20">@RequiredArgsConstructor</span>
+<span class="fc" id="L21">@Slf4j</span>
+public class ReservoirTurnController {
+
+    private final ReservoirTurnService reservoirTurnService;
+
+    /**
+     * Crea un nuevo turno de embalse para una fuente de agua específica de una finca.
+     * * @param farmId ID de la finca.
+     * @param waterSourceId ID de la fuente de agua (embalse).
+     * @param request Datos del turno.
+     * @return El turno creado.
+     */
+    @PostMapping(&quot;/api/farms/{farmId}/watersources/{waterSourceId}/reservoirturns&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasAuthority('GESTIONAR_TURNOS_EMBALSE')&quot;)
+    public ResponseEntity&lt;ReservoirTurnResponse&gt; createReservoirTurn(@PathVariable Integer farmId,
+                                                                     @PathVariable Integer waterSourceId,
+                                                                     @Valid @RequestBody ReservoirTurnRequest request) {
+<span class="nc" id="L38">        log.info(&quot;Solicitud POST para crear turno de embalse para fuente ID {} en finca ID {}&quot;, waterSourceId, farmId);</span>
+<span class="nc" id="L39">        ReservoirTurn newTurn = reservoirTurnService.createReservoirTurn(farmId, waterSourceId, request);</span>
+<span class="nc" id="L40">        return ResponseEntity.status(HttpStatus.CREATED).body(new ReservoirTurnResponse(newTurn));</span>
+    }
+
+    /**
+     * Obtiene todos los turnos de embalse para una fuente de agua específica de una finca.
+     * * @param farmId ID de la finca.
+     * @param waterSourceId ID de la fuente de agua.
+     * @return Lista de turnos asignados a esa fuente.
+     */
+    @GetMapping(&quot;/api/farms/{farmId}/watersources/{waterSourceId}/reservoirturns&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_TURNOS_EMBALSE')&quot;)
+    public ResponseEntity&lt;List&lt;ReservoirTurnResponse&gt;&gt; getReservoirTurnsByWaterSource(@PathVariable Integer farmId, @PathVariable Integer waterSourceId) {
+<span class="nc" id="L52">        log.info(&quot;Solicitud GET para obtener turnos de embalse para fuente ID {} en finca ID {}&quot;, waterSourceId, farmId);</span>
+<span class="nc" id="L53">        List&lt;ReservoirTurnResponse&gt; responses = reservoirTurnService.getReservoirTurnsByWaterSource(farmId, waterSourceId)</span>
+<span class="nc" id="L54">                .stream()</span>
+<span class="nc" id="L55">                .map(ReservoirTurnResponse::new)</span>
+<span class="nc" id="L56">                .collect(Collectors.toList());</span>
+<span class="nc" id="L57">        return ResponseEntity.ok(responses);</span>
+    }
+
+    /**
+     * Obtiene un turno de embalse específico por su ID global.
+     * * @param turnId ID del turno.
+     * @return Detalle del turno.
+     */
+    @GetMapping(&quot;/api/reservoirturns/{turnId}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'ANALISTA', 'OPERARIO') or hasAuthority('VER_TURNOS_EMBALSE')&quot;)
+    public ResponseEntity&lt;ReservoirTurnResponse&gt; getReservoirTurnById(@PathVariable Integer turnId) {
+<span class="nc" id="L68">        log.info(&quot;Solicitud GET para obtener turno de embalse ID: {}&quot;, turnId);</span>
+<span class="nc" id="L69">        ReservoirTurn turn = reservoirTurnService.getReservoirTurnById(turnId);</span>
+<span class="nc" id="L70">        return ResponseEntity.ok(new ReservoirTurnResponse(turn));</span>
+    }
+
+    /**
+     * Actualiza un turno de embalse existente.
+     * * @param turnId ID del turno a actualizar.
+     * @param request Nuevos datos del turno.
+     * @return Turno actualizado.
+     */
+    @PutMapping(&quot;/api/reservoirturns/{turnId}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasAuthority('GESTIONAR_TURNOS_EMBALSE')&quot;)
+    public ResponseEntity&lt;ReservoirTurnResponse&gt; updateReservoirTurn(@PathVariable Integer turnId,
+                                                                     @Valid @RequestBody ReservoirTurnRequest request) {
+<span class="nc" id="L83">        log.info(&quot;Solicitud PUT para actualizar turno de embalse ID {}&quot;, turnId);</span>
+<span class="nc" id="L84">        ReservoirTurn updatedTurn = reservoirTurnService.updateReservoirTurn(turnId, request);</span>
+<span class="nc" id="L85">        return ResponseEntity.ok(new ReservoirTurnResponse(updatedTurn));</span>
+    }
+
+    /**
+     * Elimina un turno de embalse.
+     * * @param turnId ID del turno a eliminar.
+     * @return 204 No Content.
+     */
+    @DeleteMapping(&quot;/api/reservoirturns/{turnId}&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN') or hasAuthority('GESTIONAR_TURNOS_EMBALSE')&quot;)
+    public ResponseEntity&lt;Void&gt; deleteReservoirTurn(@PathVariable Integer turnId) {
+<span class="nc" id="L96">        log.info(&quot;Solicitud DELETE para eliminar turno de embalse ID: {}&quot;, turnId);</span>
+<span class="nc" id="L97">        reservoirTurnService.deleteReservoirTurn(turnId);</span>
+<span class="nc" id="L98">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

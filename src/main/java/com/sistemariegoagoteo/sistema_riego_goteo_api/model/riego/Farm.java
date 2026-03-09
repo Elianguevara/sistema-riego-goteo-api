@@ -1,5 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -65,6 +66,7 @@ public class Farm {
     @ManyToMany(mappedBy = "farms", fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @JsonIgnore
     private Set<User> users = new HashSet<>();
 
     /**

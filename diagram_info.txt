@@ -1,0 +1,187 @@
+ChangeHistory.java: public class ChangeHistory {
+ChangeHistory.java: private Integer id;
+ChangeHistory.java: @ManyToOne(fetch = FetchType.LAZY)
+ChangeHistory.java: private User user;
+ChangeHistory.java: private String actionType;
+ChangeHistory.java: private String affectedTable;
+ChangeHistory.java: private String changedField;
+ChangeHistory.java: private String oldValue;
+ChangeHistory.java: private String newValue;
+ChangeHistory.java: private Date changeDatetime;
+Synchronization.java: public class Synchronization {
+Synchronization.java: private Integer id;
+Synchronization.java: private String modifiedTable;
+Synchronization.java: private Integer modifiedRecordId;
+Synchronization.java: private Date modificationDatetime;
+Synchronization.java: private Boolean isSynchronized;
+SystemConfig.java: public class SystemConfig {
+SystemConfig.java: private String configKey;
+SystemConfig.java: private String configValue;
+SystemConfig.java: private ConfigType configType;
+SystemConfig.java: private String description;
+AppNotification.java: public class AppNotification {
+AppNotification.java: private Long id;
+AppNotification.java: private String message;
+AppNotification.java: private NotificationType type;
+AppNotification.java: @ManyToOne(fetch = FetchType.LAZY)
+AppNotification.java: private User destinatario;
+AppNotification.java: private Date createdAt;
+AppNotification.java: private String entityType; // ej: "TASK", "ALERT", "MAINTENANCE"
+AppNotification.java: private Long entityId;
+AppNotification.java: private String actionUrl;
+ReportTask.java: public class ReportTask {
+ReportTask.java: private UUID id;
+ReportTask.java: private ReportStatus status;
+ReportTask.java: private String reportType;
+ReportTask.java: private String format;
+ReportTask.java: private String filePath;
+ReportTask.java: private String errorMessage;
+ReportTask.java: private LocalDateTime createdAt;
+ReportTask.java: private LocalDateTime completedAt;
+EnergyConsumption.java: public class EnergyConsumption {
+EnergyConsumption.java: private Integer id;
+EnergyConsumption.java: @ManyToOne(fetch = FetchType.LAZY)
+EnergyConsumption.java: private Farm farm;
+EnergyConsumption.java: private Date consumptionDate;
+EnergyConsumption.java: private BigDecimal kwhConsumed;
+EnergyConsumption.java: private String energyType;
+Farm.java: public class Farm {
+Farm.java: private Integer id;
+Farm.java: private String name;
+Farm.java: private String location;
+Farm.java: private BigDecimal reservoirCapacity;
+Farm.java: private BigDecimal farmSize;
+Farm.java: @ManyToMany(mappedBy = "farms", fetch = FetchType.LAZY)
+Farm.java: @OneToMany(mappedBy = "farm", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Farm.java: @OneToMany(mappedBy = "farm", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Farm.java: @OneToMany(mappedBy = "farm", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Farm.java: @OneToMany(mappedBy = "farm", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Farm.java: @OneToMany(mappedBy = "farm", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Farm.java: @OneToMany(mappedBy = "farm", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Farm.java: private BigDecimal latitude;
+Farm.java: private BigDecimal longitude;
+Fertilization.java: public class Fertilization {
+Fertilization.java: private Integer id;
+Fertilization.java: private String localMobileId;
+Fertilization.java: private Date date;
+Fertilization.java: private String fertilizerType;
+Fertilization.java: private BigDecimal quantity;
+Fertilization.java: private UnitOfMeasure quantityUnit;
+Fertilization.java: @ManyToOne(fetch = FetchType.LAZY)
+Fertilization.java: private Sector sector;
+HumidityAlert.java: public class HumidityAlert {
+HumidityAlert.java: private Integer id;
+HumidityAlert.java: @ManyToOne(fetch = FetchType.LAZY)
+HumidityAlert.java: private HumiditySensor humiditySensor;
+HumidityAlert.java: private BigDecimal humidityLevel;
+HumidityAlert.java: private Date alertDatetime;
+HumidityAlert.java: private String alertMessage;
+HumidityAlert.java: private BigDecimal humidityThreshold;
+HumiditySensor.java: public class HumiditySensor {
+HumiditySensor.java: private Integer id;
+HumiditySensor.java: @ManyToOne(fetch = FetchType.LAZY)
+HumiditySensor.java: private Sector sector;
+HumiditySensor.java: private String sensorType;
+HumiditySensor.java: private BigDecimal humidityLevel;
+HumiditySensor.java: private Date measurementDatetime;
+HumiditySensor.java: @OneToMany(mappedBy = "humiditySensor", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Irrigation.java: public class Irrigation {
+Irrigation.java: private Integer id; // ID del servidor
+Irrigation.java: private String localMobileId; // Ej. un UUID generado por el móvil
+Irrigation.java: @ManyToOne(fetch = FetchType.LAZY)
+Irrigation.java: private Sector sector;
+Irrigation.java: @ManyToOne(fetch = FetchType.LAZY)
+Irrigation.java: private IrrigationEquipment equipment;
+Irrigation.java: private LocalDateTime startDatetime;
+Irrigation.java: private LocalDateTime endDatetime;
+Irrigation.java: private BigDecimal waterAmount;
+Irrigation.java: private BigDecimal irrigationHours;
+IrrigationEquipment.java: public class IrrigationEquipment {
+IrrigationEquipment.java: private Integer id;
+IrrigationEquipment.java: private String name;
+IrrigationEquipment.java: private BigDecimal measuredFlow;
+IrrigationEquipment.java: private Boolean hasFlowMeter;
+IrrigationEquipment.java: @ManyToOne(fetch = FetchType.LAZY)
+IrrigationEquipment.java: private Farm farm;
+IrrigationEquipment.java: private String equipmentType;
+IrrigationEquipment.java: private String equipmentStatus;
+IrrigationEquipment.java: @OneToMany(mappedBy = "irrigationEquipment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY) // mappedBy actualizado
+IrrigationEquipment.java: @OneToMany(mappedBy = "equipment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Maintenance.java: public class Maintenance {
+Maintenance.java: private Integer id;
+Maintenance.java: private String localMobileId;
+Maintenance.java: @ManyToOne(fetch = FetchType.LAZY)
+Maintenance.java: private IrrigationEquipment irrigationEquipment;
+Maintenance.java: private Date date;
+Maintenance.java: private String description;
+Maintenance.java: private BigDecimal workHours;
+OperationLog.java: public class OperationLog {
+OperationLog.java: private Integer id;
+OperationLog.java: private String localMobileId;
+OperationLog.java: @ManyToOne(fetch = FetchType.LAZY)
+OperationLog.java: private Farm farm;
+OperationLog.java: private Date operationDatetime;
+OperationLog.java: private String operationType;
+OperationLog.java: private String description;
+Precipitation.java: public class Precipitation {
+Precipitation.java: private Integer id;
+Precipitation.java: @ManyToOne(fetch = FetchType.LAZY)
+Precipitation.java: private Farm farm;
+Precipitation.java: private LocalDate precipitationDate;
+Precipitation.java: private BigDecimal mmRain;
+Precipitation.java: private BigDecimal mmEffectiveRain;
+ReservoirTurn.java: public class ReservoirTurn {
+ReservoirTurn.java: private Integer id;
+ReservoirTurn.java: @ManyToOne(fetch = FetchType.LAZY)
+ReservoirTurn.java: private WaterSource waterSource;
+ReservoirTurn.java: private Date startDatetime;
+ReservoirTurn.java: private Date endDatetime;
+Sector.java: public class Sector {
+Sector.java: private Integer id;
+Sector.java: private String name;
+Sector.java: @ManyToOne(fetch = FetchType.LAZY)
+Sector.java: private Farm farm;
+Sector.java: @ManyToOne(fetch = FetchType.LAZY)
+Sector.java: private IrrigationEquipment equipment; // Referencia actualizada
+Sector.java: @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Sector.java: @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Sector.java: @OneToMany(mappedBy = "sector", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Task.java: public class Task {
+Task.java: private Long id;
+Task.java: @ManyToOne(fetch = FetchType.LAZY)
+Task.java: private Sector sector;
+Task.java: private String description;
+Task.java: private TaskStatus status;
+Task.java: @ManyToOne(fetch = FetchType.LAZY)
+Task.java: private User createdBy; // El Analista que crea la tarea
+Task.java: @ManyToOne(fetch = FetchType.LAZY)
+Task.java: private User assignedTo; // El Operario al que se le asigna
+Task.java: private Date createdAt;
+Task.java: private Date updatedAt;
+WaterSource.java: public class WaterSource {
+WaterSource.java: private Integer id;
+WaterSource.java: @ManyToOne(fetch = FetchType.LAZY)
+WaterSource.java: private Farm farm;
+WaterSource.java: private String type;
+WaterSource.java: @OneToMany(mappedBy = "waterSource", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+Permission.java: public class Permission {
+Permission.java: private Integer id;
+Permission.java: private String permissionName;
+Permission.java: // añadirías un @ManyToMany(mappedBy = "permissions") aquí.
+Permission.java: // @ManyToMany(mappedBy = "permissions")
+Role.java: public class Role {
+Role.java: private Integer id;
+Role.java: private String roleName;
+Role.java: @ManyToMany(fetch = FetchType.EAGER)
+User.java: public class User implements UserDetails {
+User.java: private Long id;
+User.java: private String name;
+User.java: private String username;
+User.java: private String password;
+User.java: private String email;
+User.java: private Date lastLogin;
+User.java: @ManyToOne(fetch = FetchType.EAGER)
+User.java: private Role rol;
+User.java: @ManyToMany(fetch = FetchType.LAZY)
+User.java: private String fcmToken;
+User.java: // Asegúrate de que Role.java tenga la relación @ManyToMany con Permission y que

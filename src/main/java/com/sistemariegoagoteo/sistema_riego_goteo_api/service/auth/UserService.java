@@ -371,6 +371,15 @@ public class UserService {
                 return userRepository.findByFarms_Id(farmId);
         }
 
+        @Transactional
+        public void saveFcmToken(String username, String fcmToken) {
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+                user.setFcmToken(fcmToken);
+                userRepository.save(user);
+                log.info("FCM token actualizado para el usuario: {}", username);
+        }
+
         // --- MÉTODO PARA EL DASHBOARD ---
 
         @Transactional(readOnly = true)

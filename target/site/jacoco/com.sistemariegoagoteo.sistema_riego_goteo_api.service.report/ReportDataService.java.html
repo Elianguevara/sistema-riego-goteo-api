@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportDataService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.report</a> &gt; <span class="el_source">ReportDataService.java</span></div><h1>ReportDataService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.report;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.*;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.report.projection.*;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.*;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L20">@RequiredArgsConstructor</span>
+public class ReportDataService {
+
+        private final FarmRepository farmRepository;
+        private final SectorRepository sectorRepository;
+        private final IrrigationRepository irrigationRepository;
+        private final PrecipitationRepository precipitationRepository;
+        private final MaintenanceRepository maintenanceRepository;
+        private final FertilizationRepository fertilizationRepository;
+        private final TaskRepository taskRepository;
+
+        public WaterBalanceReportDTO getWaterBalanceData(Integer farmId, Date startDate, Date endDate,
+                        List&lt;Integer&gt; sectorIds) {
+<span class="fc" id="L33">                Farm farm = farmRepository.findById(farmId)</span>
+<span class="pc" id="L34">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+<span class="pc bpc" id="L36" title="3 of 4 branches missed.">                List&lt;Integer&gt; targetSectorIds = (sectorIds == null || sectorIds.isEmpty())</span>
+<span class="fc" id="L37">                                ? sectorRepository.findByFarm_Id(farmId).stream().map(Sector::getId)</span>
+<span class="fc" id="L38">                                                .collect(Collectors.toList())</span>
+<span class="pc" id="L39">                                : sectorIds;</span>
+
+<span class="fc" id="L41">                WaterBalanceReportDTO report = new WaterBalanceReportDTO();</span>
+<span class="fc" id="L42">                report.setFarmName(farm.getName());</span>
+
+<span class="fc" id="L44">                SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="fc" id="L45">                WaterBalanceReportDTO.DateRange dateRange = new WaterBalanceReportDTO.DateRange();</span>
+<span class="fc" id="L46">                dateRange.setStart(sdf.format(startDate));</span>
+<span class="fc" id="L47">                dateRange.setEnd(sdf.format(endDate));</span>
+<span class="fc" id="L48">                report.setDateRange(dateRange);</span>
+
+                // Inicializar listas para evitar NullPointerException
+<span class="fc" id="L51">                report.setSectors(new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L52">                report.setFarmTotals(new WaterBalanceReportDTO.FarmTotals());</span>
+
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">                if (targetSectorIds.isEmpty()) {</span>
+<span class="nc" id="L55">                        return report;</span>
+                }
+
+                // AGREGACIÓN EN DB: Precipitaciones
+<span class="fc" id="L59">                LocalDate startL = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();</span>
+<span class="fc" id="L60">                LocalDate endL = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();</span>
+<span class="fc" id="L61">                List&lt;DailyRainProjection&gt; dailyRains = precipitationRepository.findDailyRainByFarm(farmId, startL,</span>
+                                endL);
+<span class="fc" id="L63">                Map&lt;LocalDate, BigDecimal&gt; dailyRainMap = dailyRains.stream()</span>
+<span class="fc" id="L64">                                .collect(Collectors.toMap(DailyRainProjection::getRainDate,</span>
+                                                DailyRainProjection::getAmount));
+
+                // AGREGACIÓN EN DB: Resumen por Sector
+<span class="fc" id="L68">                LocalDateTime startDT = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();</span>
+<span class="fc" id="L69">                LocalDateTime endDT = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();</span>
+<span class="fc" id="L70">                List&lt;SectorIrrigationProjection&gt; sectorSummaries = irrigationRepository</span>
+<span class="fc" id="L71">                                .getSectorIrrigationTotals(farmId, targetSectorIds, startDT, endDT);</span>
+<span class="fc" id="L72">                Map&lt;Integer, SectorIrrigationProjection&gt; sectorSummaryMap = sectorSummaries.stream()</span>
+<span class="fc" id="L73">                                .collect(Collectors.toMap(SectorIrrigationProjection::getSectorId, s -&gt; s));</span>
+
+<span class="fc" id="L75">                List&lt;WaterBalanceReportDTO.SectorData&gt; sectorDataList = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L76">                LocalDate startLocalDate = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();</span>
+<span class="fc" id="L77">                LocalDate endLocalDate = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();</span>
+
+<span class="fc bfc" id="L79" title="All 2 branches covered.">                for (Integer sectorId : targetSectorIds) {</span>
+<span class="fc" id="L80">                        Sector sector = sectorRepository.findById(sectorId).orElse(null);</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">                        if (sector == null)</span>
+<span class="nc" id="L82">                                continue;</span>
+
+<span class="fc" id="L84">                        WaterBalanceReportDTO.SectorData sectorData = new WaterBalanceReportDTO.SectorData();</span>
+<span class="fc" id="L85">                        sectorData.setSectorId(sector.getId());</span>
+<span class="fc" id="L86">                        sectorData.setSectorName(sector.getName());</span>
+
+                        // AGREGACIÓN EN DB: Riegos Diarios por Sector
+<span class="fc" id="L89">                        LocalDateTime startSDT = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();</span>
+<span class="fc" id="L90">                        LocalDateTime endSDT = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();</span>
+<span class="fc" id="L91">                        List&lt;DailyIrrigationProjection&gt; dailyIrrigations = irrigationRepository</span>
+<span class="fc" id="L92">                                        .getDailyIrrigationTotals(sectorId, startSDT, endSDT);</span>
+<span class="fc" id="L93">                        Map&lt;LocalDate, DailyIrrigationProjection&gt; dailyIrrigationMap = dailyIrrigations.stream()</span>
+<span class="fc" id="L94">                                        .collect(Collectors.toMap(DailyIrrigationProjection::getIrrigationDate,</span>
+<span class="nc" id="L95">                                                        i -&gt; i));</span>
+
+<span class="fc" id="L97">                        List&lt;WaterBalanceReportDTO.DailyData&gt; dailyDataList = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">                        for (LocalDate date = startLocalDate; !date.isAfter(endLocalDate); date = date.plusDays(1)) {</span>
+<span class="fc" id="L99">                                WaterBalanceReportDTO.DailyData daily = new WaterBalanceReportDTO.DailyData();</span>
+<span class="fc" id="L100">                                daily.setDate(date.toString());</span>
+
+<span class="fc" id="L102">                                DailyIrrigationProjection dailyIrr = dailyIrrigationMap.get(date);</span>
+<span class="fc" id="L103">                                daily.setIrrigationWater(</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">                                                dailyIrr != null ? dailyIrr.getWaterAmount() : BigDecimal.ZERO);</span>
+<span class="fc" id="L105">                                daily.setEffectiveRain(dailyRainMap.getOrDefault(date, BigDecimal.ZERO));</span>
+<span class="fc" id="L106">                                dailyDataList.add(daily);</span>
+                        }
+<span class="fc" id="L108">                        sectorData.setDailyData(dailyDataList);</span>
+
+<span class="fc" id="L110">                        WaterBalanceReportDTO.Summary summary = new WaterBalanceReportDTO.Summary();</span>
+<span class="fc" id="L111">                        SectorIrrigationProjection sectorSum = sectorSummaryMap.get(sectorId);</span>
+<span class="fc" id="L112">                        summary.setTotalIrrigationWater(</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">                                        sectorSum != null ? sectorSum.getWaterAmount() : BigDecimal.ZERO);</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">                        summary.setTotalIrrigationHours(sectorSum != null ? sectorSum.getHours() : BigDecimal.ZERO);</span>
+<span class="fc" id="L115">                        summary.setTotalEffectiveRain(dailyRains.stream().map(DailyRainProjection::getAmount)</span>
+<span class="fc" id="L116">                                        .reduce(BigDecimal.ZERO, BigDecimal::add));</span>
+
+<span class="fc" id="L118">                        sectorData.setSummary(summary);</span>
+<span class="fc" id="L119">                        sectorDataList.add(sectorData);</span>
+<span class="fc" id="L120">                }</span>
+<span class="fc" id="L121">                report.setSectors(sectorDataList);</span>
+
+<span class="fc" id="L123">                WaterBalanceReportDTO.FarmTotals farmTotals = new WaterBalanceReportDTO.FarmTotals();</span>
+<span class="fc" id="L124">                farmTotals.setTotalIrrigationWater(</span>
+<span class="fc" id="L125">                                sectorSummaries.stream().map(SectorIrrigationProjection::getWaterAmount)</span>
+<span class="fc" id="L126">                                                .reduce(BigDecimal.ZERO, BigDecimal::add));</span>
+<span class="fc" id="L127">                farmTotals.setTotalEffectiveRain(dailyRains.stream().map(DailyRainProjection::getAmount)</span>
+<span class="fc" id="L128">                                .reduce(BigDecimal.ZERO, BigDecimal::add));</span>
+<span class="fc" id="L129">                farmTotals.setTotalIrrigationHours(sectorSummaries.stream().map(SectorIrrigationProjection::getHours)</span>
+<span class="fc" id="L130">                                .reduce(BigDecimal.ZERO, BigDecimal::add));</span>
+<span class="fc" id="L131">                report.setFarmTotals(farmTotals);</span>
+
+<span class="fc" id="L133">                return report;</span>
+        }
+
+        public OperationsLogReportDTO getOperationsLogData(Integer farmId, Date startDate, Date endDate,
+                        String operationType, Long userId) {
+<span class="fc" id="L138">                Farm farm = farmRepository.findById(farmId)</span>
+<span class="pc" id="L139">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+<span class="fc" id="L141">                List&lt;OperationLogProjection&gt; allLogs = new ArrayList&lt;&gt;();</span>
+
+                // AGREGACIÓN/PROYECCIÓN EN DB
+<span class="fc" id="L144">                LocalDateTime startDT = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();</span>
+<span class="fc" id="L145">                LocalDateTime endDT = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();</span>
+<span class="pc bpc" id="L146" title="2 of 4 branches missed.">                if (operationType == null || &quot;RIEGO&quot;.equalsIgnoreCase(operationType)) {</span>
+<span class="fc" id="L147">                        allLogs.addAll(irrigationRepository.getIrrigationLogs(farmId, startDT, endDT));</span>
+                }
+<span class="pc bpc" id="L149" title="2 of 4 branches missed.">                if (operationType == null || &quot;MANTENIMIENTO&quot;.equalsIgnoreCase(operationType)) {</span>
+<span class="nc" id="L150">                        allLogs.addAll(maintenanceRepository.getMaintenanceLogs(farmId, startDate, endDate));</span>
+                }
+<span class="pc bpc" id="L152" title="2 of 4 branches missed.">                if (operationType == null || &quot;FERTILIZACION&quot;.equalsIgnoreCase(operationType)) {</span>
+<span class="nc" id="L153">                        allLogs.addAll(fertilizationRepository.getFertilizationLogs(farmId, startDate, endDate));</span>
+                }
+
+<span class="fc" id="L156">                OperationsLogReportDTO report = new OperationsLogReportDTO();</span>
+<span class="fc" id="L157">                report.setFarmName(farm.getName());</span>
+<span class="fc" id="L158">                OperationsLogReportDTO.DateRange dateRange = new OperationsLogReportDTO.DateRange();</span>
+<span class="fc" id="L159">                SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="fc" id="L160">                dateRange.setStart(sdf.format(startDate));</span>
+<span class="fc" id="L161">                dateRange.setEnd(sdf.format(endDate));</span>
+<span class="fc" id="L162">                report.setDateRange(dateRange);</span>
+
+<span class="fc" id="L164">                report.setOperations(allLogs.stream()</span>
+<span class="fc" id="L165">                                .sorted(Comparator.comparing(OperationLogProjection::getDatetime).reversed())</span>
+<span class="fc" id="L166">                                .map(proj -&gt; {</span>
+<span class="fc" id="L167">                                        OperationsLogReportDTO.Operation op = new OperationsLogReportDTO.Operation();</span>
+<span class="fc" id="L168">                                        op.setDatetime(proj.getDatetime().toString());</span>
+<span class="fc" id="L169">                                        op.setType(proj.getType());</span>
+<span class="fc" id="L170">                                        op.setDescription(proj.getDescription());</span>
+<span class="fc" id="L171">                                        op.setLocation(proj.getLocation());</span>
+<span class="fc" id="L172">                                        op.setUserName(proj.getUserName());</span>
+<span class="fc" id="L173">                                        return op;</span>
+<span class="fc" id="L174">                                }).collect(Collectors.toList()));</span>
+
+<span class="fc" id="L176">                return report;</span>
+        }
+
+        public PeriodSummaryReportDTO getPeriodSummaryData(Integer farmId, Date startDate, Date endDate) {
+<span class="fc" id="L180">                Farm farm = farmRepository.findById(farmId)</span>
+<span class="pc" id="L181">                                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+<span class="fc" id="L183">                PeriodSummaryReportDTO report = new PeriodSummaryReportDTO();</span>
+<span class="fc" id="L184">                report.setFarmName(farm.getName());</span>
+
+<span class="fc" id="L186">                PeriodSummaryReportDTO.Period period = new PeriodSummaryReportDTO.Period();</span>
+<span class="fc" id="L187">                SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span>
+<span class="fc" id="L188">                period.setStart(sdf.format(startDate));</span>
+<span class="fc" id="L189">                period.setEnd(sdf.format(endDate));</span>
+<span class="fc" id="L190">                report.setPeriod(period);</span>
+
+                // Water Summary (Using existings totals + optimized queries)
+<span class="fc" id="L193">                PeriodSummaryReportDTO.WaterSummary waterSummary = new PeriodSummaryReportDTO.WaterSummary();</span>
+
+                // Obtenemos los sectores para el farm
+<span class="fc" id="L196">                List&lt;Integer&gt; sectorIds = sectorRepository.findByFarm_Id(farmId).stream().map(Sector::getId)</span>
+<span class="fc" id="L197">                                .collect(Collectors.toList());</span>
+<span class="fc" id="L198">                LocalDateTime startDT = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();</span>
+<span class="fc" id="L199">                LocalDateTime endDT = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();</span>
+<span class="fc" id="L200">                List&lt;SectorIrrigationProjection&gt; sectorSummaries = irrigationRepository</span>
+<span class="fc" id="L201">                                .getSectorIrrigationTotals(farmId, sectorIds, startDT, endDT);</span>
+
+<span class="fc" id="L203">                waterSummary.setTotalIrrigationWaterM3(</span>
+<span class="fc" id="L204">                                sectorSummaries.stream().map(SectorIrrigationProjection::getWaterAmount)</span>
+<span class="fc" id="L205">                                                .reduce(BigDecimal.ZERO, BigDecimal::add));</span>
+<span class="fc" id="L206">                waterSummary.setTotalIrrigationHours(sectorSummaries.stream().map(SectorIrrigationProjection::getHours)</span>
+<span class="fc" id="L207">                                .reduce(BigDecimal.ZERO, BigDecimal::add));</span>
+
+<span class="fc" id="L209">                LocalDate startL = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();</span>
+<span class="fc" id="L210">                LocalDate endL = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();</span>
+<span class="fc" id="L211">                List&lt;DailyRainProjection&gt; rains = precipitationRepository.findDailyRainByFarm(farmId, startL,</span>
+                                endL);
+<span class="fc" id="L213">                waterSummary.setTotalPrecipitationMM(rains.stream().map(DailyRainProjection::getAmount)</span>
+<span class="fc" id="L214">                                .reduce(BigDecimal.ZERO, BigDecimal::add));</span>
+<span class="fc" id="L215">                waterSummary.setTotalEffectivePrecipitationMM(rains.stream().map(DailyRainProjection::getAmount)</span>
+<span class="fc" id="L216">                                .reduce(BigDecimal.ZERO, BigDecimal::add));</span>
+<span class="fc" id="L217">                report.setWaterSummary(waterSummary);</span>
+
+                // Operations Summary
+<span class="fc" id="L220">                PeriodSummaryReportDTO.OperationsSummary opsSummary = new PeriodSummaryReportDTO.OperationsSummary();</span>
+<span class="fc" id="L221">                opsSummary.setTasksCreated(</span>
+<span class="fc" id="L222">                                taskRepository.countBySector_Farm_IdAndCreatedAtBetween(farmId, startDate, endDate));</span>
+<span class="fc" id="L223">                opsSummary.setTasksCompleted(</span>
+<span class="fc" id="L224">                                taskRepository.countBySector_Farm_IdAndCreatedAtBetweenAndStatus(farmId, startDate,</span>
+                                                endDate, TaskStatus.COMPLETADA));
+<span class="fc" id="L226">                opsSummary.setMaintenanceRecords(</span>
+<span class="fc" id="L227">                                maintenanceRepository.countByIrrigationEquipment_Farm_IdAndDateBetween(farmId,</span>
+                                                startDate, endDate));
+<span class="fc" id="L229">                opsSummary.setFertilizationRecords(</span>
+<span class="fc" id="L230">                                fertilizationRepository.countBySector_Farm_IdAndDateBetween(farmId, startDate,</span>
+                                                endDate));
+<span class="fc" id="L232">                report.setOperationsSummary(opsSummary);</span>
+
+                // Water Usage By Sector
+<span class="fc" id="L235">                report.setWaterUsageBySector(sectorSummaries.stream()</span>
+<span class="fc" id="L236">                                .map(s -&gt; {</span>
+<span class="fc" id="L237">                                        PeriodSummaryReportDTO.WaterUsageBySector usage = new PeriodSummaryReportDTO.WaterUsageBySector();</span>
+<span class="fc" id="L238">                                        usage.setSectorName(s.getSectorName());</span>
+<span class="fc" id="L239">                                        usage.setTotalWaterM3(s.getWaterAmount());</span>
+<span class="fc" id="L240">                                        return usage;</span>
+<span class="fc" id="L241">                                }).collect(Collectors.toList()));</span>
+
+<span class="fc" id="L243">                return report;</span>
+        }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

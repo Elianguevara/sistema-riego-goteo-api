@@ -23,13 +23,14 @@ public class IrrigationResponse {
     private String farmName; // Derivado del sector
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime startDatetime;
+    private LocalDateTime startDateTime;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime endDatetime;
+    private LocalDateTime endDateTime;
 
     private BigDecimal waterAmount;
     private BigDecimal irrigationHours;
+    private String message;
 
     public IrrigationResponse(Irrigation irrigation) {
         this.id = irrigation.getId();
@@ -45,9 +46,10 @@ public class IrrigationResponse {
             this.equipmentId = irrigation.getEquipment().getId();
             this.equipmentName = irrigation.getEquipment().getName();
         }
-        this.startDatetime = irrigation.getStartDatetime();
-        this.endDatetime = irrigation.getEndDatetime();
+        this.startDateTime = irrigation.getStartDatetime();
+        this.endDateTime = irrigation.getEndDatetime();
         this.waterAmount = irrigation.getWaterAmount();
         this.irrigationHours = irrigation.getIrrigationHours();
+        this.message = "Riego registrado exitosamente. ID: " + irrigation.getId();
     }
 }

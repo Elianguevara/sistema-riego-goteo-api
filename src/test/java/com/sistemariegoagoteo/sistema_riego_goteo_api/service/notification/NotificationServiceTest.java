@@ -40,6 +40,9 @@ class NotificationServiceTest {
     @Mock
     private NotificationRepository notificationRepository;
 
+    @Mock
+    private FcmService fcmService;
+
     @InjectMocks
     private NotificationService notificationService;
 

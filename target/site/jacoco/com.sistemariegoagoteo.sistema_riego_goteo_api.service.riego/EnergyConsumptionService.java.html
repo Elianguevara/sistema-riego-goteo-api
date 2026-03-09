@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EnergyConsumptionService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego</a> &gt; <span class="el_source">EnergyConsumptionService.java</span></div><h1>EnergyConsumptionService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.EnergyConsumptionRequest;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.EnergyConsumption;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User; // &lt;-- IMPORTAR
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.EnergyConsumptionRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder; // &lt;-- IMPORTAR
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.Objects; // &lt;-- IMPORTAR
+
+@Service
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+<span class="fc" id="L24">@Slf4j</span>
+public class EnergyConsumptionService {
+
+    private final EnergyConsumptionRepository energyConsumptionRepository;
+    private final FarmRepository farmRepository;
+    private final AuditService auditService;
+
+    @Transactional
+    public EnergyConsumption createEnergyConsumption(Integer farmId, EnergyConsumptionRequest request) {
+<span class="nc" id="L33">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L34">        Farm farm = farmRepository.findById(farmId)</span>
+<span class="nc" id="L35">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+
+        // Validación de duplicados
+<span class="nc" id="L38">        energyConsumptionRepository.findByFarmAndConsumptionDateAndEnergyType(farm, request.getConsumptionDate(), request.getEnergyType())</span>
+<span class="nc" id="L39">            .ifPresent(ec -&gt; {</span>
+<span class="nc" id="L40">                throw new IllegalArgumentException(</span>
+<span class="nc" id="L41">                    &quot;Ya existe un registro de consumo de energía para la finca '&quot; + farm.getName() +</span>
+<span class="nc" id="L42">                    &quot;' en la fecha &quot; + request.getConsumptionDate() +</span>
+<span class="nc" id="L43">                    &quot; y tipo de energía '&quot; + request.getEnergyType() + &quot;'.&quot;</span>
+                );
+            });
+
+<span class="nc" id="L47">        EnergyConsumption energyConsumption = new EnergyConsumption();</span>
+<span class="nc" id="L48">        energyConsumption.setFarm(farm);</span>
+<span class="nc" id="L49">        energyConsumption.setConsumptionDate(request.getConsumptionDate());</span>
+<span class="nc" id="L50">        energyConsumption.setKwhConsumed(request.getKwhConsumed().setScale(2, RoundingMode.HALF_UP));</span>
+<span class="nc" id="L51">        energyConsumption.setEnergyType(request.getEnergyType());</span>
+
+<span class="nc" id="L53">        EnergyConsumption savedConsumption = energyConsumptionRepository.save(energyConsumption);</span>
+
+        // --- AUDITORÍA DE CREACIÓN ---
+<span class="nc" id="L56">        auditService.logChange(currentUser, &quot;CREATE&quot;, EnergyConsumption.class.getSimpleName(), &quot;kwhConsumed&quot;, null, savedConsumption.getKwhConsumed().toString());</span>
+<span class="nc" id="L57">        auditService.logChange(currentUser, &quot;CREATE&quot;, EnergyConsumption.class.getSimpleName(), &quot;energyType&quot;, null, savedConsumption.getEnergyType());</span>
+<span class="nc" id="L58">        auditService.logChange(currentUser, &quot;CREATE&quot;, EnergyConsumption.class.getSimpleName(), &quot;consumptionDate&quot;, null, savedConsumption.getConsumptionDate().toString());</span>
+
+<span class="nc" id="L60">        log.info(&quot;Registrando consumo de energía para finca ID {} en fecha {}: {} kWh, tipo {}&quot;,</span>
+<span class="nc" id="L61">                farmId, request.getConsumptionDate(), energyConsumption.getKwhConsumed(), request.getEnergyType());</span>
+<span class="nc" id="L62">        return savedConsumption;</span>
+    }
+
+    @Transactional
+    public EnergyConsumption updateEnergyConsumption(Integer consumptionId, EnergyConsumptionRequest request) {
+<span class="nc" id="L67">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L68">        EnergyConsumption energyConsumption = getEnergyConsumptionById(consumptionId);</span>
+
+        // --- AUDITORÍA DE ACTUALIZACIÓN ---
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        if (!Objects.equals(energyConsumption.getConsumptionDate(), request.getConsumptionDate())) {</span>
+<span class="nc" id="L72">             auditService.logChange(currentUser, &quot;UPDATE&quot;, EnergyConsumption.class.getSimpleName(), &quot;consumptionDate&quot;, Objects.toString(energyConsumption.getConsumptionDate(), null), Objects.toString(request.getConsumptionDate(), null));</span>
+        }
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (!Objects.equals(energyConsumption.getEnergyType(), request.getEnergyType())) {</span>
+<span class="nc" id="L75">             auditService.logChange(currentUser, &quot;UPDATE&quot;, EnergyConsumption.class.getSimpleName(), &quot;energyType&quot;, energyConsumption.getEnergyType(), request.getEnergyType());</span>
+        }
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (energyConsumption.getKwhConsumed().compareTo(request.getKwhConsumed()) != 0) {</span>
+<span class="nc" id="L78">             auditService.logChange(currentUser, &quot;UPDATE&quot;, EnergyConsumption.class.getSimpleName(), &quot;kwhConsumed&quot;, energyConsumption.getKwhConsumed().toString(), request.getKwhConsumed().toString());</span>
+        }
+        
+        // ... (Validación de duplicados)
+
+<span class="nc" id="L83">        energyConsumption.setConsumptionDate(request.getConsumptionDate());</span>
+<span class="nc" id="L84">        energyConsumption.setKwhConsumed(request.getKwhConsumed().setScale(2, RoundingMode.HALF_UP));</span>
+<span class="nc" id="L85">        energyConsumption.setEnergyType(request.getEnergyType());</span>
+
+<span class="nc" id="L87">        log.info(&quot;Actualizando consumo de energía ID {}&quot;, consumptionId);</span>
+<span class="nc" id="L88">        return energyConsumptionRepository.save(energyConsumption);</span>
+    }
+
+    @Transactional
+    public void deleteEnergyConsumption(Integer consumptionId) {
+<span class="nc" id="L93">        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+<span class="nc" id="L94">        EnergyConsumption energyConsumption = getEnergyConsumptionById(consumptionId);</span>
+
+        // --- AUDITORÍA DE BORRADO ---
+<span class="nc" id="L97">        auditService.logChange(currentUser, &quot;DELETE&quot;, EnergyConsumption.class.getSimpleName(), &quot;id&quot;, energyConsumption.getId().toString(), null);</span>
+
+<span class="nc" id="L99">        log.warn(&quot;Eliminando consumo de energía ID {}&quot;, consumptionId);</span>
+<span class="nc" id="L100">        energyConsumptionRepository.delete(energyConsumption);</span>
+<span class="nc" id="L101">    }</span>
+
+    // --- MÉTODOS GET (SIN CAMBIOS) ---
+    
+    @Transactional(readOnly = true)
+    public List&lt;EnergyConsumption&gt; getEnergyConsumptionsByFarm(Integer farmId) {
+<span class="nc" id="L107">        Farm farm = farmRepository.findById(farmId)</span>
+<span class="nc" id="L108">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Farm&quot;, &quot;id&quot;, farmId));</span>
+<span class="nc" id="L109">        return energyConsumptionRepository.findByFarmOrderByConsumptionDateDesc(farm);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public EnergyConsumption getEnergyConsumptionById(Integer consumptionId) {
+<span class="nc" id="L114">        return energyConsumptionRepository.findById(consumptionId)</span>
+<span class="nc" id="L115">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;EnergyConsumption&quot;, &quot;id&quot;, consumptionId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

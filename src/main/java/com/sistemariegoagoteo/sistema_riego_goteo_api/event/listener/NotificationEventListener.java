@@ -33,7 +33,7 @@ public class NotificationEventListener {
             notif.setMessage("Nueva tarea asignada: " + event.description());
             notif.setEntityType("TASK");
             notif.setEntityId(event.taskId());
-            notif.setActionUrl("/tasks/assigned-to-me/" + event.taskId());
+            notif.setActionUrl("/tasks");
 
             notificationRepository.save(notif);
             log.info("AppNotification persistida para el usuario {} sobre asignación de tarea {}", user.getUsername(),
@@ -52,7 +52,7 @@ public class NotificationEventListener {
                     "El operario " + event.operatorName() + " actualizó la tarea a estado: " + event.statusName());
             notif.setEntityType("TASK");
             notif.setEntityId(event.taskId());
-            notif.setActionUrl("/tasks/created-by-me/" + event.taskId());
+            notif.setActionUrl("/analyst/tasks");
 
             notificationRepository.save(notif);
             log.info("AppNotification persistida para el analista {} sobre actualización de tarea {}",
@@ -75,7 +75,7 @@ public class NotificationEventListener {
                             + event.humidityLevel() + "%");
                     notif.setEntityType("ALERT");
                     notif.setEntityId(event.alertId().longValue());
-                    notif.setActionUrl("/farms/" + event.farmId() + "/alerts/" + event.alertId());
+                    notif.setActionUrl("/analyst/irrigation-analysis");
 
                     notificationRepository.save(notif);
                 });
@@ -94,7 +94,7 @@ public class NotificationEventListener {
                             "Mantenimiento registrado en " + event.equipmentName() + ": " + event.description());
                     notif.setEntityType("MAINTENANCE");
                     notif.setEntityId(event.maintenanceId().longValue());
-                    notif.setActionUrl("/farms/" + event.farmId() + "/maintenances/" + event.maintenanceId());
+                    notif.setActionUrl("/farms/" + event.farmId());
 
                     notificationRepository.save(notif);
                 });

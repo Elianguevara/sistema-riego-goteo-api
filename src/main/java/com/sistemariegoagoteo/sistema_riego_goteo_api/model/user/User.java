@@ -1,5 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.model.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm; // Asegúrate de importar la entidad Farm
 import jakarta.persistence.*;
 
@@ -58,6 +59,7 @@ public class User implements UserDetails {
      * Contraseña codificada del usuario.
      */
     @Column(name = "password", nullable = false, length = 255)
+    @JsonIgnore
     private String password;
 
     /**
@@ -103,6 +105,13 @@ public class User implements UserDetails {
     @ToString.Exclude // Evitar recursión en toString con Lombok
     @EqualsAndHashCode.Exclude // Evitar recursión en equals/hashCode con Lombok
     private Set<Farm> farms = new HashSet<>();
+
+    /**
+     * Token de Firebase Cloud Messaging para push notifications en Android.
+     * Se actualiza cuando la app Android inicia sesión o abre la aplicación.
+     */
+    @Column(name = "fcm_token", length = 500)
+    private String fcmToken;
 
     // Constructor conveniente actualizado
     public User(String name, String username, String password, String email, Role rol) {

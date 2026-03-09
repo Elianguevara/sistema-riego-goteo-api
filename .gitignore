@@ -60,3 +60,14 @@ Thumbs.db       # Windows
 # Directorios de caché de Maven/Gradle (suelen estar fuera del proyecto, pero por si acaso)
 # ~/.m2/repository/
 # ~/.gradle/caches/
+# Archivos de logs de testing y compilación locales
+test_output*.txt
+compile*.txt
+compiler-errors*.txt
+test-*.txt
+*test_results*.txt
+
+# Archivos con credenciales / claves sensibles
+apikey.txt
+*.key.txt
+*secret*.txt

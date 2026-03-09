@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuditService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit</a> &gt; <span class="el_source">AuditService.java</span></div><h1>AuditService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.ChangeHistory;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.audit.Synchronization;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.audit.ChangeHistoryRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.audit.SynchronizationRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
+
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L27">@RequiredArgsConstructor</span>
+<span class="fc" id="L28">@Slf4j</span>
+public class AuditService {
+
+    private final ChangeHistoryRepository changeHistoryRepository;
+    private final SynchronizationRepository synchronizationRepository;
+    private final UserRepository userRepository;
+
+    /**
+     * Guarda un registro de auditoría detallado.
+     * @param user El usuario que realiza la acción.
+     * @param actionType El tipo de acción (CREATE, UPDATE, DELETE).
+     * @param affectedTable La tabla afectada.
+     * @param changedField El campo que cambió (o el ID para deletes).
+     * @param oldValue El valor antiguo del campo.
+     * @param newValue El valor nuevo del campo.
+     */
+    @Transactional
+    public void logChange(User user, String actionType, String affectedTable, String changedField, String oldValue, String newValue) {
+<span class="nc" id="L46">        ChangeHistory logEntry = new ChangeHistory();</span>
+<span class="nc" id="L47">        logEntry.setUser(user);</span>
+<span class="nc" id="L48">        logEntry.setActionType(actionType); // Se guarda el tipo de acción</span>
+<span class="nc" id="L49">        logEntry.setAffectedTable(affectedTable);</span>
+<span class="nc" id="L50">        logEntry.setChangedField(changedField);</span>
+<span class="nc" id="L51">        logEntry.setOldValue(oldValue);</span>
+<span class="nc" id="L52">        logEntry.setNewValue(newValue);</span>
+<span class="nc" id="L53">        logEntry.setChangeDatetime(new Date());</span>
+<span class="nc" id="L54">        changeHistoryRepository.save(logEntry);</span>
+<span class="nc" id="L55">        log.debug(&quot;Change logged: User '{}' performed {} on table '{}', field '{}'&quot;, user.getUsername(), actionType, affectedTable, changedField);</span>
+<span class="nc" id="L56">    }</span>
+
+    @Transactional(readOnly = true)
+    public Page&lt;ChangeHistory&gt; getChangeHistory(
+            Long userId, String affectedTable, String actionType, String searchTerm,
+            Date startDate, Date endDate, Pageable pageable) {
+        
+<span class="nc" id="L63">        Specification&lt;ChangeHistory&gt; spec = (root, query, criteriaBuilder) -&gt; {</span>
+<span class="nc" id="L64">            List&lt;Predicate&gt; predicates = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">            if (userId != null) {</span>
+<span class="nc" id="L66">                User user = userRepository.findById(userId)</span>
+<span class="nc" id="L67">                        .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, &quot;id&quot;, userId));</span>
+<span class="nc" id="L68">                predicates.add(criteriaBuilder.equal(root.get(&quot;user&quot;), user));</span>
+            }
+<span class="nc bnc" id="L70" title="All 4 branches missed.">            if (affectedTable != null &amp;&amp; !affectedTable.isEmpty()) {</span>
+<span class="nc" id="L71">                predicates.add(criteriaBuilder.equal(root.get(&quot;affectedTable&quot;), affectedTable));</span>
+            }
+            // --- NUEVA LÓGICA DE FILTRADO POR ACCIÓN ---
+<span class="nc bnc" id="L74" title="All 4 branches missed.">            if (actionType != null &amp;&amp; !actionType.isEmpty()) {</span>
+<span class="nc" id="L75">                predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get(&quot;actionType&quot;)), actionType.toLowerCase()));</span>
+            }
+            // ------------------------------------------
+<span class="nc bnc" id="L78" title="All 4 branches missed.">            if (searchTerm != null &amp;&amp; !searchTerm.isEmpty()) {</span>
+<span class="nc" id="L79">                Predicate oldValuePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get(&quot;oldValue&quot;)), &quot;%&quot; + searchTerm.toLowerCase() + &quot;%&quot;);</span>
+<span class="nc" id="L80">                Predicate newValuePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get(&quot;newValue&quot;)), &quot;%&quot; + searchTerm.toLowerCase() + &quot;%&quot;);</span>
+<span class="nc" id="L81">                Predicate changedFieldPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get(&quot;changedField&quot;)), &quot;%&quot; + searchTerm.toLowerCase() + &quot;%&quot;);</span>
+<span class="nc" id="L82">                predicates.add(criteriaBuilder.or(oldValuePredicate, newValuePredicate, changedFieldPredicate));</span>
+            }
+<span class="nc bnc" id="L84" title="All 2 branches missed.">            if (startDate != null) {</span>
+<span class="nc" id="L85">                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(&quot;changeDatetime&quot;), startDate));</span>
+            }
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            if (endDate != null) {</span>
+<span class="nc" id="L88">                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(&quot;changeDatetime&quot;), endDate));</span>
+            }
+<span class="nc bnc" id="L90" title="All 4 branches missed.">            if (pageable.getSort().isUnsorted() &amp;&amp; query != null) {</span>
+<span class="nc" id="L91">                 query.orderBy(criteriaBuilder.desc(root.get(&quot;changeDatetime&quot;)));</span>
+            }
+<span class="nc" id="L93">            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));</span>
+        };
+<span class="nc" id="L95">        return changeHistoryRepository.findAll(spec, pageable);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Optional&lt;ChangeHistory&gt; getChangeHistoryDetail(Integer logId) {
+<span class="nc" id="L100">        return changeHistoryRepository.findById(logId);</span>
+    }
+
+    // --- Métodos de Synchronization (sin cambios) ---
+    
+    @Transactional
+    public void recordModificationForSync(String tableName, Integer recordId) {
+<span class="nc" id="L107">        Synchronization syncRecord = synchronizationRepository</span>
+<span class="nc" id="L108">                .findByModifiedTableAndModifiedRecordId(tableName, recordId)</span>
+<span class="nc" id="L109">                .orElse(new Synchronization());</span>
+
+<span class="nc" id="L111">        syncRecord.setModifiedTable(tableName);</span>
+<span class="nc" id="L112">        syncRecord.setModifiedRecordId(recordId);</span>
+<span class="nc" id="L113">        syncRecord.setModificationDatetime(new Date());</span>
+<span class="nc" id="L114">        syncRecord.setIsSynchronized(false);</span>
+
+<span class="nc" id="L116">        synchronizationRepository.save(syncRecord);</span>
+<span class="nc" id="L117">        log.info(&quot;Recorded modification for sync: Table '{}', Record ID '{}'&quot;, tableName, recordId);</span>
+<span class="nc" id="L118">    }</span>
+
+    @Transactional(readOnly = true)
+    public Page&lt;Synchronization&gt; getPendingSynchronizations(String tableName, Pageable pageable) {
+<span class="nc bnc" id="L122" title="All 4 branches missed.">        if (tableName != null &amp;&amp; !tableName.isEmpty()) {</span>
+<span class="nc" id="L123">            return synchronizationRepository.findByModifiedTableAndIsSynchronized(tableName, false, pageable);</span>
+        } else {
+<span class="nc" id="L125">            return synchronizationRepository.findByIsSynchronized(false, pageable);</span>
+        }
+    }
+    
+    @Transactional(readOnly = true)
+    public Page&lt;Synchronization&gt; getAllSynchronizationRecords(String tableName, Boolean isSynchronized, Pageable pageable) {
+<span class="nc" id="L131">        Specification&lt;Synchronization&gt; spec = (root, query, criteriaBuilder) -&gt; {</span>
+<span class="nc" id="L132">            List&lt;Predicate&gt; predicates = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L133" title="All 4 branches missed.">            if (tableName != null &amp;&amp; !tableName.isEmpty()) {</span>
+<span class="nc" id="L134">                predicates.add(criteriaBuilder.equal(root.get(&quot;modifiedTable&quot;), tableName));</span>
+            }
+<span class="nc bnc" id="L136" title="All 2 branches missed.">            if (isSynchronized != null) {</span>
+<span class="nc" id="L137">                predicates.add(criteriaBuilder.equal(root.get(&quot;isSynchronized&quot;), isSynchronized));</span>
+            }
+<span class="nc bnc" id="L139" title="All 4 branches missed.">            if (pageable.getSort().isUnsorted() &amp;&amp; query != null) {</span>
+<span class="nc" id="L140">                 query.orderBy(criteriaBuilder.desc(root.get(&quot;modificationDatetime&quot;)));</span>
+            }
+<span class="nc" id="L142">            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));</span>
+        };
+<span class="nc" id="L144">        return synchronizationRepository.findAll(spec, pageable);</span>
+    }
+
+    @Transactional
+    public Synchronization updateSynchronizationStatus(Integer syncId, boolean synchronizedStatus) {
+<span class="nc" id="L149">        Synchronization syncRecord = synchronizationRepository.findById(syncId)</span>
+<span class="nc" id="L150">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Synchronization&quot;, &quot;id&quot;, syncId));</span>
+
+<span class="nc" id="L152">        syncRecord.setIsSynchronized(synchronizedStatus);</span>
+<span class="nc" id="L153">        syncRecord.setModificationDatetime(new Date());</span>
+<span class="nc" id="L154">        log.info(&quot;Updating synchronization status for sync ID {}: {}&quot;, syncId, synchronizedStatus);</span>
+<span class="nc" id="L155">        return synchronizationRepository.save(syncRecord);</span>
+    }
+
+    @Transactional
+    public int batchUpdateSynchronizationStatus(List&lt;Integer&gt; syncIds, boolean synchronizedStatus) {
+<span class="nc bnc" id="L160" title="All 4 branches missed.">        if (syncIds == null || syncIds.isEmpty()) {</span>
+<span class="nc" id="L161">            return 0;</span>
+        }
+<span class="nc" id="L163">        log.info(&quot;Batch updating synchronization status for {} IDs to: {}&quot;, syncIds.size(), synchronizedStatus);</span>
+<span class="nc" id="L164">        return synchronizationRepository.updateSynchronizationStatusForIds(syncIds, synchronizedStatus, new Date());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

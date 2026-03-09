@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.dashboard</a> &gt; <span class="el_source">DashboardService.java</span></div><h1>DashboardService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.dashboard;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.dashboard.DashboardKpiResponse;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository; // &lt;-- CORREGIDO
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L15">@RequiredArgsConstructor</span>
+public class DashboardService {
+
+    private final UserRepository userRepository;
+    private final FarmRepository farmRepository;
+    private final SectorRepository sectorRepository;
+    private final IrrigationEquipmentRepository equipmentRepository;
+
+    public DashboardKpiResponse getDashboardKpis() {
+<span class="fc" id="L24">        long totalUsers = userRepository.count();</span>
+<span class="fc" id="L25">        long totalFarms = farmRepository.count();</span>
+<span class="fc" id="L26">        long totalSectors = sectorRepository.count();</span>
+<span class="fc" id="L27">        long activeSectors = sectorRepository.countByEquipmentStatus(&quot;ACTIVO&quot;); // &lt;-- LÓGICA AÑADIDA</span>
+
+<span class="fc" id="L29">        long activeAlerts = 14; // Lógica a implementar para alertas</span>
+
+<span class="fc" id="L31">        Map&lt;String, Long&gt; equipmentStatusCount = equipmentRepository.countByStatus().stream()</span>
+<span class="fc" id="L32">                .collect(Collectors.toMap(</span>
+<span class="fc" id="L33">                        row -&gt; (String) row[0],</span>
+<span class="fc" id="L34">                        row -&gt; (Long) row[1]));</span>
+
+        // Se actualiza el constructor para incluir el nuevo campo
+<span class="fc" id="L37">        return new DashboardKpiResponse(totalUsers, totalFarms, totalSectors, activeSectors, activeAlerts,</span>
+                equipmentStatusCount);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

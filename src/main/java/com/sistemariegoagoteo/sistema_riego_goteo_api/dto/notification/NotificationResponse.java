@@ -1,6 +1,7 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.dto.notification;
 
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.AppNotification;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.NotificationType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +17,7 @@ public class NotificationResponse {
     private Date createdAt;
     private String entityType;
     private Long entityId;
+    private NotificationType type;
 
     public NotificationResponse(AppNotification notification) {
         this.id = notification.getId();
@@ -25,5 +27,6 @@ public class NotificationResponse {
         this.createdAt = notification.getCreatedAt();
         this.entityType = notification.getEntityType();
         this.entityId = notification.getEntityId();
+        this.type = notification.getType();
     }
 }

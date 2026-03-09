@@ -87,4 +87,18 @@ public class MeController {
         User updatedUser = userService.updateOwnProfile(username, request);
         return ResponseEntity.ok(new UserResponse(updatedUser));
     }
+
+    /**
+     * Registra o actualiza el token FCM del dispositivo Android del usuario.
+     * La app Android debe llamar a este endpoint al iniciar sesión o al obtener un nuevo token.
+     *
+     * @param token Token FCM del dispositivo.
+     * @return Confirmación.
+     */
+    @PutMapping("/fcm-token")
+    public ResponseEntity<String> updateFcmToken(@RequestBody String token) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        userService.saveFcmToken(username, token);
+        return ResponseEntity.ok("Token FCM registrado exitosamente.");
+    }
 }

@@ -1,5 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.controller.notification;
 
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.notification.NotificationResponse;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.notification.AppNotification;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
@@ -14,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -25,24 +27,26 @@ public class NotificationController {
 
     @Operation(summary = "Obtener notificaciones no leídas", description = "Retorna una lista de notificaciones que el usuario autenticado aún no ha leído.")
     @GetMapping("/unread")
-    public ResponseEntity<List<AppNotification>> getUnreadNotifications(@AuthenticationPrincipal User currentUser) {
-        List<AppNotification> unread = notificationService.getUnreadNotificationsForUser(currentUser);
+    public ResponseEntity<List<NotificationResponse>> getUnreadNotifications(@AuthenticationPrincipal User currentUser) {
+        List<NotificationResponse> unread = notificationService.getUnreadNotificationsForUser(currentUser)
+                .stream().map(NotificationResponse::new).toList();
         return ResponseEntity.ok(unread);
     }
 
     @Operation(summary = "Ver todas las notificaciones paginadas", description = "Retorna el historial completo de notificaciones de un usuario.")
     @GetMapping
-    public ResponseEntity<Page<AppNotification>> getAllNotifications(@AuthenticationPrincipal User currentUser,
+    public ResponseEntity<Page<NotificationResponse>> getAllNotifications(@AuthenticationPrincipal User currentUser,
             Pageable pageable) {
-        Page<AppNotification> page = notificationService.getAllNotificationsForUser(currentUser, pageable);
+        Page<NotificationResponse> page = notificationService.getAllNotificationsForUser(currentUser, pageable)
+                .map(NotificationResponse::new);
         return ResponseEntity.ok(page);
     }
 
     @Operation(summary = "Obtener contador de no leídas", description = "Retorna el número total de notificaciones no leídas para el badge de la UI.")
     @GetMapping("/unread-count")
-    public ResponseEntity<Long> getUnreadCount(@AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<Map<String, Long>> getUnreadCount(@AuthenticationPrincipal User currentUser) {
         long count = notificationService.getUnreadCountForUser(currentUser);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.ok(Map.of("unreadCount", count));
     }
 
     @Operation(summary = "Marcar notificación como leída", responses = {
@@ -51,10 +55,10 @@ public class NotificationController {
             @ApiResponse(responseCode = "404", description = "Notificación no encontrada")
     })
     @PutMapping("/{id}/read")
-    public ResponseEntity<AppNotification> markAsRead(@PathVariable Long id,
+    public ResponseEntity<NotificationResponse> markAsRead(@PathVariable Long id,
             @AuthenticationPrincipal User currentUser) {
         AppNotification updated = notificationService.markAsRead(id, currentUser);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(new NotificationResponse(updated));
     }
 
     @Operation(summary = "Marcar todas las notificaciones como leídas", description = "Actualiza el estado de todas las notificaciones no leídas del usuario a leídas.")

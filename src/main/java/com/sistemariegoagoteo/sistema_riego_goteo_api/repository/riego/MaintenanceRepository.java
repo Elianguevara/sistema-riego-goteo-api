@@ -9,12 +9,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para la entidad Maintenance.
  */
 @Repository
 public interface MaintenanceRepository extends JpaRepository<Maintenance, Integer> {
+    Optional<Maintenance> findByLocalMobileId(String localMobileId);
+
     List<Maintenance> findByIrrigationEquipment(IrrigationEquipment irrigationEquipment);
 
     List<Maintenance> findByDate(Date date);
