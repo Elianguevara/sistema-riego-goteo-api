@@ -9,12 +9,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para la entidad Fertilization.
  */
 @Repository
 public interface FertilizationRepository extends JpaRepository<Fertilization, Integer> {
+    Optional<Fertilization> findByLocalMobileId(String localMobileId);
+
     List<Fertilization> findBySector(Sector sector);
 
     List<Fertilization> findByDate(Date date);

@@ -169,6 +169,70 @@
                 </configuration>
             </plugin>
 
+            <!-- JaCoCo: Cobertura de código -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.11</version>
+                <executions>
+                    <!-- 1. Instrumenta el bytecode antes de los tests -->
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <!-- 2. Genera el reporte HTML/XML despues de los tests -->
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <!-- 3. Falla el build si la cobertura es menor al umbral definido -->
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.70</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.60</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                            <!-- Excluir clases sin logica de negocio testeable -->
+                            <excludes>
+                                <exclude>**/config/DataInitializer.class</exclude>
+                                <exclude>**/config/seeder/**</exclude>
+                                <exclude>**/util/GenerateSecretKey.class</exclude>
+                                <exclude>**/util/PasswordEncoderUtil.class</exclude>
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/model/**</exclude>
+                                <exclude>**/SistemaRiegoGoteoApiApplication.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
 
     </build>

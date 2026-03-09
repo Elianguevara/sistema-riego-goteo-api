@@ -1,5 +1,6 @@
 package com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego;
 
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.SectorHistoryEntryDTO;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego.SectorRequest;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.exceptions.ResourceNotFoundException;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm;
@@ -7,7 +8,10 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.IrrigationEqui
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FarmRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FertilizationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationEquipmentRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.MaintenanceRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
 
@@ -17,7 +21,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -32,25 +40,13 @@ import java.util.Objects;
 @Slf4j
 public class SectorService {
 
-    /**
-     * Repositorio para la persistencia de sectores.
-     */
     private final SectorRepository sectorRepository;
-
-    /**
-     * Repositorio para la persistencia de fincas.
-     */
     private final FarmRepository farmRepository;
-
-    /**
-     * Repositorio para la persistencia de equipos de riego.
-     */
     private final IrrigationEquipmentRepository irrigationEquipmentRepository;
-
-    /**
-     * Servicio de auditoría para registrar operaciones sobre sectores.
-     */
     private final AuditService auditService;
+    private final IrrigationRepository irrigationRepository;
+    private final FertilizationRepository fertilizationRepository;
+    private final MaintenanceRepository maintenanceRepository;
 
     /**
      * Crea un nuevo sector dentro de una finca específica.
@@ -183,6 +179,77 @@ public class SectorService {
      *
      * @return Una lista de todos los sectores activos en el sistema.
      */
+    /**
+     * Retorna el historial unificado de actividades de un sector:
+     * riegos, fertilizaciones y mantenimientos del equipo asignado,
+     * ordenados por fecha descendente (el más reciente primero).
+     */
+    @Transactional(readOnly = true)
+    public List<SectorHistoryEntryDTO> getSectorHistory(Integer farmId, Integer sectorId) {
+        Sector sector = sectorRepository.findByIdAndFarm_Id(sectorId, farmId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sector", "id", sectorId + " para la finca " + farmId));
+
+        List<SectorHistoryEntryDTO> history = new ArrayList<>();
+
+        // --- RIEGOS ---
+        irrigationRepository.findBySectorOrderByStartDatetimeDesc(sector).forEach(i -> {
+            SectorHistoryEntryDTO entry = new SectorHistoryEntryDTO();
+            entry.setType("RIEGO");
+            entry.setId(i.getId());
+            entry.setDate(i.getStartDatetime());
+            entry.setDescription(String.format("Riego de %.2f hL durante %.2f hs.", i.getWaterAmount(), i.getIrrigationHours()));
+            entry.setDetails(Map.of(
+                    "startDatetime", i.getStartDatetime().toString(),
+                    "endDatetime", i.getEndDatetime() != null ? i.getEndDatetime().toString() : "",
+                    "waterAmount", i.getWaterAmount(),
+                    "irrigationHours", i.getIrrigationHours(),
+                    "equipmentName", i.getEquipment() != null ? i.getEquipment().getName() : ""
+            ));
+            history.add(entry);
+        });
+
+        // --- FERTILIZACIONES ---
+        fertilizationRepository.findBySectorOrderByDateDesc(sector).forEach(f -> {
+            SectorHistoryEntryDTO entry = new SectorHistoryEntryDTO();
+            entry.setType("FERTILIZACION");
+            entry.setId(f.getId());
+            entry.setDate(f.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+            entry.setDescription(String.format("Fertilización: %s | %.2f %s.",
+                    f.getFertilizerType(), f.getQuantity(),
+                    f.getQuantityUnit() != null ? f.getQuantityUnit().name() : ""));
+            entry.setDetails(Map.of(
+                    "fertilizerType", f.getFertilizerType(),
+                    "quantity", f.getQuantity(),
+                    "unit", f.getQuantityUnit() != null ? f.getQuantityUnit().name() : ""
+            ));
+            history.add(entry);
+        });
+
+        // --- MANTENIMIENTOS del equipo asignado al sector ---
+        if (sector.getEquipment() != null) {
+            maintenanceRepository.findByIrrigationEquipmentOrderByDateDesc(sector.getEquipment()).forEach(m -> {
+                SectorHistoryEntryDTO entry = new SectorHistoryEntryDTO();
+                entry.setType("MANTENIMIENTO");
+                entry.setId(m.getId());
+                entry.setDate(m.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                entry.setDescription(String.format("Mantenimiento en %s: %s",
+                        sector.getEquipment().getName(), m.getDescription()));
+                entry.setDetails(Map.of(
+                        "equipmentName", sector.getEquipment().getName(),
+                        "workHours", m.getWorkHours() != null ? m.getWorkHours() : 0,
+                        "description", m.getDescription()
+                ));
+                history.add(entry);
+            });
+        }
+
+        // Ordenar todo por fecha descendente
+        history.sort(Comparator.comparing(SectorHistoryEntryDTO::getDate).reversed());
+
+        log.info("Historial del sector ID {} (finca ID {}): {} registros.", sectorId, farmId, history.size());
+        return history;
+    }
+
     @Transactional(readOnly = true)
     public List<Sector> getActiveSectors() {
         log.info("Buscando todos los sectores con equipo de riego en estado 'Operativo'");

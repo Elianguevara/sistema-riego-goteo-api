@@ -71,3 +71,6 @@ test-*.txt
 apikey.txt
 *.key.txt
 *secret*.txt
+
+# Configuración local de Claude Code (no compartir entre desarrolladores)
+.claude/settings.local.json

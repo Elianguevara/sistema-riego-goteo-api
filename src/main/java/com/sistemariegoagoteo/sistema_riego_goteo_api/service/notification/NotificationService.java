@@ -18,6 +18,7 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final FcmService fcmService;
 
     @Transactional(readOnly = true)
     public List<AppNotification> getUnreadNotificationsForUser(User user) {
@@ -63,5 +64,8 @@ public class NotificationService {
         notification.setType(NotificationType.INFO);
         notification.setCreatedAt(new Date());
         notificationRepository.save(notification);
+
+        // Enviar push notification si el usuario tiene token FCM registrado
+        fcmService.sendPushNotification(recipient.getFcmToken(), "Sistema de Riego", message);
     }
 }

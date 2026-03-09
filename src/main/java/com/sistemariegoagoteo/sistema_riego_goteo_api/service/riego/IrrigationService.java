@@ -14,7 +14,9 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.Irrigatio
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.IrrigationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.PrecipitationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -59,6 +61,8 @@ public class IrrigationService {
      * Servicio de auditoría para registrar cambios en los riegos.
      */
     private final AuditService auditService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     /**
      * Repositorio para la gestión de fincas.
@@ -112,6 +116,21 @@ public class IrrigationService {
 
         auditService.logChange(currentUser, "CREATE", Irrigation.class.getSimpleName(), "id", null,
                 savedIrrigation.getId().toString());
+
+        // --- NOTIFICACIÓN AL OPERARIO (confirmación) ---
+        String msgOperario = String.format(
+                "Riego registrado exitosamente en sector '%s'. ID: %d | Agua: %.2f hL | Duración: %.2f hs.",
+                sector.getName(), savedIrrigation.getId(),
+                savedIrrigation.getWaterAmount(), savedIrrigation.getIrrigationHours());
+        notificationService.createNotification(currentUser, msgOperario, "IRRIGATION",
+                Long.valueOf(savedIrrigation.getId()), "/irrigations/" + savedIrrigation.getId());
+
+        // --- NOTIFICACIÓN A ADMINS ---
+        String msgAdmin = String.format("El operario '%s' registró un riego en sector '%s' (Finca: '%s'). ID: %d.",
+                currentUser.getUsername(), sector.getName(), sector.getFarm().getName(), savedIrrigation.getId());
+        userRepository.findByRol_RoleName("ADMIN").forEach(admin ->
+                notificationService.createNotification(admin, msgAdmin, "IRRIGATION",
+                        Long.valueOf(savedIrrigation.getId()), "/irrigations/" + savedIrrigation.getId()));
 
         log.info("Usuario {} registró un nuevo riego (ID: {}) para el sector {}", currentUser.getUsername(),
                 savedIrrigation.getId(), sector.getName());

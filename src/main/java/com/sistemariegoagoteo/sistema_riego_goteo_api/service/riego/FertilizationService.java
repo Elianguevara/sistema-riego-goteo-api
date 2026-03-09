@@ -7,7 +7,9 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Sector;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.FertilizationRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.riego.SectorRepository;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.repository.user.UserRepository;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +27,8 @@ public class FertilizationService {
     private final FertilizationRepository fertilizationRepository;
     private final SectorRepository sectorRepository;
     private final AuditService auditService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Transactional
     public Fertilization createFertilization(FertilizationRequest request) {
@@ -42,8 +46,24 @@ public class FertilizationService {
 
         Fertilization savedFertilization = fertilizationRepository.save(fertilization);
 
-        // --- LLAMADA A AUDITORÍA CORREGIDA (6 argumentos) ---
         auditService.logChange(currentUser, "CREATE", Fertilization.class.getSimpleName(), "id", null, savedFertilization.getId().toString());
+
+        // --- NOTIFICACIÓN AL OPERARIO (confirmación) ---
+        String msgOperario = String.format(
+                "Fertilización registrada exitosamente en sector '%s'. ID: %d | Tipo: %s | Cantidad: %.2f %s.",
+                sector.getName(), savedFertilization.getId(),
+                savedFertilization.getFertilizerType(),
+                savedFertilization.getQuantity(),
+                savedFertilization.getQuantityUnit() != null ? savedFertilization.getQuantityUnit().name() : "");
+        notificationService.createNotification(currentUser, msgOperario, "FERTILIZATION",
+                Long.valueOf(savedFertilization.getId()), "/fertilizations/" + savedFertilization.getId());
+
+        // --- NOTIFICACIÓN A ADMINS ---
+        String msgAdmin = String.format("El operario '%s' registró una fertilización en sector '%s' (Finca: '%s'). ID: %d.",
+                currentUser.getUsername(), sector.getName(), sector.getFarm().getName(), savedFertilization.getId());
+        userRepository.findByRol_RoleName("ADMIN").forEach(admin ->
+                notificationService.createNotification(admin, msgAdmin, "FERTILIZATION",
+                        Long.valueOf(savedFertilization.getId()), "/fertilizations/" + savedFertilization.getId()));
 
         log.info("Usuario {} registró fertilización (ID: {}) en sector {}", currentUser.getUsername(), savedFertilization.getId(), sector.getName());
         return savedFertilization;

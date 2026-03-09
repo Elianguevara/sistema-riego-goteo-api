@@ -7,12 +7,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para la entidad OperationLog.
  */
 @Repository
 public interface OperationLogRepository extends JpaRepository<OperationLog, Integer> {
+
+    Optional<OperationLog> findByLocalMobileId(String localMobileId);
 
     /**
      * Busca todas las entradas de la bitácora para una finca específica.
