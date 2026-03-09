@@ -9,6 +9,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.service.auth.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class AdminUserController {
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<UserResponse>> getAllUsers(Pageable pageable) {
+    public ResponseEntity<Page<UserResponse>> getAllUsers(@ParameterObject Pageable pageable) {
         log.debug("GET /api/admin/users");
         Page<UserResponse> usersResponse = userService.findAllUsers(pageable).map(UserResponse::new);
         return ResponseEntity.ok(usersResponse);

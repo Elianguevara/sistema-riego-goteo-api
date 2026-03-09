@@ -8,6 +8,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.model.user.User;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.riego.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -61,7 +62,7 @@ public class TaskController {
      */
     @GetMapping("/assigned-to-me")
     @PreAuthorize("hasRole('OPERARIO')")
-    public ResponseEntity<Page<TaskResponse>> getMyAssignedTasks(@PageableDefault(size = 20) Pageable pageable) {
+    public ResponseEntity<Page<TaskResponse>> getMyAssignedTasks(@ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Page<TaskResponse> tasks = taskService.getTasksAssignedTo(currentUser, pageable).map(TaskResponse::new);
         return ResponseEntity.ok(tasks);
@@ -75,7 +76,7 @@ public class TaskController {
      */
     @GetMapping("/created-by-me")
     @PreAuthorize("hasRole('ANALISTA')")
-    public ResponseEntity<Page<TaskResponse>> getMyCreatedTasks(@PageableDefault(size = 20) Pageable pageable) {
+    public ResponseEntity<Page<TaskResponse>> getMyCreatedTasks(@ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Page<TaskResponse> tasks = taskService.getTasksCreatedBy(currentUser, pageable).map(TaskResponse::new);
         return ResponseEntity.ok(tasks);

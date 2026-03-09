@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,7 @@ public class NotificationController {
     @Operation(summary = "Ver todas las notificaciones paginadas", description = "Retorna el historial completo de notificaciones de un usuario.")
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getAllNotifications(@AuthenticationPrincipal User currentUser,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         Page<NotificationResponse> page = notificationService.getAllNotificationsForUser(currentUser, pageable)
                 .map(NotificationResponse::new);
         return ResponseEntity.ok(page);

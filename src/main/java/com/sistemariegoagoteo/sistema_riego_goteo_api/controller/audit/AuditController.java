@@ -10,6 +10,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.service.audit.AuditService
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -43,7 +44,7 @@ public class AuditController {
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date endDate,
-            @PageableDefault(size = 20, sort = "changeDatetime,desc") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "changeDatetime,desc") Pageable pageable) {
 
         log.info("Fetching change history with params: userId={}, affectedTable={}, actionType={}, searchTerm={}",
                 userId, affectedTable, actionType, searchTerm);
@@ -72,7 +73,7 @@ public class AuditController {
     @GetMapping("/synchronization/pending")
     public ResponseEntity<Page<SynchronizationRecordResponse>> getPendingSynchronizations(
             @RequestParam(required = false) String tableName,
-            @PageableDefault(size = 100, sort = "modificationDatetime,asc") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 100, sort = "modificationDatetime,asc") Pageable pageable) {
         log.info("Fetching pending synchronization records, tableName: {}", tableName);
         Page<Synchronization> syncPage = auditService.getPendingSynchronizations(tableName, pageable);
         return ResponseEntity.ok(syncPage.map(SynchronizationRecordResponse::new));
@@ -85,7 +86,7 @@ public class AuditController {
     public ResponseEntity<Page<SynchronizationRecordResponse>> getAllSynchronizationRecords(
             @RequestParam(required = false) String tableName,
             @RequestParam(required = false) Boolean isSynchronized,
-            @PageableDefault(size = 20, sort = "modificationDatetime,desc") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "modificationDatetime,desc") Pageable pageable) {
         log.info("Fetching all synchronization records, tableName: {}, isSynchronized: {}", tableName, isSynchronized);
         Page<Synchronization> syncPage = auditService.getAllSynchronizationRecords(tableName, isSynchronized, pageable);
         return ResponseEntity.ok(syncPage.map(SynchronizationRecordResponse::new));

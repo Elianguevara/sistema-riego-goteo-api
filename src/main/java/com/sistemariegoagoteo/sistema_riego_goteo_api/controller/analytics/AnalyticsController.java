@@ -5,6 +5,7 @@ import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.analytics.IrrigationSe
 import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.analytics.IrrigationTimeseriesDTO;
 import com.sistemariegoagoteo.sistema_riego_goteo_api.service.analytics.AnalyticsService;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -78,7 +79,7 @@ public class AnalyticsController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate,
             @RequestParam(required = false) List<Integer> sectorIds,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
 
         Page<IrrigationRecordDTO> records = analyticsService.getIrrigationRecords(farmId, startDate, endDate, sectorIds, pageable);
         return ResponseEntity.ok(records);
