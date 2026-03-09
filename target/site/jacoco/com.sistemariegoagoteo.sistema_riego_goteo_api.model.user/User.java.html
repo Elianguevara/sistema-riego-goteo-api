@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.model.user</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.model.user;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.Farm; // Asegúrate de importar la entidad Farm
+import jakarta.persistence.*;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+//import java.util.stream.Collectors; // Para la opción de autoridades con permisos
+
+/**
+ * Entidad que representa un Usuario en el sistema.
+ * &lt;p&gt;
+ * Mapea a la tabla 'user' del modelo de datos y implementa la interfaz
+ * {@link UserDetails} de Spring Security para manejar la autenticación y
+ * autorización.
+ * &lt;/p&gt;
+ */
+<span class="pc" id="L30">@Setter</span>
+@Getter
+<span class="fc" id="L32">@NoArgsConstructor</span>
+@Entity
+@Table(name = &quot;user&quot;)
+public class User implements UserDetails {
+
+    /**
+     * Identificador único del usuario.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;user_id&quot;)
+<span class="fc" id="L43">    private Long id;</span>
+
+    /**
+     * Nombre completo o de mostrar del usuario.
+     */
+    @Column(name = &quot;name&quot;, nullable = false, length = 100)
+<span class="fc" id="L49">    private String name;</span>
+
+    /**
+     * Nombre de usuario único para el inicio de sesión.
+     */
+    @Column(name = &quot;username&quot;, nullable = false, unique = true, length = 50)
+<span class="fc" id="L55">    private String username;</span>
+
+    /**
+     * Contraseña codificada del usuario.
+     */
+    @Column(name = &quot;password&quot;, nullable = false, length = 255)
+<span class="fc" id="L61">    private String password;</span>
+
+    /**
+     * Correo electrónico único del usuario.
+     */
+    @Column(name = &quot;email&quot;, nullable = false, unique = true, length = 100)
+<span class="fc" id="L67">    private String email;</span>
+
+    /**
+     * Fecha y hora del último inicio de sesión exitoso.
+     */
+    @Column(name = &quot;last_login&quot;)
+    @Temporal(TemporalType.TIMESTAMP)
+<span class="nc" id="L74">    private Date lastLogin;</span>
+
+    /**
+     * Contador de intentos de inicio de sesión fallidos.
+     */
+<span class="fc" id="L79">    @Column(name = &quot;failed_attempts&quot;, columnDefinition = &quot;INT DEFAULT 0&quot;)</span>
+<span class="pc" id="L80">    private Integer failedAttempts = 0;</span>
+
+    /**
+     * Rol asignado al usuario que define sus permisos base.
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = &quot;role_id&quot;, nullable = false)
+<span class="fc" id="L87">    private Role rol;</span>
+
+    /**
+     * Estado de activación del usuario. Los usuarios inactivos no pueden iniciar
+     * sesión.
+     */
+<span class="fc" id="L93">    @Column(name = &quot;is_active&quot;, columnDefinition = &quot;TINYINT(1) DEFAULT 1&quot;)</span>
+<span class="fc" id="L94">    private boolean isActive = true;</span>
+
+    /**
+     * Relación Many-to-Many con la entidad Farm, a través de la tabla intermedia
+     * 'user_farm'.
+     */
+<span class="fc" id="L100">    @ManyToMany(fetch = FetchType.LAZY)</span>
+    @JoinTable(name = &quot;user_farm&quot;, // Tabla de unión según el MER
+            joinColumns = @JoinColumn(name = &quot;user_id&quot;), inverseJoinColumns = @JoinColumn(name = &quot;farm_id&quot;))
+    @ToString.Exclude // Evitar recursión en toString con Lombok
+    @EqualsAndHashCode.Exclude // Evitar recursión en equals/hashCode con Lombok
+<span class="fc" id="L105">    private Set&lt;Farm&gt; farms = new HashSet&lt;&gt;();</span>
+
+    /**
+     * Token de Firebase Cloud Messaging para push notifications en Android.
+     * Se actualiza cuando la app Android inicia sesión o abre la aplicación.
+     */
+    @Column(name = &quot;fcm_token&quot;, length = 500)
+<span class="fc" id="L112">    private String fcmToken;</span>
+
+    // Constructor conveniente actualizado
+<span class="fc" id="L115">    public User(String name, String username, String password, String email, Role rol) {</span>
+<span class="fc" id="L116">        this.name = name;</span>
+<span class="fc" id="L117">        this.username = username;</span>
+<span class="fc" id="L118">        this.password = password;</span>
+<span class="fc" id="L119">        this.email = email;</span>
+<span class="fc" id="L120">        this.rol = rol;</span>
+<span class="fc" id="L121">        this.isActive = true;</span>
+<span class="fc" id="L122">        this.failedAttempts = 0;</span>
+<span class="fc" id="L123">    }</span>
+
+    // --- Implementación de UserDetails ---
+
+    /**
+     * Retorna las autoridades concedidas al usuario.
+     * Por defecto, se basa en el rol principal del usuario.
+     * Si se implementa un sistema de permisos más granular (Role &lt;-&gt; Permission),
+     * este método podría expandirse para incluir los permisos directamente como
+     * autoridades.
+     */
+    @Override
+    public Collection&lt;? extends GrantedAuthority&gt; getAuthorities() {
+        // Opción 1: Solo basado en el Rol (como estaba)
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        if (this.rol == null) {</span>
+<span class="nc" id="L138">            return List.of();</span>
+        }
+<span class="fc" id="L140">        SimpleGrantedAuthority roleAuthority = new SimpleGrantedAuthority(&quot;ROLE_&quot; + this.rol.getRoleName());</span>
+<span class="fc" id="L141">        return List.of(roleAuthority);</span>
+
+        // Opción 2: Basado en Rol y sus Permisos asociados (si Role tiene una colección
+        // de Permission)
+        // Asegúrate de que Role.java tenga la relación @ManyToMany con Permission y que
+        // los permisos se carguen (EAGER o Fetch).
+        /*
+         * if (this.rol == null) {
+         * return List.of();
+         * }
+         * Set&lt;GrantedAuthority&gt; authorities = new HashSet&lt;&gt;();
+         * authorities.add(new SimpleGrantedAuthority(&quot;ROLE_&quot; +
+         * this.rol.getNombreRol()));
+         * if (this.rol.getPermissions() != null) {
+         * this.rol.getPermissions().forEach(permission -&gt;
+         * authorities.add(new SimpleGrantedAuthority(permission.getPermissionName()))
+         * );
+         * }
+         * return authorities;
+         */
+    }
+
+    // getPassword() y getUsername() son generados por Lombok (@Data)
+
+    @Override
+    public boolean isAccountNonExpired() {
+<span class="nc" id="L167">        return true;</span>
+    }
+
+    /**
+     * Indica si la cuenta del usuario no está bloqueada.
+     * Ahora usa el campo 'isActive' y podría combinarse con 'failedAttempts'.
+     */
+    @Override
+    public boolean isAccountNonLocked() {
+        // Ejemplo más avanzado: return isActive &amp;&amp; failedAttempts &lt; MAX_LOGIN_ATTEMPTS;
+<span class="nc" id="L177">        return this.isActive;</span>
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+<span class="nc" id="L182">        return true;</span>
+    }
+
+    /**
+     * Indica si el usuario está habilitado o deshabilitado.
+     * Mapea directamente al campo 'isActive'.
+     */
+    @Override
+    public boolean isEnabled() {
+<span class="nc" id="L191">        return this.isActive;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReservoirTurnResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego</a> &gt; <span class="el_source">ReservoirTurnResponse.java</span></div><h1>ReservoirTurnResponse.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.dto.riego;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.sistemariegoagoteo.sistema_riego_goteo_api.model.riego.ReservoirTurn;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
+
+<span class="nc bnc" id="L10" title="All 62 branches missed.">@Data</span>
+<span class="nc" id="L11">@NoArgsConstructor</span>
+public class ReservoirTurnResponse {
+<span class="nc" id="L13">    private Integer id;</span>
+
+<span class="nc" id="L15">    private Integer waterSourceId;</span>
+<span class="nc" id="L16">    private String waterSourceType; // Tipo de la fuente de agua</span>
+
+<span class="nc" id="L18">    private Integer farmId; // Derivado de la fuente de agua</span>
+<span class="nc" id="L19">    private String farmName; // Derivado de la fuente de agua</span>
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd'T'HH:mm:ssXXX&quot;, timezone = &quot;UTC&quot;)
+<span class="nc" id="L22">    private Date startDatetime;</span>
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd'T'HH:mm:ssXXX&quot;, timezone = &quot;UTC&quot;)
+<span class="nc" id="L25">    private Date endDatetime;</span>
+
+<span class="nc" id="L27">    public ReservoirTurnResponse(ReservoirTurn reservoirTurn) {</span>
+<span class="nc" id="L28">        this.id = reservoirTurn.getId();</span>
+<span class="nc bnc" id="L29" title="All 2 branches missed.">        if (reservoirTurn.getWaterSource() != null) {</span>
+<span class="nc" id="L30">            this.waterSourceId = reservoirTurn.getWaterSource().getId();</span>
+<span class="nc" id="L31">            this.waterSourceType = reservoirTurn.getWaterSource().getType();</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">            if (reservoirTurn.getWaterSource().getFarm() != null) {</span>
+<span class="nc" id="L33">                this.farmId = reservoirTurn.getWaterSource().getFarm().getId();</span>
+<span class="nc" id="L34">                this.farmName = reservoirTurn.getWaterSource().getFarm().getName();</span>
+            }
+        }
+<span class="nc" id="L37">        this.startDatetime = reservoirTurn.getStartDatetime();</span>
+<span class="nc" id="L38">        this.endDatetime = reservoirTurn.getEndDatetime();</span>
+<span class="nc" id="L39">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

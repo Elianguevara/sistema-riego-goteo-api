@@ -303,6 +303,13 @@ public class UserService {
                 return userRepository.findByRol(role);
         }
 
+        @Transactional(readOnly = true)
+        @PreAuthorize("hasRole('ADMIN')")
+        public List<User> getAvailableOperarios() {
+                log.debug("Admin consultando operarios disponibles (sin finca asignada)");
+                return userRepository.findAvailableOperarios();
+        }
+
         @Transactional
         public void updateOwnPassword(String username, String currentPassword, String newPassword,
                         String confirmPassword) {
@@ -369,15 +376,6 @@ public class UserService {
                         throw new ResourceNotFoundException("Farm", "id", farmId);
                 }
                 return userRepository.findByFarms_Id(farmId);
-        }
-
-        @Transactional
-        public void saveFcmToken(String username, String fcmToken) {
-                User user = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
-                user.setFcmToken(fcmToken);
-                userRepository.save(user);
-                log.info("FCM token actualizado para el usuario: {}", username);
         }
 
         // --- MÉTODO PARA EL DASHBOARD ---

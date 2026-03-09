@@ -87,4 +87,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByRol_RoleName(String roleName);
 
+    /**
+     * Devuelve los operarios que aún no tienen ninguna finca asignada.
+     * Se usa para listar candidatos disponibles al momento de asignar un operario a una finca.
+     *
+     * @return Lista de usuarios con rol OPERARIO y sin fincas asignadas.
+     */
+    @Query("SELECT u FROM User u JOIN u.rol r WHERE r.roleName = 'OPERARIO' AND u.farms IS EMPTY")
+    List<User> findAvailableOperarios();
+
 }

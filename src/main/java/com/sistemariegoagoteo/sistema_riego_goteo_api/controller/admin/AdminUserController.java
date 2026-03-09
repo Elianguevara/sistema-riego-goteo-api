@@ -181,4 +181,20 @@ public class AdminUserController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(users);
     }
+
+    /**
+     * Devuelve los operarios que no tienen ninguna finca asignada.
+     * Se usa para poblar el selector de usuarios al momento de asignar un operario a una finca.
+     *
+     * @return Lista de operarios disponibles.
+     */
+    @GetMapping("/available-operarios")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserResponse>> getAvailableOperarios() {
+        log.debug("GET /api/admin/users/available-operarios");
+        List<UserResponse> users = userService.getAvailableOperarios().stream()
+                .map(UserResponse::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
+    }
 }

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeocodingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sistema-riego-goteo-api</a> &gt; <a href="index.source.html" class="el_package">com.sistemariegoagoteo.sistema_riego_goteo_api.service.geocoding</a> &gt; <span class="el_source">GeocodingService.java</span></div><h1>GeocodingService.java</h1><pre class="source lang-java linenums">package com.sistemariegoagoteo.sistema_riego_goteo_api.service.geocoding;
+
+import com.sistemariegoagoteo.sistema_riego_goteo_api.dto.geocoding.GeocodingResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L14">@Slf4j</span>
+public class GeocodingService {
+
+    private final RestTemplate restTemplate;
+
+    @Value(&quot;${geocoding.api.key}&quot;)
+    private String apiKey;
+
+    @Value(&quot;${geocoding.api.url}&quot;)
+    private String apiUrl;
+
+<span class="fc" id="L25">    public GeocodingService(RestTemplate restTemplate) {</span>
+<span class="fc" id="L26">        this.restTemplate = restTemplate;</span>
+<span class="fc" id="L27">    }</span>
+
+    public Optional&lt;Coordinates&gt; getCoordinates(String location) {
+<span class="nc bnc" id="L30" title="All 4 branches missed.">        if (location == null || location.isBlank()) {</span>
+<span class="nc" id="L31">            return Optional.empty();</span>
+        }
+
+        // Construimos la URL de la API con los parámetros necesarios
+<span class="nc" id="L35">        String url = UriComponentsBuilder.fromUriString(apiUrl)</span>
+<span class="nc" id="L36">                .queryParam(&quot;q&quot;, location)</span>
+<span class="nc" id="L37">                .queryParam(&quot;key&quot;, apiKey)</span>
+<span class="nc" id="L38">                .queryParam(&quot;limit&quot;, 1) // Solo queremos el resultado más relevante</span>
+<span class="nc" id="L39">                .queryParam(&quot;countrycode&quot;, &quot;ar&quot;) // Priorizamos resultados en Argentina (ideal para Mendoza)</span>
+<span class="nc" id="L40">                .toUriString();</span>
+
+        try {
+<span class="nc" id="L43">            GeocodingResponse response = restTemplate.getForObject(url, GeocodingResponse.class);</span>
+
+<span class="nc bnc" id="L45" title="All 6 branches missed.">            if (response != null &amp;&amp; response.getResults() != null &amp;&amp; !response.getResults().isEmpty()) {</span>
+<span class="nc" id="L46">                GeocodingResponse.Geometry geometry = response.getResults().get(0).getGeometry();</span>
+<span class="nc bnc" id="L47" title="All 6 branches missed.">                if (geometry != null &amp;&amp; geometry.getLat() != null &amp;&amp; geometry.getLng() != null) {</span>
+<span class="nc" id="L48">                    return Optional.of(new Coordinates(geometry.getLat(), geometry.getLng()));</span>
+                }
+            }
+<span class="nc" id="L51">        } catch (Exception e) {</span>
+<span class="nc" id="L52">            log.error(&quot;Error al llamar a la API de geocodificación para la ubicación '{}': {}&quot;, location,</span>
+<span class="nc" id="L53">                    e.getMessage());</span>
+<span class="nc" id="L54">        }</span>
+
+<span class="nc" id="L56">        return Optional.empty();</span>
+    }
+
+    // Clase auxiliar (record) para devolver las coordenadas de forma limpia
+<span class="nc" id="L60">    public record Coordinates(BigDecimal latitude, BigDecimal longitude) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
